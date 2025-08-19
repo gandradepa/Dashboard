@@ -1,30 +1,55 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
     <title>Asset Management Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Your site styles -->
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
   </head>
   <body class="ubc-body">
+    <!-- Top UBC blue strip -->
     <header>
       <div class="ubc-top-strip"></div>
+
+      <!-- Navbar area -->
       <nav class="navbar navbar-expand-lg ubc-navbar" aria-label="Primary">
         <div class="container d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo me-3">
+            <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}"
+                 alt="UBC Logo" class="ubc-logo me-3" />
             <a class="navbar-brand ubc-brand" href="#">Asset Management Dashboard</a>
           </div>
+
           <div>
-            <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" alt="UBC Facilities Logo" class="ubc-facilities-logo">
+            <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}"
+                 alt="UBC Facilities Logo" class="ubc-facilities-logo" />
           </div>
         </div>
       </nav>
     </header>
 
-    <main class="container py-5" id="main">
+    <main id="main" class="container py-5">
       <h1 class="h3 ubc-heading mb-4">Applications</h1>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-3">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Cards -->
       <div class="row g-4">
         {% for a in apps %}
         <div class="col-12 col-md-6 col-lg-4">
@@ -32,21 +57,44 @@
             <div class="card-body d-flex flex-column">
               <h2 class="h5 card-title mb-2">{{ a.name }}</h2>
               <p class="card-text text-muted small">URL: <code>{{ a.url }}</code></p>
-              <div class="mt-auto d-grid gap-2">
+
+              <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
+                <!-- Open button -->
                 <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
+
+                <!-- Backflow QR API button -->
+                {% if a.key == "review_bf" %}
+                <form class="m-0" method="post" action="{{ url_for('run_task', task_key='qr_api_bf') }}">
+                  <button class="btn ubc-btn" type="submit">Run Backflow QR API</button>
+                </form>
+                {% endif %}
+
+                <!-- Mechanical QR API button -->
+                {% if a.key == "review_me" %}
+                <form class="m-0" method="post" action="{{ url_for('run_task', task_key='qr_api_me') }}">
+                  <button class="btn ubc-btn" type="submit">Run Mechanical QR API</button>
+                </form>
+                {% endif %}
               </div>
             </div>
           </div>
         </div>
         {% endfor %}
       </div>
+
+      <div class="mt-4">
+        <a class="btn ubc-btn" href="{{ url_for('list_logs') }}">View Logs</a>
+      </div>
     </main>
 
-    <footer class="ubc-footer text-center py-3" role="contentinfo">
+    <footer class="ubc-footer text-center py-3">
       <div class="container">
-        <small class="footer-text">© 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.</small>
+        <small class="footer-text">
+          © 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.
+        </small>
       </div>
     </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
