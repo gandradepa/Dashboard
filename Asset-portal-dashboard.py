@@ -1,93 +1,148 @@
 """
-Asset Management Dashboard – Flask app (Asset-portal-dashboard.py)
+Asset Management Dashboard – Flask app (Option A: plaintext-compatible login)
 
-Run locally:
+Run:
   python Asset-portal-dashboard.py
-
 Open:
   http://127.0.0.1:5080
 
 Requires:
+  - templates/login.html
   - templates/dashboard.html
   - static/style.css
-  - (optional) static/logos/ubc_logo.jpg, static/logos/ubc-facilities_logo.jpg
-
-This app renders the dashboard and exposes a POST-only /run/<task_key> endpoint
-to launch approved Python scripts on the server (whitelist). Output from launched
-scripts is written to UTF-8 log files in ./logs/.
+  - static/logos/ubc_logo.jpg (optional)
+  - static/logos/ubc-facilities_logo.jpg (optional)
 """
 
 import os
 import sys
 import time
+import sqlite3
 import subprocess
 from pathlib import Path
+from functools import wraps
 
 from flask import (
     Flask, render_template, redirect, url_for, flash,
-    request, abort, Response
+    request, abort, Response, session, g
 )
+from werkzeug.security import check_password_hash
 
 # ------------------ Flask app ------------------
 app = Flask(__name__)
-# Needed for flash() messages
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
-# ------------------ Cards shown on the dashboard ------------------
+# ------------------ Paths ------------------
+BASE_DIR = Path(__file__).resolve().parent
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+USERS_DB = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\Git_control\asset_capture_app_dev\data\User_control.db"
+
+# ------------------ Dashboard cards ------------------
 APPS = [
     {"key": "capture",   "name": "Asset Capture Mobile App",            "url": "http://127.0.0.1:5001"},
     {"key": "review_me", "name": "Asset Reviewer - Mechanical",         "url": "http://127.0.0.1:5002"},
     {"key": "review_bf", "name": "Asset Reviewer - Backflow Devices",   "url": "http://127.0.0.1:5003"},
 ]
 
-# ------------------ Whitelisted tasks (safe) ------------------
-# Map a short key -> absolute path to a Python script you allow to run
+# ------------------ Whitelisted tasks ------------------
 TASKS = {
     "qr_api_bf": r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\Git_control\QR_code_project_API\API interface_BF_ver00.py",
     "qr_api_me": r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\Git_control\QR_code_project_API\API interface_ME_ver00.py",
 }
 
-# ------------------ Log directory ------------------
-BASE_DIR = Path(__file__).resolve().parent
-LOG_DIR = BASE_DIR / "logs"
-LOG_DIR.mkdir(exist_ok=True)
+# ------------------ Auth helpers ------------------
+def get_user_row(username: str):
+    """Fetch a user row from SQLite by username (case-insensitive)."""
+    if not os.path.exists(USERS_DB):
+        return None
+    try:
+        con = sqlite3.connect(USERS_DB)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute(
+            "SELECT * FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
+            (username,)
+        )
+        row = cur.fetchone()
+        cur.close()
+        con.close()
+        return row
+    except Exception:
+        return None
 
+def is_active_user(row) -> bool:
+    """Treat is_active = 1/true/yes as active; if column missing, assume active."""
+    if row is None:
+        return False
+    if "is_active" in row.keys():
+        v = row["is_active"]
+        try:
+            return int(v) == 1
+        except Exception:
+            return str(v).strip().lower() in {"1", "true", "yes", "y"}
+    return True
 
-# ------------------ Helpers ------------------
-def _validate_task_key(task_key: str) -> Path:
-    """Return script path for a valid task key or 404."""
-    if task_key not in TASKS:
-        abort(404, f"Unknown task: {task_key}")
-    script = Path(TASKS[task_key]).resolve()
-    if not script.exists() or script.suffix.lower() != ".py":
-        abort(404, f"Script not found or invalid: {script}")
-    return script
+def validate_password(row, candidate: str) -> bool:
+    """
+    Option A: Accept plaintext stored in password_hash for backward compatibility.
+    If password_hash starts with a known scheme, verify as a real hash.
+    Otherwise compare as plaintext. Also supports a legacy 'password' column.
+    """
+    if row is None:
+        return False
 
+    def has(col): return col in row.keys()
 
+    if has("password_hash") and row["password_hash"]:
+        ph = str(row["password_hash"])
+        if ph.startswith(("pbkdf2:", "scrypt:", "argon2:")):
+            try:
+                return check_password_hash(ph, candidate)
+            except Exception:
+                return False
+        else:
+            # Plaintext fallback
+            return ph == candidate
+
+    if has("password") and row["password"] is not None:
+        return str(row["password"]) == candidate
+
+    return False
+
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not session.get("user"):
+            next_url = request.path
+            return redirect(url_for("login", next=next_url))
+        return fn(*args, **kwargs)
+    return wrapper
+
+@app.before_request
+def load_current_user():
+    g.user = session.get("user")  # e.g., {'username': 'gandrade'}
+
+# ------------------ UTF‑8 safe launcher ------------------
 def _launch_script_detached(script_path: Path) -> Path:
     """
-    Launch a Python script asynchronously (non-blocking) with UTF‑8 I/O.
-    Uses the same interpreter as this Flask app (sys.executable).
-    Writes stdout/stderr to logs/<script>.<timestamp>.log (UTF‑8).
+    Launch Python script asynchronously with UTF‑8 I/O.
+    Writes stdout/stderr to logs/<script>.<timestamp>.log
     """
     timestamp = int(time.time())
     log_path = LOG_DIR / f"{script_path.stem}.{timestamp}.log"
-
-    # Open the log as UTF‑8 so emojis/special chars won't break on Windows
     log_fp = open(log_path, "w", encoding="utf-8")
 
-    # Windows detached flags (ignored on non‑Windows)
     creationflags = 0
     if sys.platform.startswith("win"):
         # CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
         creationflags = 0x00000200 | 0x00000008
 
-    # Inherit env, force UTF‑8 for child process
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
 
-    # -X utf8 enables UTF‑8 mode for the child Python interpreter
     subprocess.Popen(
         [sys.executable, "-X", "utf8", str(script_path)],
         cwd=str(script_path.parent),
@@ -99,32 +154,55 @@ def _launch_script_detached(script_path: Path) -> Path:
     )
     return log_path
 
+def _validate_task_key(task_key: str) -> Path:
+    if task_key not in TASKS:
+        abort(404, f"Unknown task: {task_key}")
+    script = Path(TASKS[task_key]).resolve()
+    if not script.exists() or script.suffix.lower() != ".py":
+        abort(404, f"Script not found or invalid: {script}")
+    return script
 
-# ------------------ Routes ------------------
-@app.get("/")
-def index():
-    """
-    Renders the dashboard. The template should include forms like:
+# ------------------ Routes: Auth ------------------
+@app.get("/login")
+def login():
+    if session.get("user"):
+        return redirect(url_for("index"))
+    return render_template("login.html")
 
-      <!-- Mechanical -->
-      <form method="post" action="{{ url_for('run_task', task_key='qr_api_me') }}">
-        <button class="btn ubc-btn" type="submit">Run Mechanical QR API</button>
-      </form>
+@app.post("/login")
+def login_post():
+    username = (request.form.get("username") or "").strip()
+    password = request.form.get("password") or ""
+    next_url = request.args.get("next") or url_for("index")
 
-      <!-- Backflow -->
-      <form method="post" action="{{ url_for('run_task', task_key='qr_api_bf') }}">
-        <button class="btn ubc-btn" type="submit">Run Backflow QR API</button>
-      </form>
-    """
+    if not username or not password:
+        flash("Please enter username and password.", "danger")
+        return redirect(url_for("login", next=next_url))
+
+    row = get_user_row(username)
+    if row and is_active_user(row) and validate_password(row, password):
+        session["user"] = {"username": row["username"] if "username" in row.keys() else username}
+        # NOTE: intentionally no "Signed in successfully." flash
+        return redirect(next_url)
+
+    flash("Invalid username or password.", "danger")
+    return redirect(url_for("login", next=next_url))
+
+@app.post("/logout")
+def logout():
+    session.pop("user", None)
+    flash("You have been signed out.", "success")
+    return redirect(url_for("login"))
+
+# ------------------ Routes: Dashboard & tasks (protected) ------------------
+@app.get("/", endpoint="index")  # <-- make the endpoint name 'index'
+@login_required
+def dashboard():
     return render_template("dashboard.html", apps=APPS)
 
-
 @app.post("/run/<task_key>")
+@login_required
 def run_task(task_key: str):
-    """
-    POST-only endpoint that starts a whitelisted task in the background.
-    Shows a flash message with the created log file name.
-    """
     script = _validate_task_key(task_key)
     try:
         log_path = _launch_script_detached(script)
@@ -133,9 +211,9 @@ def run_task(task_key: str):
         flash(f"Failed to start task '{task_key}': {e}", "danger")
     return redirect(url_for("index"))
 
-
-# --------- (Optional) Minimal log browser ----------
+# ------------------ (Optional) Logs (protected) ------------------
 @app.get("/logs")
+@login_required
 def list_logs():
     newest = sorted(LOG_DIR.glob("*.log"), reverse=True)[:50]
     items = "".join(
@@ -144,15 +222,14 @@ def list_logs():
     )
     return f"<h3>Recent logs</h3><ul>{items}</ul>"
 
-
 @app.get("/logs/view")
+@login_required
 def view_log():
     name = request.args.get("name", "")
     path = (LOG_DIR / name).resolve()
     if not path.exists() or path.parent != LOG_DIR.resolve():
         abort(404)
     return Response(path.read_text(encoding="utf-8"), mimetype="text/plain")
-
 
 # ------------------ Main ------------------
 if __name__ == "__main__":

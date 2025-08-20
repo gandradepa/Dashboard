@@ -24,9 +24,13 @@
             <a class="navbar-brand ubc-brand" href="#">Asset Management Dashboard</a>
           </div>
 
-          <div>
+          <!-- RIGHT SIDE: Facilities logo + Logout button (added) -->
+          <div class="d-flex align-items-center">
             <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}"
-                 alt="UBC Facilities Logo" class="ubc-facilities-logo" />
+                 alt="UBC Facilities Logo" class="ubc-facilities-logo me-3" />
+            <form class="m-0" method="post" action="{{ url_for('logout') }}">
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Logout</button>
+            </form>
           </div>
         </div>
       </nav>
@@ -62,17 +66,17 @@
                 <!-- Open button -->
                 <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
 
-                <!-- Backflow QR API button -->
+                <!-- AI Interpreter button for Backflow -->
                 {% if a.key == "review_bf" %}
                 <form class="m-0" method="post" action="{{ url_for('run_task', task_key='qr_api_bf') }}">
-                  <button class="btn ubc-btn" type="submit">Run Backflow QR API</button>
+                  <button class="btn ubc-btn" type="submit">Run AI Interpreter</button>
                 </form>
                 {% endif %}
 
-                <!-- Mechanical QR API button -->
+                <!-- AI Interpreter button for Mechanical -->
                 {% if a.key == "review_me" %}
                 <form class="m-0" method="post" action="{{ url_for('run_task', task_key='qr_api_me') }}">
-                  <button class="btn ubc-btn" type="submit">Run Mechanical QR API</button>
+                  <button class="btn ubc-btn" type="submit">Run AI Interpreter</button>
                 </form>
                 {% endif %}
               </div>
