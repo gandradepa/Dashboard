@@ -24,7 +24,7 @@
             <a class="navbar-brand ubc-brand" href="#">Asset Management Dashboard</a>
           </div>
 
-          <!-- RIGHT SIDE: Facilities logo + Logout button (added) -->
+          <!-- RIGHT SIDE: Facilities logo + Logout button -->
           <div class="d-flex align-items-center">
             <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}"
                  alt="UBC Facilities Logo" class="ubc-facilities-logo me-3" />
@@ -89,6 +89,29 @@
       <div class="mt-4">
         <a class="btn ubc-btn" href="{{ url_for('list_logs') }}">View Logs</a>
       </div>
+
+      <!-- ===== Approval chart section (added) ===== -->
+      <hr class="my-5" />
+      <section aria-labelledby="approval-overview-heading">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <h2 id="approval-overview-heading" class="h4 m-0">Approved Assets to Plannon</h2>
+          <label for="building-select" class="ms-2 mb-0"><strong>Building:</strong></label>
+          <select id="building-select" class="form-select form-select-sm" style="max-width: 320px;">
+            {% for b in building_options %}
+              <option value="{{ b }}" {% if b == 'All' %}selected{% endif %}>{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="ratio ratio-21x9">
+          <img id="approval-chart"
+               class="img-fluid rounded shadow-sm bg-white"
+               src="{{ url_for('approval_chart_png') }}?building=All"
+               alt="Approval status by asset group" />
+        </div>
+      </section>
+      <!-- ===== End chart section ===== -->
+
     </main>
 
     <footer class="ubc-footer text-center py-3">
@@ -100,5 +123,17 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      (function(){
+        const sel = document.getElementById('building-select');
+        const img = document.getElementById('approval-chart');
+        function refresh() {
+          const b = encodeURIComponent(sel.value || 'All');
+          // cache-bust to ensure quick refresh
+          img.src = "{{ url_for('approval_chart_png') }}" + "?building=" + b + "&_=" + Date.now();
+        }
+        sel.addEventListener('change', refresh);
+      })();
+    </script>
   </body>
 </html>
