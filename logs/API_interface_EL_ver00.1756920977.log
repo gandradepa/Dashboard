@@ -1,0 +1,7 @@
+[INFO] Tesseract OK at: /usr/bin/tesseract
+[INFO] TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
+[INFO] Approval filter from sdi_dataset_EL: 1 QR(s) will be processed.
+[INFO] Total assets to process (Approved=1): 1
+
+[INFO] Processing QR 0000183710 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183710.json

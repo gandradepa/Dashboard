@@ -1,0 +1,6 @@
+Approval filter loaded from sdi_dataset_EL: 1 QR(s) will be PROCESSED.
+Total assets to process (Approved=1): 1
+
+📦 Processing QR 0000183710 (Building 314-1) ...
+❌ quick_ocr_text failed on /home/developer/Capture_photos_upload/0000183710 314-1 EL - 1.jpg: tesseract is not installed or it's not in your PATH. See README file for more information.
+✅ Saved: /home/developer/Output_jason_api/0000183710.json

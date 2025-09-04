@@ -11,11 +11,14 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, Rectangle, Patch
 
 # === CONFIG ===
-DB_PATH_DEFAULT = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\Git_control\asset_capture_app_dev\data\QR_codes.db"
+DB_PATH_DEFAULT = r"/home/developer/asset_capture_app_dev/data/QR_codes.db"
 DB_PATH = os.getenv("DASHBOARD_DB_PATH", DB_PATH_DEFAULT)
 
-TABLE_MAIN = "sdi_dataset"
+TABLES_MAIN = ("sdi_dataset", "sdi_dataset_EL")  # <— use both
 TABLE_BUILDINGS = "Buildings"
+
+# Columns common to both tables (as per your note)
+COMMON_COLS = ["Approved", "Asset Group", "Attribute", "Building", "Description", "QR Code"]
 
 # UBC palette
 COLOR_APPROVED = "#002145"  # dark blue
@@ -24,9 +27,38 @@ BG_FACE        = "white"
 
 
 # ---------- Data helpers ----------
+def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    cur = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1", (table,)
+    )
+    return cur.fetchone() is not None
+
 def _read_table(db_path: str, table: str) -> pd.DataFrame:
     with sqlite3.connect(db_path) as conn:
         return pd.read_sql_query(f'SELECT * FROM "{table}"', conn)
+
+def _read_main_union(db_path: str, tables: tuple[str, ...], cols: list[str]) -> pd.DataFrame:
+    """Read the listed tables, keep only cols, and union them into a single df."""
+    dfs = []
+    with sqlite3.connect(db_path) as conn:
+        for t in tables:
+            if not _table_exists(conn, t):
+                continue
+            df = pd.read_sql_query(f'SELECT * FROM "{t}"', conn)
+
+            # Ensure all expected columns exist (if any is missing, create empty)
+            for c in cols:
+                if c not in df.columns:
+                    df[c] = np.nan
+
+            # Keep only the common columns in the defined order
+            df = df[cols].copy()
+            df["__source_table__"] = t  # optional: handy for debugging
+            dfs.append(df)
+
+    if not dfs:
+        raise RuntimeError(f"None of the tables {tables} were found in the database.")
+    return pd.concat(dfs, ignore_index=True)
 
 def _ensure(df: pd.DataFrame, cols: list, name: str):
     missing = [c for c in cols if c not in df.columns]
@@ -35,21 +67,28 @@ def _ensure(df: pd.DataFrame, cols: list, name: str):
 
 def _prepare_data() -> pd.DataFrame:
     """Return df4 grouped as (Name, Asset Group, Approved, QTY)."""
-    df  = _read_table(DB_PATH, TABLE_MAIN)
+    # --- df now pulls from BOTH main tables ---
+    df = _read_main_union(DB_PATH, TABLES_MAIN, COMMON_COLS)
+
+    # Buildings map
     df2 = _read_table(DB_PATH, TABLE_BUILDINGS)
 
-    _ensure(df,  ["Building"], "sdi_dataset")
+    _ensure(df,  ["Building"], "main_union")
     _ensure(df2, ["Code", "Name"], "Buildings")
 
+    # Normalize keys for join
     df["Building_key"] = df["Building"].astype(str).str.strip()
     df2["Code_key"]    = df2["Code"].astype(str).str.strip()
     df2 = df2.drop_duplicates(subset=["Code_key"], keep="first")
 
+    # Merge to get Building Name
     df3 = df.merge(df2, left_on="Building_key", right_on="Code_key", how="left") \
             .drop(columns=["Building_key", "Code_key"])
 
+    # Clean up optional columns from Buildings if present
     df3 = df3.drop(columns=["Owner Rep", "Usage"], errors="ignore")
 
+    # Normalize Approved ? "Approved"/"Not Approved"
     if "Approved" not in df3.columns:
         df3["Approved"] = ""
     df3["Approved"] = df3["Approved"].fillna("").astype(str).str.strip()
@@ -59,6 +98,7 @@ def _prepare_data() -> pd.DataFrame:
     df3["Name"] = df3["Name"].fillna("Unknown").astype(str).str.strip()
     df3["Asset Group"] = df3["Asset Group"].fillna("Unknown").astype(str).str.strip()
 
+    # Group: distinct QR Code counts by (Building Name, Asset Group, Approved)
     df4 = (
         df3.groupby(["Name", "Asset Group", "Approved_label"], dropna=False)["QR Code"]
            .nunique()

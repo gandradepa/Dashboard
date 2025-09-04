@@ -1,0 +1,49 @@
+[INFO] Tesseract OK at: /usr/bin/tesseract
+[INFO] TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
+[INFO] Approval filter from sdi_dataset_EL (Approved <> 1): 15 QR(s) will be processed.
+[INFO] Total assets to process (Approved <> 1): 15
+
+[INFO] Processing QR 0000183682 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183682.json
+
+[INFO] Processing QR 0000183683 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183683.json
+
+[INFO] Processing QR 0000183684 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183684.json
+
+[INFO] Processing QR 0000183685 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183685.json
+
+[INFO] Processing QR 0000183686 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183686.json
+
+[INFO] Processing QR 0000183687 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183687.json
+
+[INFO] Processing QR 0000183688 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183688.json
+
+[INFO] Processing QR 0000183689 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183689.json
+
+[INFO] Processing QR 0000183690 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183690.json
+
+[INFO] Processing QR 0000183691 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183691.json
+
+[INFO] Processing QR 0000183692 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183692.json
+
+[INFO] Processing QR 0000183693 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183693.json
+
+[INFO] Processing QR 0000183694 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183694.json
+
+[INFO] Processing QR 0000183695 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183695.json
+
+[INFO] Processing QR 0000183696 (Building 314-1) ...
+[OK] Saved: /home/developer/Output_jason_api/0000183696.json

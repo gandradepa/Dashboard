@@ -1,0 +1,43 @@
+[INFO] Tesseract OK at: /usr/bin/tesseract
+[INFO] TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
+[INFO] Approval filter from sdi_dataset_EL (Approved <> 1): 5 QR(s) will be processed.
+[INFO] Total assets to process (Approved <> 1): 5
+[SUMMARY] RUN_START time=2025-09-03T13:26:36 total_groups=5
+Summary: RUN_START time=2025-09-03T13:26:36 total_groups=5
+
+[INFO] Processing QR 0000183710 (Building 314-1) ...
+[SUMMARY] QR=0000183710 | Building=314-1 | JSON= | Status=START
+Summary: QR=0000183710 | Building=314-1 | JSON= | Status=START
+[OK] Saved: /home/developer/Output_jason_api/0000183710.json
+[SUMMARY] QR=0000183710 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183710.json | Status=OK
+Summary: QR=0000183710 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183710.json | Status=OK
+
+[INFO] Processing QR 0000183693 (Building 314-1) ...
+[SUMMARY] QR=0000183693 | Building=314-1 | JSON= | Status=START
+Summary: QR=0000183693 | Building=314-1 | JSON= | Status=START
+[OK] Saved: /home/developer/Output_jason_api/0000183693.json
+[SUMMARY] QR=0000183693 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183693.json | Status=OK
+Summary: QR=0000183693 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183693.json | Status=OK
+
+[INFO] Processing QR 0000183694 (Building 314-1) ...
+[SUMMARY] QR=0000183694 | Building=314-1 | JSON= | Status=START
+Summary: QR=0000183694 | Building=314-1 | JSON= | Status=START
+[OK] Saved: /home/developer/Output_jason_api/0000183694.json
+[SUMMARY] QR=0000183694 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183694.json | Status=OK
+Summary: QR=0000183694 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183694.json | Status=OK
+
+[INFO] Processing QR 0000183695 (Building 314-1) ...
+[SUMMARY] QR=0000183695 | Building=314-1 | JSON= | Status=START
+Summary: QR=0000183695 | Building=314-1 | JSON= | Status=START
+[OK] Saved: /home/developer/Output_jason_api/0000183695.json
+[SUMMARY] QR=0000183695 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183695.json | Status=OK
+Summary: QR=0000183695 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183695.json | Status=OK
+
+[INFO] Processing QR 0000183696 (Building 314-1) ...
+[SUMMARY] QR=0000183696 | Building=314-1 | JSON= | Status=START
+Summary: QR=0000183696 | Building=314-1 | JSON= | Status=START
+[OK] Saved: /home/developer/Output_jason_api/0000183696.json
+[SUMMARY] QR=0000183696 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183696.json | Status=OK
+Summary: QR=0000183696 | Building=314-1 | JSON=/home/developer/Output_jason_api/0000183696.json | Status=OK
+[SUMMARY] RUN_END time=2025-09-03T13:27:41 processed=5 ok=5 error=0 skipped=0
+Summary: RUN_END time=2025-09-03T13:27:41 processed=5 ok=5 error=0 skipped=0

@@ -31,7 +31,7 @@
           <div class="mb-3">
             {% for category, message in messages %}
               <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
+                {{ message|safe }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
             {% endfor %}
@@ -62,6 +62,14 @@
                 <form class="m-0" method="post" action="{{ url_for('run_task', task_key='qr_api_me') }}">
                   <button class="btn ubc-btn" type="submit">
                     {{ task_labels.get('qr_api_me', 'Run AI Interpreter (ME)') }}
+                  </button>
+                </form>
+                {% endif %}
+
+                {% if a.key == "review_el" %}
+                <form class="m-0" method="post" action="{{ url_for('run_task', task_key='qr_api_el') }}">
+                  <button class="btn ubc-btn" type="submit">
+                    {{ task_labels.get('qr_api_el', 'Run AI Interpreter (EL)') }}
                   </button>
                 </form>
                 {% endif %}
@@ -114,7 +122,7 @@
     <footer class="ubc-footer text-center py-3">
       <div class="container">
         <small class="footer-text">
-          © 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.
+          &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.
         </small>
       </div>
     </footer>

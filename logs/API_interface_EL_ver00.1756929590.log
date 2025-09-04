@@ -1,0 +1,4 @@
+  File "/home/developer/API/API_interface_EL_ver00.py", line 303
+    print(f"
+          ^
+SyntaxError: unterminated f-string literal (detected at line 303)
