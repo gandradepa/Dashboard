@@ -5,65 +5,161 @@
     <title>{{ title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" />
+    <!-- Google Font: Inter -->
+    <link rel="icon" href="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" type="image/jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (Correct version for plain JS) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+      :root {
+        --ubc-blue: #002145;
+        --ubc-blue-light: #0055b7;
+        --light-grey: #f4f7fb;
+        --dark-grey: #2d2d2d;
+        --border-color: #e5e7eb;
+        --card-bg: #ffffff;
+      }
+
+      body {
+        background-color: var(--light-grey);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--dark-grey);
+      }
+
+      .ubc-navbar {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.3s ease;
+      }
+
+      .ubc-brand {
+        color: var(--ubc-blue) !important;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      
+      .ubc-logo, .ubc-facilities-logo {
+        height: 50px;
+      }
+
+      .page-title {
+        color: var(--ubc-blue);
+        font-weight: 700;
+      }
+
+      .page-subtitle {
+        color: #5a6e82;
+        font-size: 1.1rem;
+      }
+      
+      .card.tile {
+        background-color: var(--card-bg);
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        overflow: hidden;
+      }
+      
+      .ubc-btn {
+        background-color: var(--ubc-blue);
+        border: none;
+        color: white;
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      }
+
+      .ubc-btn:hover {
+        background-color: var(--ubc-blue-light);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      .ubc-footer {
+        background-color: var(--ubc-blue);
+        color: rgba(255, 255, 255, 0.8);
+      }
+      
       pre.logbox {
         background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: .5rem;
-        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
         white-space: pre-wrap;
         word-break: break-word;
-        font-size: .95rem;
-        line-height: 1.35;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--dark-grey);
       }
     </style>
   </head>
   <body class="ubc-body">
     <header>
-      <div class="ubc-top-strip"></div>
-      <nav class="navbar navbar-expand-lg ubc-navbar" aria-label="Primary">
-        <div class="container d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo me-3" />
-            <a class="navbar-brand ubc-brand" href="{{ url_for('index') }}">Asset Management Dashboard</a>
-          </div>
-          <div>
-            <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" alt="UBC Facilities Logo" class="ubc-facilities-logo" />
+      <nav class="navbar navbar-expand-lg ubc-navbar sticky-top" aria-label="Primary">
+        <div class="container">
+          <a class="navbar-brand d-flex align-items-center gap-3" href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
+            <span class="ubc-brand">Asset Management Dashboard</span>
+          </a>
+          <div class="d-flex align-items-center gap-3">
+             <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" alt="UBC Facilities Logo" class="ubc-facilities-logo" />
+             <i data-lucide="circle-user-round" style="color: var(--ubc-blue);"></i>
           </div>
         </div>
       </nav>
     </header>
 
-    <main class="container py-4">
-      <div class="d-flex justify-content-between align-items-end mb-3">
+    <main id="main" class="container py-5">
+      
+      <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="h4 mb-1">{{ title }}</h1>
-          <div class="text-muted small">
-            <span class="me-2">File:</span><code>{{ name }}</code>
-            <span class="ms-3">When:</span><span>{{ when }}</span>
-          </div>
+            <h1 class="h3 page-title mb-1">{{ title }}</h1>
+            <div class="text-muted">
+                <span class="me-2">File:</span><code>{{ name }}</code>
+                <span class="mx-2">|</span>
+                <span>When:</span><span> {{ when }}</span>
+            </div>
         </div>
         <div class="d-flex gap-2">
-          {% if is_summary %}
-            <a class="btn btn-outline-secondary" href="{{ url_for('read_log') }}?name={{ name }}&mode=raw">Show Raw</a>
-          {% else %}
-            <a class="btn btn-outline-secondary" href="{{ url_for('read_log') }}?name={{ name }}&mode=summary">Show Summary</a>
-          {% endif %}
-          <a class="btn btn-outline-secondary" href="{{ url_for('download_log') }}?name={{ name }}">Download</a>
-          <a class="btn btn-outline-secondary" href="{{ url_for('list_logs') }}">Back to Logs</a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('list_logs') }}">Back to Logs</a>
         </div>
       </div>
 
-      <pre class="logbox">{{ content }}</pre>
+      <div class="card tile">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
+           <h2 class="h6 mb-0 text-muted">Log Content ({{ 'Summary' if is_summary else 'Raw' }})</h2>
+           <div class="d-flex gap-2">
+                {% if is_summary %}
+                    <a class="btn btn-sm btn-secondary" href="{{ url_for('read_log') }}?name={{ name }}&mode=raw">Show Raw</a>
+                {% else %}
+                    <a class="btn btn-sm btn-secondary" href="{{ url_for('read_log') }}?name={{ name }}&mode=summary">Show Summary</a>
+                {% endif %}
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('download_log') }}?name={{ name }}">Download</a>
+           </div>
+        </div>
+        <div class="card-body">
+            <pre class="logbox m-0">{{ content }}</pre>
+        </div>
+      </div>
     </main>
 
-    <footer class="ubc-footer text-center py-3">
+    <footer class="ubc-footer text-center py-4 mt-5">
       <div class="container">
-        <small class="footer-text">© 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.</small>
+        <small class="footer-text">
+          &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.
+        </small>
       </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+    </script>
   </body>
 </html>
