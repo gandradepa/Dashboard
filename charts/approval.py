@@ -8,13 +8,13 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")  # headless for servers
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, Rectangle, Patch
+from matplotlib.patches import Patch
 
 # === CONFIG ===
 DB_PATH_DEFAULT = r"/home/developer/asset_capture_app_dev/data/QR_codes.db"
 DB_PATH = os.getenv("DASHBOARD_DB_PATH", DB_PATH_DEFAULT)
 
-TABLES_MAIN = ("sdi_dataset", "sdi_dataset_EL")  # <— use both
+TABLES_MAIN = ("sdi_dataset", "sdi_dataset_EL")  # <â€” use both
 TABLE_BUILDINGS = "Buildings"
 
 # Columns common to both tables (as per your note)
@@ -23,7 +23,7 @@ COMMON_COLS = ["Approved", "Asset Group", "Attribute", "Building", "Description"
 # UBC palette
 COLOR_APPROVED = "#002145"  # dark blue
 COLOR_NOTAPP   = "#E6ECF2"  # light grey
-BG_FACE        = "white"
+BG_FACE        = "#f4f7fb"  # Match website background
 
 
 # ---------- Data helpers ----------
@@ -121,28 +121,12 @@ def building_options():
     except Exception:
         return ["All"]
 
-def _draw_pill_stacked(ax, x_centers, totals, approved, width=0.62):
-    rounding = width / 2.0
-    max_total = max(totals) if len(totals) else 0
-    for x, total, app in zip(x_centers, totals, approved):
-        notapp = max(total - app, 0)
-        if total <= 0:
-            continue
-        x0 = x - width / 2.0
-        clip = FancyBboxPatch((x0, 0), width, total,
-                              boxstyle=f"round,pad=0,rounding_size={rounding}",
-                              linewidth=0, facecolor="none", edgecolor="none")
-        ax.add_patch(clip)
-        seg_not = Rectangle((x0, 0), width, notapp, facecolor=COLOR_NOTAPP, edgecolor="none")
-        seg_not.set_clip_path(clip); ax.add_patch(seg_not)
-        seg_app = Rectangle((x0, notapp), width, app, facecolor=COLOR_APPROVED, edgecolor="none")
-        seg_app.set_clip_path(clip); ax.add_patch(seg_app)
-        ax.text(x, total, str(int(total)), ha="center", va="bottom", fontsize=9)
-    ax.set_ylim(0, max_total * 1.15 if max_total else 1)
-
 def render_chart_png(building: str = "All") -> bytes:
     """Return PNG bytes of the chart (bar + pie)."""
     fig, (ax_bar, ax_pie) = plt.subplots(1, 2, figsize=(16, 7), gridspec_kw={"width_ratios": [3, 1]})
+    
+    # Set background for figure and axes
+    fig.patch.set_facecolor(BG_FACE)
     for ax in (ax_bar, ax_pie): ax.set_facecolor(BG_FACE)
 
     try:
@@ -151,8 +135,8 @@ def render_chart_png(building: str = "All") -> bytes:
     except Exception as e:
         ax_bar.text(0.5, 0.5, f"Data error:\n{e}", ha="center", va="center", fontsize=12, wrap=True)
         ax_bar.set_xticks([]); ax_bar.set_yticks([]); ax_pie.axis("off")
-        buf = io.BytesIO(); fig.tight_layout()
-        fig.savefig(buf, format="png", dpi=120, bbox_inches="tight"); plt.close(fig); buf.seek(0)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=120, bbox_inches="tight", transparent=True); plt.close(fig); buf.seek(0)
         return buf.read()
 
     if filtered.empty:
@@ -171,24 +155,36 @@ def render_chart_png(building: str = "All") -> bytes:
         wide = wide.loc[wide.sum(axis=1).sort_values(ascending=False).index]
 
         groups = wide.index.to_series().fillna("Unknown").astype(str).tolist()
-        totals = (wide["Not Approved"] + wide["Approved"]).to_numpy()
         approved_vals = wide["Approved"].to_numpy()
-        x = np.arange(len(groups))
+        not_approved_vals = wide["Not Approved"].to_numpy()
+        totals = approved_vals + not_approved_vals
+        y = np.arange(len(groups))
 
-        _draw_pill_stacked(ax_bar, x, totals, approved_vals, width=0.62)
-        ax_bar.set_xlabel("Asset Group"); ax_bar.set_ylabel("")
-        ax_bar.set_xticks(x, groups, rotation=45, ha="right")
-        for lbl in ax_bar.get_xticklabels(): lbl.set_fontsize(lbl.get_fontsize() * 0.8)
-        ax_bar.legend(handles=[
-            Patch(facecolor=COLOR_APPROVED, edgecolor="none", label="Approved"),
-            Patch(facecolor=COLOR_NOTAPP, edgecolor="none", label="Not Approved"),
-        ], title="Status", frameon=False)
+        ax_bar.barh(y, not_approved_vals, color=COLOR_NOTAPP, height=0.7, edgecolor=BG_FACE)
+        ax_bar.barh(y, approved_vals, left=not_approved_vals, color=COLOR_APPROVED, height=0.7, edgecolor=BG_FACE)
+
+        max_total = max(totals) if len(totals) > 0 else 0
+        for i, total in enumerate(totals):
+            if total > 0:
+                ax_bar.text(total + (max_total * 0.01), i, str(int(total)),
+                            ha='left', va='center', fontsize=9)
+
+        ax_bar.set_yticks(y, groups)
+        ax_bar.invert_yaxis()
+        ax_bar.set_ylabel("Asset Group")
+
         for s in ax_bar.spines.values(): s.set_visible(False)
-        ax_bar.grid(False); ax_bar.tick_params(axis="both", which="both", length=0); ax_bar.set_yticks([])
+        ax_bar.grid(False)
+        ax_bar.tick_params(axis="both", which="both", length=0)
+        ax_bar.set_xticks([])
+        ax_bar.set_xlim(0, max_total * 1.15 if max_total > 0 else 1)
 
+        # --- Donut Chart Logic ---
         app_total = int(filtered.loc[filtered["Approved"] == "Approved", "QTY"].sum())
         not_total = int(filtered.loc[filtered["Approved"] == "Not Approved", "QTY"].sum())
-        if app_total + not_total == 0:
+        
+        grand_total = app_total + not_total
+        if grand_total == 0:
             ax_pie.text(0.5, 0.5, "No totals", ha="center", va="center", fontsize=12); ax_pie.axis("off")
         else:
             wedges, texts, autotexts = ax_pie.pie(
@@ -197,21 +193,37 @@ def render_chart_png(building: str = "All") -> bytes:
                 colors=[COLOR_APPROVED, COLOR_NOTAPP],
                 autopct=lambda p: f"{p:.0f}%",
                 startangle=90, counterclock=False,
-                wedgeprops={"linewidth": 0, "edgecolor": "none"},
-                textprops={"fontsize": 11, "color": "black"},
+                wedgeprops={"width": 0.4, "edgecolor": BG_FACE},
+                pctdistance=0.8,
+                textprops={"fontsize": 11},
+                radius=1.1,
             )
-            for a in autotexts: a.set_color("black"); a.set_fontweight("normal")
-            for t in texts: t.set_color("black")
+            
+            ax_pie.text(
+                0, 0, f"{grand_total}\nAssets", 
+                ha="center", va="center", 
+                fontsize=17, fontweight="bold", color=COLOR_APPROVED
+            )
+
+            for a in autotexts: a.set_fontweight("normal")
             for w, t, a in zip(wedges, texts, autotexts):
-                if t.get_text() == "Approved":
-                    a.set_color("white"); a.set_fontweight("bold")
-            ax_pie.axis("equal"); ax_pie.set_title("Overall Approval %")
+                 if t.get_text() == "Approved":
+                     a.set_color("white"); a.set_fontweight("bold")
+                 else:
+                     a.set_color("black")
+
+            ax_pie.axis("equal")
+            ax_pie.set_title("Overall Approval %", y=1.0, pad=-25)
+
         for s in ax_pie.spines.values(): s.set_visible(False)
         ax_pie.set_xticks([]); ax_pie.set_yticks([])
 
-    fig.tight_layout()
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.85, bottom=0.15, wspace=0.3)
+
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=120, bbox_inches="tight")
+    # Save with transparent background
+    fig.savefig(buf, format="png", dpi=120, bbox_inches="tight", transparent=True)
     plt.close(fig)
     buf.seek(0)
     return buf.read()
+
