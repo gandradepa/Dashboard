@@ -40,10 +40,12 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
 # ------------------ Cards shown on the dashboard ------------------
 APPS = [
-    {"key": "capture",    "name": "Asset Capture Mobile App",           "url": "https://appprod.assetcap.facilities.ubc.ca"},
-    {"key": "review_me",  "name": "Asset Reviewer - Mechanical",        "url": "https://reviewme.assetcap.facilities.ubc.ca"},
-    {"key": "review_bf",  "name": "Asset Reviewer - Backflow Devices",  "url": "https://reviewbf.assetcap.facilities.ubc.ca"},
-    {"key": "review_el",  "name": "Asset Reviewer - Electrical",        "url": "https://reviewel.assetcap.facilities.ubc.ca"},
+    {"key": "capture",     "name": "Asset Capture Mobile App",           "url": "https://appprod.assetcap.facilities.ubc.ca"},
+    {"key": "review_me",   "name": "Asset Reviewer - Mechanical",        "url": "https://reviewme.assetcap.facilities.ubc.ca"},
+    {"key": "review_bf",   "name": "Asset Reviewer - Backflow Devices",  "url": "https://reviewbf.assetcap.facilities.ubc.ca"},
+    {"key": "review_el",   "name": "Asset Reviewer - Electrical",        "url": "https://reviewel.assetcap.facilities.ubc.ca"},
+    # --- NOVO CARTÃO ADICIONADO ---
+    {"key": "sdi_process", "name": "SDI Process Application",            "url": "https://sdiprocess.assetcap.facilities.ubc.ca"},
 ]
 
 # ------------------ Log directory ------------------
@@ -157,18 +159,16 @@ def approval_chart():
     if not CHARTS_AVAILABLE:
         return Response("Chart module unavailable", status=503, mimetype="text/plain")
     
-    # --- CORREÇÃO: Obter o 'chart_type' do pedido ---
     building = request.args.get("building", "All")
-    chart_type = request.args.get("chart_type", "gauge") # Padrão para 'gauge'
+    chart_type = request.args.get("chart_type", "gauge") 
 
     try:
-        # --- CORREÇÃO: Passar o 'chart_type' para a função de renderização ---
         png_bytes = approval_mod.render_chart_png(building=building, chart_type=chart_type)
         resp = Response(png_bytes, mimetype="image/png")
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         return resp
     except Exception as e:
-        print(f"Chart error for type '{chart_type}': {e}") # Log de erro melhorado
+        print(f"Chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
 
 # ------------------ Routes: Run Tasks ------------------
