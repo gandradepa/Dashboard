@@ -1,4 +1,4 @@
-#!/usr-bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import io
@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")  # headless for servers
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch, Wedge
+from matplotlib.patches import Patch, Wedge, Arc, Circle
 
 # === CONFIG ===
 DB_PATH_DEFAULT = r"/home/developer/asset_capture_app_dev/data/QR_codes.db"
@@ -88,33 +88,64 @@ def _draw_gauge_chart(ax, value, max_value, target_percent):
     ax.set_xticks([])
     ax.set_yticks([])
     for s in ax.spines.values(): s.set_visible(False)
-    ax.set_title("Approval Rate KPI", fontsize=16, weight='bold', color=COLOR_APPROVED, pad=15)
-
+    ax.set_title("Performance Control KPI", fontsize=16, weight='bold', color=COLOR_APPROVED, pad=20)
+    
     start_angle, end_angle = 180, 0
+    pointer_angle = start_angle - ((value / max_value) * 180 if max_value > 0 else 0)
     
-    background = Wedge(center=(0, 0), r=1.0, theta1=end_angle, theta2=start_angle, width=0.35, facecolor=COLOR_NOTAPP)
-    ax.add_patch(background)
+    # 1. Anel exterior fino
+    ax.add_patch(Arc((0, 0), width=2.4, height=2.4, angle=0, theta1=end_angle, theta2=start_angle,
+                     edgecolor=COLOR_TARGET, lw=0.5, alpha=0.9))
 
-    value_angle = start_angle - ((value / max_value) * 180 if max_value > 0 else 0)
-    foreground = Wedge(center=(0, 0), r=1.0, theta1=value_angle, theta2=start_angle, width=0.35, facecolor=COLOR_APPROVED)
-    ax.add_patch(foreground)
-    
-    ax.text(0, 0, f"{value/max_value*100 if max_value>0 else 0:.0f}%", ha='center', va='center', fontsize=30, weight='bold', color=COLOR_APPROVED)
-    ax.text(0, -0.2, "Approved", ha='center', va='center', fontsize=12, color=COLOR_APPROVED)
+    # 2. Arco de valor espesso
+    ax.add_patch(Wedge((0, 0), r=1.0, theta1=end_angle, theta2=start_angle, width=0.3,
+                       facecolor=COLOR_NOTAPP, alpha=0.8))
+    ax.add_patch(Wedge((0, 0), r=1.0, theta1=pointer_angle, theta2=start_angle, width=0.3,
+                       facecolor=COLOR_APPROVED))
 
+    # 3. Etiqueta de valor central
+    ax.text(0, -0.3, f"{value:.0f} / {max_value:.0f}", ha='center', va='center', fontsize=22, weight='bold', color=COLOR_APPROVED)
+    ax.text(0, -0.5, "Approved Assets", ha='center', va='center', fontsize=10, color=COLOR_APPROVED)
+
+    # 4. Ponteiro (Agulha)
+    pointer_angle_rad = math.radians(pointer_angle)
+    ax.arrow(0, 0, 0.7 * math.cos(pointer_angle_rad), 0.7 * math.sin(pointer_angle_rad),
+             width=0.015, head_width=0, head_length=0, fc='black', ec='black', zorder=5)
+    ax.add_patch(Circle((0,0), 0.05, facecolor='black', zorder=6))
+
+    # 5. Etiquetas numéricas ao longo do arco
+    for percent in [0, 50, 100]:
+        val = max_value * (percent / 100.0)
+        angle = start_angle - (percent * 1.8)
+        angle_rad = math.radians(angle)
+        x = 1.2 * math.cos(angle_rad)
+        y = 1.2 * math.sin(angle_rad)
+        ax.text(x, y, f"{int(val)}", ha='center', va='center', fontsize=10)
+
+    # 6. Marcador do Alvo
     target_value = max_value * (target_percent / 100.0)
     target_angle = start_angle - ((target_value / max_value) * 180 if max_value > 0 else 0)
     target_rad = math.radians(target_angle)
-    x = 1.2 * math.cos(target_rad)
-    y = 1.2 * math.sin(target_rad)
-    ax.plot([x], [y], marker='v', markersize=10, color=COLOR_TARGET, clip_on=False)
-    ax.text(x, y + 0.1, f"Target: {target_percent}%", ha='center', va='bottom', color=COLOR_TARGET, fontsize=10)
     
-    ax.text(-1, -0.1, "0", ha='center', va='top', fontsize=10)
-    ax.text(1, -0.1, f"{max_value}", ha='center', va='top', fontsize=10)
+    # Posição do marcador (ligeiramente fora do anel para tocar a parte externa)
+    marker_radius = 1.25 
+    tx = marker_radius * math.cos(target_rad)
+    ty = marker_radius * math.sin(target_rad)
     
-    ax.set_xlim(-1.4, 1.4)
-    ax.set_ylim(-0.2, 1.4)
+    ax.plot([tx], [ty], marker=(3, 0, target_angle + 90), 
+            markersize=12, color=COLOR_TARGET, clip_on=False, zorder=10, linestyle='none')
+
+    # Posição da etiqueta (ao lado do marcador)
+    label_radius = 1.4
+    lx = label_radius * math.cos(target_rad)
+    ly = label_radius * math.sin(target_rad)
+    
+    ha = 'left' if tx > -0.1 else 'right'
+    ax.text(lx, ly, f"Target: {target_percent}%", ha=ha, va='center', color=COLOR_TARGET, fontsize=10)
+
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-0.6, 1.5)
+
 
 def _draw_bar_chart(ax, filtered_data):
     wide = filtered_data.groupby(["Asset Group", "Approved"])["QTY"].sum().unstack(fill_value=0)
@@ -144,7 +175,7 @@ def _draw_bar_chart(ax, filtered_data):
     ax.tick_params(axis="both", which="both", length=0)
     ax.set_xticks([])
     ax.set_xlim(0, max_total * 1.15 if max_total > 0 else 1)
-    ax.set_title("Assets by Group", fontsize=14, color=COLOR_APPROVED, pad=10)
+    ax.set_title("Assets by Group", fontsize=16, color=COLOR_APPROVED, pad=10, weight='bold', ha='center')
 
 def _draw_pie_chart(ax, app_total, not_total):
     grand_total = app_total + not_total
@@ -162,7 +193,7 @@ def _draw_pie_chart(ax, app_total, not_total):
         autopct=make_autopct([app_total, not_total]),
         startangle=90, counterclock=False,
         wedgeprops={"width": 0.4, "edgecolor": 'none'},
-        pctdistance=0.7, textprops={"fontsize": 11, "ha":'center'}, radius=1.0,
+        pctdistance=0.7, textprops={"fontsize": 11, "ha":'center'}, radius=0.8,
     )
     
     for a in autotexts:
@@ -181,7 +212,7 @@ def render_chart_png(building: str = "All", chart_type: str = "all") -> bytes:
         filtered = df4 if (building == "All" or not building) else df4[df4["Name"] == building]
     except Exception as e:
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.text(0.5, 0.5, f"Data error:\n{e}", ha="center", va="center", wrap=True)
+        ax.text(0.5, 0.5, f"Data error:\n{e}", ha="center", va='center', wrap=True)
         buf = io.BytesIO()
         fig.savefig(buf, format="png", dpi=120, transparent=True); plt.close(fig); buf.seek(0)
         return buf.read()
@@ -192,14 +223,13 @@ def render_chart_png(building: str = "All", chart_type: str = "all") -> bytes:
 
     fig = None
     if chart_type == "gauge":
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 4.5))
         if grand_total == 0: ax.text(0.5, 0.5, "No data", ha="center")
         else: _draw_gauge_chart(ax, app_total, grand_total, 90)
     elif chart_type == "bar":
         num_groups = len(filtered["Asset Group"].unique())
-        # --- CORREÇÃO FINAL: Forçar uma proporção alta e estreita na imagem gerada ---
-        fig_height = max(8, num_groups * 0.9) 
-        fig_width = 6 # Largura reduzida para forçar a proporção
+        fig_height = max(8, num_groups * 1.0) 
+        fig_width = 7 
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         if filtered.empty: ax.text(0.5, 0.5, "No data", ha="center")
         else: _draw_bar_chart(ax, filtered)
@@ -211,7 +241,7 @@ def render_chart_png(building: str = "All", chart_type: str = "all") -> bytes:
     if fig:
         fig.patch.set_facecolor('none')
         ax.set_facecolor('none')
-        plt.tight_layout(pad=1.0)
+        plt.tight_layout(pad=0.5)
         buf = io.BytesIO()
         fig.savefig(buf, format="png", dpi=120, transparent=True)
         plt.close(fig)
