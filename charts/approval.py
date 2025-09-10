@@ -176,7 +176,7 @@ def _draw_bar_chart(ax, filtered_data):
     ax.set_xticks([])
     ax.set_xlim(0, max_total * 1.15 if max_total > 0 else 1)
     # --- CORREÇÃO: Título em negrito e centrado restaurado ---
-    ax.set_title("Assets by Group", fontsize=16, color=COLOR_APPROVED, pad=10, weight='bold', ha='center')
+    ax.set_title("Assets by Group", fontsize=18, color=COLOR_APPROVED, pad=10, weight='bold', ha='center')
 
 def _draw_pie_chart(ax, app_total, not_total):
     grand_total = app_total + not_total
