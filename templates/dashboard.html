@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <title>Asset Management Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/static/logos/ubc-facilities_logo.jpg" type="image/jpeg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="icon" href="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" type="image/jpeg">
     <!-- Google Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,41 +20,73 @@
         --dark-grey: #2d2d2d;
         --border-color: #e5e7eb;
         --card-bg: #ffffff;
-        --success-color: #22c55e;
-        --error-color: #ef4444;
+        --success-green: #28a745;
+        --error-red: #dc3545;
       }
+
       body {
         background-color: var(--light-grey);
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         color: var(--dark-grey);
       }
+
       .ubc-navbar {
         background-color: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--border-color);
       }
+
       .ubc-brand {
         color: var(--ubc-blue) !important;
         font-weight: 600;
+        font-size: 1.1rem;
       }
-      .ubc-logo, .ubc-facilities-logo { height: 50px; }
-      .page-title { color: var(--ubc-blue); font-weight: 700; }
-      .page-subtitle { color: #5a6e82; }
-      .section-title { color: var(--ubc-blue); font-weight: 600; }
+      
+      .ubc-logo, .ubc-facilities-logo {
+        height: 50px;
+      }
+
+      .page-title {
+        color: var(--ubc-blue);
+        font-weight: 700;
+      }
+
+      .page-subtitle {
+        color: #5a6e82;
+        font-size: 1.1rem;
+      }
+
+      .section-title {
+        color: var(--ubc-blue);
+        font-weight: 600;
+        padding-bottom: 0.5rem;
+        display: inline-block;
+      }
+      
       .card.tile {
         background-color: var(--card-bg);
         border: none;
         border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
       }
+
       .card.tile:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
       }
-      .capture-card-bg {
-        background-color: #B1D6FA !important;
+      
+      .capture-card-highlight {
+          background-color: #B1D6FA !important;
       }
+      
+      .card-title {
+        color: var(--ubc-blue);
+        font-weight: 600;
+      }
+      
       .ubc-btn {
         background-color: var(--ubc-blue);
         border: none;
@@ -62,61 +94,116 @@
         font-weight: 500;
         border-radius: 8px;
         padding: 0.6rem 1.2rem;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
       }
-      .form-select {
-        border-radius: 8px;
+
+      .ubc-btn:hover {
+        background-color: var(--ubc-blue-light);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      .ubc-footer {
+        background-color: var(--ubc-blue);
+        color: rgba(255, 255, 255, 0.8);
+      }
+      
+      .task-runner-wrapper {
+        min-height: 38px;
+        flex-grow: 1; /* Garante que o wrapper se expande */
+      }
+      .progress-bar-container {
+        display: none;
+        align-items: center;
+        width: 100%;
+      }
+      .progress-track {
+        flex-grow: 1;
+        height: 8px;
+        background-color: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .progress-bar-fill {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        background-color: var(--ubc-blue-light);
+        background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+        background-size: 20px 20px;
+        animation: progress-bar-stripes 1s linear infinite;
+      }
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        margin-left: 12px;
+        min-width: 80px;
+      }
+      .status-icon {
+        display: none;
+        margin-right: 4px;
+      }
+      .status-text {
+        font-size: 0.9rem;
         font-weight: 500;
       }
-      .analytics-grid {
+      
+      .progress-bar-container.success .progress-track { background-color: #d4edda; }
+      .progress-bar-container.success .progress-bar-fill { background-image: none; background-color: var(--success-green); }
+      .progress-bar-container.success .icon-success { display: inline-block; color: var(--success-green); }
+      .progress-bar-container.success .status-text { color: var(--success-green); }
+
+      .progress-bar-container.error .progress-track { background-color: #f8d7da; }
+      .progress-bar-container.error .progress-bar-fill { background-image: none; background-color: var(--error-red); }
+      .progress-bar-container.error .icon-error { display: inline-block; color: var(--error-red); }
+      .progress-bar-container.error .status-text { color: var(--error-red); }
+
+      @keyframes progress-bar-stripes {
+        from { background-position: 20px 0; }
+        to { background-position: 0 0; }
+      }
+
+      .analytics-card-grid {
         display: grid;
         grid-template-columns: repeat(1, 1fr);
         gap: 1.5rem;
       }
       @media (min-width: 992px) {
-        .analytics-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-        .kpi-main {
-          grid-row: span 2 / span 2;
+        .analytics-card-grid {
+          grid-template-columns: repeat(5, 1fr);
         }
       }
-      .chart-card {
+      .analytics-card {
         background-color: var(--card-bg);
         border-radius: 16px;
         padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 100%;
       }
-      .chart-card img {
-        max-width: 100%;
-        max-height: 100%;
+      @media (min-width: 992px) {
+        .analytics-card.bar-chart-card {
+           grid-column: span 2;
+           grid-row: span 2;
+        }
+        .analytics-card.kpi-card {
+           grid-column: span 3;
+        }
+        .analytics-card.pie-chart-card {
+           grid-column: span 3;
+        }
       }
-      .progress-container { display: none; }
-      .progress-bar-wrapper {
-        width: 100%; height: 28px; background-color: #e9ecef; border-radius: 8px;
-        overflow: hidden; position: relative;
+      .form-select-wrapper .form-select {
+        border-radius: 8px;
       }
-      .progress-bar-animated {
-        height: 100%; width: 100%;
-        background: linear-gradient(90deg, #ced4da, #adb5bd, #ced4da);
-        background-size: 200% 100%;
-        animation: progress-animation 1.5s linear infinite;
-      }
-      @keyframes progress-animation {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-      }
-      .progress-bar-success { background: var(--success-color); }
-      .progress-bar-error { background: var(--error-color); }
     </style>
   </head>
-  <body>
+  <body class="ubc-body">
     <header>
-      <nav class="navbar navbar-expand-lg ubc-navbar sticky-top">
+      <nav class="navbar navbar-expand-lg ubc-navbar sticky-top" aria-label="Primary">
         <div class="container">
           <a class="navbar-brand d-flex align-items-center gap-3" href="#">
             <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
@@ -130,34 +217,61 @@
       </nav>
     </header>
 
-    <main class="container py-5">
+    <main id="main" class="container py-5">
+      
       <div class="mb-5">
         <h1 class="display-5 page-title">Dashboard</h1>
         <p class="lead page-subtitle">Overview of applications and asset approval analytics.</p>
       </div>
 
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3" role="alert">
+                {{ message|safe }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      
+      <!-- Secção de Aplicações -->
       <section class="mb-5">
         <h2 class="h4 section-title mb-4">Applications</h2>
         <div class="row g-4">
           {% for a in apps %}
-          <div class="col-12 col-md-6 col-lg-4">
-            <div class="card tile h-100 {% if a.key == 'capture' %}capture-card-bg{% endif %}">
+          <div class="col-12 col-md-6 col-lg-4 d-flex">
+            <div class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% endif %}">
               <div class="card-body d-flex flex-column p-4">
-                 <div class="mb-3"><i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i></div>
+                 <div class="mb-3">
+                   <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
+                 </div>
                 <h3 class="h5 card-title mb-2">{{ a.name }}</h3>
                 <p class="card-text text-muted small mb-4"><code>{{ a.url | replace('https://', '') }}</code></p>
                 <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
                   <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
                   {% if a.key in ["review_bf", "review_me", "review_el"] %}
-                  <!-- CORREÇÃO: Adicionado 'flex-grow-1' ao contentor e 'w-100' ao botão -->
-                  <div class="task-runner flex-grow-1" data-task-key="qr_api_{{ a.key.split('_')[1] }}">
-                    <button class="btn btn-outline-secondary btn-sm run-btn w-100" type="button">Run AI Interpreter</button>
-                    <div class="progress-container w-100">
-                      <div class="progress-bar-wrapper">
-                        <div class="progress-bar-animated"></div>
+                    <div class="task-runner-wrapper">
+                      <div class="task-runner-container">
+                          <div class="d-grid">
+                              <button class="btn btn-outline-secondary btn-sm run-task-btn" type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}">
+                                  Run AI Interpreter
+                              </button>
+                          </div>
+                          <div class="progress-bar-container">
+                              <div class="progress-track">
+                                  <div class="progress-bar-fill"></div>
+                              </div>
+                              <div class="status-indicator">
+                                  <i data-lucide="check-circle" class="status-icon icon-success"></i>
+                                  <i data-lucide="x-circle" class="status-icon icon-error"></i>
+                                  <span class="status-text"></span>
+                              </div>
+                          </div>
                       </div>
                     </div>
-                  </div>
                   {% endif %}
                 </div>
               </div>
@@ -167,32 +281,35 @@
         </div>
       </section>
 
+      <!-- Secção de Análise -->
       <section>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="h4 section-title">Analytics</h2>
-          {% if chart_enabled %}
-          <div class="col-12 col-md-6 col-lg-4">
-            <select id="building" name="building" class="form-select">
-              {% for opt in building_options %}<option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option>{% endfor %}
-            </select>
-          </div>
-          {% endif %}
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+            <h2 class="h4 section-title mb-0">Analytics</h2>
+            <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
+              <select id="building" name="building" class="form-select">
+                {% for opt in building_options %}
+                  <option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
         </div>
         
         {% if chart_enabled %}
-        <div class="analytics-grid">
-          <div class="chart-card kpi-main">
-            <img alt="Bar Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}" style="width: 100%; height: 100%; object-fit: fill;"/>
+          <div class="analytics-card-grid">
+              <div class="analytics-card bar-chart-card">
+                  <img class="img-fluid" alt="Bar Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}" style="width: 100%; height: 100%; object-fit: fill;">
+              </div>
+              <div class="analytics-card kpi-card">
+                  <img class="img-fluid" alt="Gauge Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}">
+              </div>
+              <div class="analytics-card pie-chart-card">
+                   <img class="img-fluid" alt="Donut Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}">
+              </div>
           </div>
-          <div class="chart-card">
-            <img alt="Gauge Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}" />
-          </div>
-          <div class="chart-card">
-            <img alt="Donut Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}" />
-          </div>
-        </div>
         {% else %}
-        <div class="alert alert-warning rounded-3">Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}.</div>
+          <div class="alert alert-warning rounded-3">
+            Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}.
+          </div>
         {% endif %}
       </section>
 
@@ -202,74 +319,95 @@
     </main>
 
     <footer class="ubc-footer text-center py-4 mt-5">
-      <div class="container"><small>&copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.</small></div>
+      <div class="container">
+        <small class="footer-text">
+          &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.
+        </small>
+      </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      lucide.createIcons();
-      document.getElementById('building').addEventListener('change', function() {
-        window.location.href = `{{ url_for('index') }}?building=${this.value}`;
-      });
+        // Inicializar ícones Lucide
+        lucide.createIcons();
 
-      document.querySelectorAll('.task-runner').forEach(runner => {
-        const runBtn = runner.querySelector('.run-btn');
-        const progressContainer = runner.querySelector('.progress-container');
-        const progressBar = progressContainer.querySelector('.progress-bar-animated');
-        const taskKey = runner.dataset.taskKey;
-
-        runBtn.addEventListener('click', () => {
-          runBtn.style.display = 'none';
-          progressContainer.style.display = 'block';
-          progressBar.className = 'progress-bar-animated';
-          
-          fetch(`{{ url_for('run_task', task_key='__task__') }}`.replace('__task__', taskKey), { method: 'POST' })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              pollStatus(data.log_name);
-            } else {
-              showError();
-            }
-          })
-          .catch(() => showError());
+        // Lógica para o dropdown de seleção
+        document.getElementById('building').addEventListener('change', function() {
+            window.location.href = `{{ url_for('index') }}?building=${this.value}`;
         });
 
-        function pollStatus(logName) {
-          const interval = setInterval(() => {
-            fetch(`{{ url_for('log_status', name='__log__') }}`.replace('__log__', logName))
-            .then(response => response.json())
-            .then(data => {
-              if (data.status === 'success') {
-                clearInterval(interval);
-                showSuccess(logName);
-              } else if (data.status === 'error') {
-                clearInterval(interval);
-                showError();
-              }
-            })
-            .catch(() => {
-              clearInterval(interval);
-              showError();
+        // Lógica para a Barra de Progresso
+        document.querySelectorAll('.run-task-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const taskKey = this.dataset.taskKey;
+                const runnerContainer = this.closest('.task-runner-container');
+                const progressBarContainer = runnerContainer.querySelector('.progress-bar-container');
+                
+                // Esconder botão, mostrar barra de progresso
+                this.parentElement.style.display = 'none'; // Esconde o wrapper do botão
+                progressBarContainer.style.display = 'flex';
+                progressBarContainer.querySelector('.status-text').textContent = 'Running...';
+                
+                // Iniciar tarefa
+                fetch(`/run/${taskKey}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            pollLogStatus(data.log_name, progressBarContainer);
+                        } else {
+                            showError(progressBarContainer, 'Failed to start.');
+                        }
+                    })
+                    .catch(() => showError(progressBarContainer, 'Network error.'));
             });
-          }, 2000);
+        });
+
+        function pollLogStatus(logName, progressBarContainer) {
+            const interval = setInterval(() => {
+                fetch(`/log_status/${logName}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            clearInterval(interval);
+                            showSuccess(progressBarContainer, logName);
+                        } else if (data.status === 'error') {
+                            clearInterval(interval);
+                            showError(progressBarContainer, 'Task failed.');
+                        }
+                    })
+                    .catch(() => {
+                        clearInterval(interval);
+                        showError(progressBarContainer, 'Polling failed.');
+                    });
+            }, 2000);
         }
 
-        function showSuccess(logName) {
-          progressBar.classList.add('progress-bar-success');
-          setTimeout(() => {
-            window.location.href = `{{ url_for('read_log') }}?name=${logName}&mode=summary`;
-          }, 500);
+        function showSuccess(progressBarContainer, logName) {
+            progressBarContainer.classList.remove('error');
+            progressBarContainer.classList.add('success');
+            progressBarContainer.querySelector('.status-text').textContent = 'Success';
+            lucide.createIcons();
+            setTimeout(() => {
+                window.location.href = `/logs/read?name=${logName}&mode=summary`;
+            }, 1000);
         }
 
-        function showError() {
-          progressBar.classList.add('progress-bar-error');
-          setTimeout(() => {
-            progressContainer.style.display = 'none';
-            runBtn.style.display = 'block';
-          }, 2000);
+        function showError(progressBarContainer, message) {
+            progressBarContainer.classList.remove('success');
+            progressBarContainer.classList.add('error');
+            progressBarContainer.querySelector('.status-text').textContent = message;
+            lucide.createIcons();
+            setTimeout(() => resetComponent(progressBarContainer), 5000);
         }
-      });
+
+        function resetComponent(progressBarContainer) {
+            const runnerContainer = progressBarContainer.closest('.task-runner-container');
+            const buttonWrapper = runnerContainer.querySelector('.d-grid');
+
+            progressBarContainer.style.display = 'none';
+            progressBarContainer.classList.remove('success', 'error');
+            buttonWrapper.style.display = 'block';
+        }
     </script>
   </body>
 </html>

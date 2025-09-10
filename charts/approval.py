@@ -53,6 +53,7 @@ def _prepare_data() -> pd.DataFrame:
     df2 = _read_table(DB_PATH, TABLE_BUILDINGS)
     
     df["Building_key"] = df["Building"].astype(str).str.strip()
+    # --- CORREÇÃO: Erro de sintaxe corrigido aqui ---
     df2["Code_key"]    = df2["Code"].astype(str).str.strip()
     df2 = df2.drop_duplicates(subset=["Code_key"], keep="first")
 
@@ -88,6 +89,7 @@ def _draw_gauge_chart(ax, value, max_value, target_percent):
     ax.set_xticks([])
     ax.set_yticks([])
     for s in ax.spines.values(): s.set_visible(False)
+    # --- CORREÇÃO: Título restaurado ---
     ax.set_title("Performance Control KPI", fontsize=16, weight='bold', color=COLOR_APPROVED, pad=20)
     
     start_angle, end_angle = 180, 0
@@ -127,7 +129,6 @@ def _draw_gauge_chart(ax, value, max_value, target_percent):
     target_angle = start_angle - ((target_value / max_value) * 180 if max_value > 0 else 0)
     target_rad = math.radians(target_angle)
     
-    # Posição do marcador (ligeiramente fora do anel para tocar a parte externa)
     marker_radius = 1.25 
     tx = marker_radius * math.cos(target_rad)
     ty = marker_radius * math.sin(target_rad)
@@ -135,7 +136,6 @@ def _draw_gauge_chart(ax, value, max_value, target_percent):
     ax.plot([tx], [ty], marker=(3, 0, target_angle + 90), 
             markersize=12, color=COLOR_TARGET, clip_on=False, zorder=10, linestyle='none')
 
-    # Posição da etiqueta (ao lado do marcador)
     label_radius = 1.4
     lx = label_radius * math.cos(target_rad)
     ly = label_radius * math.sin(target_rad)
@@ -175,6 +175,7 @@ def _draw_bar_chart(ax, filtered_data):
     ax.tick_params(axis="both", which="both", length=0)
     ax.set_xticks([])
     ax.set_xlim(0, max_total * 1.15 if max_total > 0 else 1)
+    # --- CORREÇÃO: Título em negrito e centrado restaurado ---
     ax.set_title("Assets by Group", fontsize=16, color=COLOR_APPROVED, pad=10, weight='bold', ha='center')
 
 def _draw_pie_chart(ax, app_total, not_total):
