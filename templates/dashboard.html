@@ -109,6 +109,16 @@
         color: white;
         transform: translateY(-2px);
       }
+      
+      .ubc-btn-secondary {
+        background-color: transparent;
+        border: 1px solid var(--ubc-blue);
+        color: var(--ubc-blue);
+      }
+      .ubc-btn-secondary:hover {
+        background-color: var(--ubc-blue);
+        color: white;
+      }
 
       .ubc-footer {
         background-color: var(--ubc-blue);
@@ -173,10 +183,9 @@
 
       .analytics-card-grid {
         display: grid;
-        grid-template-columns: repeat(1, 1fr); /* Layout de 1 coluna por defeito (mobile) */
+        grid-template-columns: repeat(1, 1fr);
         gap: 1.5rem;
       }
-      /* Layout para ecrãs maiores (desktop) */
       @media (min-width: 992px) {
         .analytics-card-grid {
           grid-template-columns: repeat(2, 1fr);
@@ -211,34 +220,50 @@
       .form-select-wrapper .form-select {
         border-radius: 8px;
       }
+
+      .asset-table-container {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      }
+      .asset-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .asset-table th, .asset-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .asset-table th {
+        font-weight: 600;
+        color: var(--ubc-blue);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .asset-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .asset-table tbody tr:hover {
+        background-color: #f8f9fa;
+      }
       
-      /* --- Media Queries para Responsividade --- */
       @media (max-width: 768px) {
-        .page-title {
-          font-size: 2.2rem; /* Reduz o título principal */
-        }
-        .page-subtitle {
-          font-size: 1rem; /* Reduz o subtítulo */
-        }
-        .ubc-logo, .ubc-facilities-logo {
-          height: 40px; /* Reduz os logótipos no header */
-        }
-        .ubc-brand {
-            font-size: 0.9rem; /* Reduz o texto do brand */
-        }
-        main.container {
-            padding-top: 1.5rem !important; /* Reduz o espaçamento do topo */
-            padding-bottom: 1.5rem !important;
-        }
+        .page-title { font-size: 2.2rem; }
+        .page-subtitle { font-size: 1rem; }
+        .ubc-logo, .ubc-facilities-logo { height: 40px; }
+        .ubc-brand { font-size: 0.9rem; }
+        main.container { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
       }
     </style>
   </head>
   <body class="ubc-body">
     <header>
-      <!-- --- CORREÇÃO: Layout do Header para ser responsivo --- -->
       <nav class="navbar navbar-expand-lg ubc-navbar sticky-top" aria-label="Primary">
         <div class="container d-flex justify-content-between align-items-center">
-          <a class="navbar-brand d-flex align-items-center gap-md-3 gap-2" href="#">
+          <a class="navbar-brand d-flex align-items-center gap-md-3 gap-2" href="{{ url_for('index') }}">
             <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
             <span class="ubc-brand d-none d-md-inline">Asset Management Dashboard</span>
           </a>
@@ -270,7 +295,7 @@
         {% endif %}
       {% endwith %}
       
-      <!-- Secção de Aplicações -->
+      <!-- Applications Section -->
       <section class="mb-5">
         <h2 class="h4 section-title mb-4">Applications</h2>
         <div class="row g-4">
@@ -278,9 +303,7 @@
           <div class="col-12 col-md-6 col-lg-4 d-flex">
             <div class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% elif a.key == 'sdi_process' %}sdi-card-highlight{% endif %}">
               <div class="card-body d-flex flex-column p-4">
-                 <div class="mb-3">
-                   <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
-                 </div>
+                 <div class="mb-3"> <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i> </div>
                 <h3 class="h5 card-title mb-2">{{ a.name }}</h3>
                 <p class="card-text text-muted small mb-4"><code>{{ a.url | replace('https://', '') }}</code></p>
                 <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
@@ -289,14 +312,10 @@
                     <div class="task-runner-wrapper">
                       <div class="task-runner-container">
                           <div class="d-grid">
-                              <button class="btn btn-outline-secondary btn-sm run-task-btn" type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}">
-                                  Run AI Interpreter
-                              </button>
+                              <button class="btn btn-outline-secondary btn-sm run-task-btn" type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}"> Run AI Interpreter </button>
                           </div>
                           <div class="progress-bar-container">
-                              <div class="progress-track">
-                                  <div class="progress-bar-fill"></div>
-                              </div>
+                              <div class="progress-track"><div class="progress-bar-fill"></div></div>
                               <div class="status-indicator">
                                   <i data-lucide="check-circle" class="status-icon icon-success"></i>
                                   <i data-lucide="x-circle" class="status-icon icon-error"></i>
@@ -314,15 +333,59 @@
         </div>
       </section>
 
-      <!-- Secção de Análise -->
-      <section>
+      <!-- MOVED SECTION: Pending Assets (Toggleable) -->
+      <section class="mb-5">
+        <!-- Summary View -->
+        <div id="summary-view">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h2 class="h4 section-title mb-0">QR Pending to AI Process</h2>
+            <button id="toggle-to-detailed-btn" class="btn ubc-btn ubc-btn-secondary btn-sm">View Detailed List</button>
+          </div>
+          <div class="asset-table-container">
+            {% if ai_status_summary %}
+              <table class="asset-table">
+                <thead><tr><th>Property</th><th class="text-end">Pending Quantity</th></tr></thead>
+                <tbody>
+                  {% for row in ai_status_summary %} <tr><td>{{ row.Property or 'N/A' }}</td><td class="text-end">{{ row['Pendency QTY'] }}</td></tr> {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <div class="text-center p-4"><p class="text-muted mb-0">No pending asset data to display.</p></div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Detailed View (Initially Hidden) -->
+        <div id="detailed-view" style="display: none;">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h2 class="h4 section-title mb-0">Detailed Pending Assets</h2>
+            <button id="toggle-to-summary-btn" class="btn ubc-btn ubc-btn-secondary btn-sm">Back to Summary</button>
+          </div>
+          <div class="asset-table-container">
+            {% if ai_asset_details %}
+              <div class="table-responsive">
+                <table class="asset-table">
+                  <thead><tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+                  <tbody>
+                    {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or 'N/A' }}</td>{% endfor %}</tr>{% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center p-4"><p class="text-muted mb-0">No detailed asset data to display.</p></div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+      <!-- END MOVED SECTION -->
+
+      <!-- Analytics Section -->
+      <section class="mb-5">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
             <h2 class="h4 section-title mb-0">Analytics</h2>
             <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
               <select id="building" name="building" class="form-select">
-                {% for opt in building_options %}
-                  <option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option>
-                {% endfor %}
+                {% for opt in building_options %} <option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option> {% endfor %}
               </select>
             </div>
         </div>
@@ -333,18 +396,12 @@
                   <img class="img-fluid" alt="Bar Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}" style="width: 100%; height: 100%; object-fit: fill;">
               </div>
               <div class="kpi-pie-wrapper">
-                  <div class="analytics-card kpi-card">
-                      <img class="img-fluid" alt="Gauge Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}">
-                  </div>
-                  <div class="analytics-card pie-chart-card">
-                       <img class="img-fluid" alt="Donut Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}">
-                  </div>
+                  <div class="analytics-card kpi-card"> <img class="img-fluid" alt="Gauge Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}"> </div>
+                  <div class="analytics-card pie-chart-card"> <img class="img-fluid" alt="Donut Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}"> </div>
               </div>
           </div>
         {% else %}
-          <div class="alert alert-warning rounded-3">
-            Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}.
-          </div>
+          <div class="alert alert-warning rounded-3"> Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}. </div>
         {% endif %}
       </section>
 
@@ -355,23 +412,39 @@
 
     <footer class="ubc-footer text-center py-4 mt-5">
       <div class="container">
-        <small class="footer-text">
-          &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved.
-        </small>
+        <small class="footer-text"> &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved. </small>
       </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Inicializar ícones Lucide
         lucide.createIcons();
 
-        // Lógica para o dropdown de seleção
         document.getElementById('building').addEventListener('change', function() {
             window.location.href = `{{ url_for('index') }}?building=${this.value}`;
         });
+        
+        // --- NEW SCRIPT: For toggling between summary and detailed asset views ---
+        const summaryView = document.getElementById('summary-view');
+        const detailedView = document.getElementById('detailed-view');
+        const toDetailedBtn = document.getElementById('toggle-to-detailed-btn');
+        const toSummaryBtn = document.getElementById('toggle-to-summary-btn');
 
-        // Lógica para a Barra de Progresso
+        if (toDetailedBtn) {
+          toDetailedBtn.addEventListener('click', () => {
+              summaryView.style.display = 'none';
+              detailedView.style.display = 'block';
+          });
+        }
+
+        if (toSummaryBtn) {
+          toSummaryBtn.addEventListener('click', () => {
+              detailedView.style.display = 'none';
+              summaryView.style.display = 'block';
+          });
+        }
+        // --- END NEW SCRIPT ---
+
         document.querySelectorAll('.run-task-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const taskKey = this.dataset.taskKey;
@@ -444,4 +517,5 @@
     </script>
   </body>
 </html>
+
 

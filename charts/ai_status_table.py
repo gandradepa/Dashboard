@@ -5,17 +5,7 @@ import os
 def read_and_process_asset_codes():
     """
     Connects to a SQLite database, reads and processes asset data.
-
-    This function performs several steps:
-    1. Reads data from 'QR_code_assets', 'sdi_dataset', and 'sdi_dataset_EL'.
-    2. Splits the main 'code_assets' column.
-    3. Creates an 'ai_status' column based on whether a QR_code_ID exists
-       in the sdi tables ('1' for exists, '0' for not).
-    4. Removes duplicates.
-    5. Filters to keep only rows where 'ai_status' is '0'.
-    6. Merges with the 'Buildings' table to add building names and renames the column to 'Property'.
-    7. Renames asset type abbreviations to full names.
-    8. Returns the final processed pandas DataFrame.
+    This version includes more robust error handling and logging.
     """
     db_path = r"/home/developer/asset_capture_app_dev/data/QR_codes.db"
 
@@ -26,68 +16,91 @@ def read_and_process_asset_codes():
     try:
         conn = sqlite3.connect(db_path)
 
-        # --- Load and process data in sequential steps ---
-
-        # Load comparison QR codes
-        qr_codes_to_check = set()
+        # --- Load and split main asset data first ---
         try:
-            sdi_ds = pd.read_sql_query('SELECT "QR Code" FROM sdi_dataset', conn)
-            sdi_el = pd.read_sql_query('SELECT "QR Code" FROM sdi_dataset_EL', conn)
-            sdi_ds_codes = set(sdi_ds['QR Code'].dropna().astype(str))
-            sdi_el_codes = set(sdi_el['QR Code'].dropna().astype(str))
-            qr_codes_to_check = sdi_ds_codes.union(sdi_el_codes)
-        except (sqlite3.Error, pd.io.sql.DatabaseError, KeyError):
-            pass  # Fail silently if comparison tables are missing
+            ai_asset_outstanding = pd.read_sql_query("SELECT code_assets FROM QR_code_assets", conn)
+            if ai_asset_outstanding.empty:
+                print("Warning: The 'QR_code_assets' table is empty. No assets to process.")
+                return pd.DataFrame() # Return an empty DataFrame
+        except (sqlite3.Error, pd.io.sql.DatabaseError) as e:
+            print(f"CRITICAL ERROR: Could not read from 'QR_code_assets' table: {e}")
+            return None
 
-        # Load and split main asset data
-        ai_asset_outstanding = pd.read_sql_query("SELECT code_assets FROM QR_code_assets", conn)
         split_data = ai_asset_outstanding['code_assets'].str.split(' ', expand=True)
         ai_asset_outstanding['QR_code_ID'] = split_data[0]
         ai_asset_outstanding['Code'] = split_data[1]
         ai_asset_outstanding['type_of_asset'] = split_data[2]
         ai_asset_outstanding.drop(columns=['code_assets'], inplace=True)
+        ai_asset_outstanding.drop_duplicates(inplace=True)
 
-        # Create status column
-        if qr_codes_to_check:
+        # --- Load comparison QR codes with clear feedback ---
+        qr_codes_to_check = set()
+        try:
+            sdi_ds = pd.read_sql_query('SELECT "QR Code" FROM sdi_dataset', conn)
+            sdi_ds_codes = set(sdi_ds['QR Code'].dropna().astype(str))
+            qr_codes_to_check.update(sdi_ds_codes)
+            print(f"Successfully loaded {len(sdi_ds_codes)} codes from sdi_dataset.")
+        except (sqlite3.Error, pd.io.sql.DatabaseError, KeyError):
+            print("Warning: Could not load data from 'sdi_dataset' table. It may be missing.")
+
+        try:
+            sdi_el = pd.read_sql_query('SELECT "QR Code" FROM sdi_dataset_EL', conn)
+            sdi_el_codes = set(sdi_el['QR Code'].dropna().astype(str))
+            qr_codes_to_check.update(sdi_el_codes)
+            print(f"Successfully loaded {len(sdi_el_codes)} codes from sdi_dataset_EL.")
+        except (sqlite3.Error, pd.io.sql.DatabaseError, KeyError):
+            print("Warning: Could not load data from 'sdi_dataset_EL' table. It may be missing.")
+
+        # --- Create status column and filter ---
+        # If the set of codes to check is empty, all assets are considered pending ('0')
+        if not qr_codes_to_check:
+            print("No processed QR codes found. All assets from QR_code_assets will be marked as pending.")
+            ai_asset_outstanding['ai_status'] = '0'
+        else:
             ai_asset_outstanding['ai_status'] = ai_asset_outstanding['QR_code_ID'].apply(
                 lambda qr_id: '1' if qr_id in qr_codes_to_check else '0'
             )
+        
+        # Filter to keep only pending assets
+        pending_assets = ai_asset_outstanding[ai_asset_outstanding['ai_status'] == '0'].copy()
+        print(f"Found {len(pending_assets)} pending assets after filtering.")
 
-        # Clean and filter data
-        ai_asset_outstanding.drop_duplicates(inplace=True)
-        if 'ai_status' in ai_asset_outstanding.columns:
-            ai_asset_outstanding = ai_asset_outstanding[ai_asset_outstanding['ai_status'] == '0'].copy()
 
-        # Merge with Buildings data and rename the column
-        try:
-            buildings_df = pd.read_sql_query('SELECT "Code", "Name" FROM Buildings', conn)
-            ai_asset_outstanding = pd.merge(ai_asset_outstanding, buildings_df, on='Code', how='left')
-            ai_asset_outstanding.rename(columns={'Name': 'Property'}, inplace=True)
-        except (sqlite3.Error, pd.io.sql.DatabaseError, KeyError):
-            pass # Fail silently if Buildings table is missing
+        # --- Merge with Buildings data ---
+        if not pending_assets.empty:
+            try:
+                buildings_df = pd.read_sql_query('SELECT "Code", "Name" FROM Buildings', conn)
+                pending_assets = pd.merge(pending_assets, buildings_df, on='Code', how='left')
+                pending_assets.rename(columns={'Name': 'Property'}, inplace=True)
+            except (sqlite3.Error, pd.io.sql.DatabaseError, KeyError):
+                print("Warning: Could not merge with 'Buildings' table. 'Property' column will be missing.")
+                pending_assets['Property'] = 'Unknown'
+        
+            # Rename asset types
+            rename_map = {"ME": "Mechanical", "BF": "Backflow", "EL": "Electrical"}
+            pending_assets['type_of_asset'] = pending_assets['type_of_asset'].replace(rename_map)
 
-        # Rename asset types
-        rename_map = {"ME": "Mechanical", "BF": "Backflow", "EL": "Electrical"}
-        ai_asset_outstanding['type_of_asset'] = ai_asset_outstanding['type_of_asset'].replace(rename_map)
+        return pending_assets
 
-        return ai_asset_outstanding
-
-    except (sqlite3.Error, Exception) as e:
-        print(f"An unexpected error occurred: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred in read_and_process_asset_codes: {e}")
         return None
     finally:
         if 'conn' in locals() and conn:
             conn.close()
 
 
-if __name__ == '__main__':
-    # Get the processed data
+def get_pending_assets():
+    """
+    Processes asset data and returns both a detailed list and a summary.
+    This is the main function to be called from the Flask application.
+    """
     ai_asset_outstanding = read_and_process_asset_codes()
 
-    # Create the grouped dataset and print it
-    if ai_asset_outstanding is not None and not ai_asset_outstanding.empty:
-        ai_asset_outstanding_group = ai_asset_outstanding.groupby('Property').size().reset_index(name='Pendency QTY')
-        print(ai_asset_outstanding_group)
-    elif ai_asset_outstanding is not None:
-        print("The final DataFrame is empty after processing.")
+    if ai_asset_outstanding is None or ai_asset_outstanding.empty:
+        return None, None
+    
+    ai_asset_outstanding_group = ai_asset_outstanding.groupby('Property').size().reset_index(name='Pendency QTY')
+    
+    return ai_asset_outstanding_group, ai_asset_outstanding
 

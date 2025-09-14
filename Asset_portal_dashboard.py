@@ -4,7 +4,7 @@
 Asset Management Dashboard – Flask app (Asset-portal-dashboard.py)
 
 Run locally:
-  python Asset-portal-dashboard.py
+  python3 Asset-portal-dashboard.py
 
 Open:
   http://127.0.0.1:8002
@@ -25,14 +25,34 @@ from flask import (
 )
 from markupsafe import Markup
 
-# ------------------ Optional chart module ------------------
+# ------------------ Optional modules (Corrected Logic) ------------------
+
+# Block for analytics charts (approval)
 CHARTS_AVAILABLE = True
 CHARTS_IMPORT_ERROR = ""
 try:
+    print("Attempting to import chart module: approval...")
     from charts import approval as approval_mod
+    print("Successfully imported approval module.")
 except Exception as _e:
     CHARTS_AVAILABLE = False
     CHARTS_IMPORT_ERROR = str(_e)
+    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print(f"CRITICAL: Failed to import approval module. Visual charts will be disabled. Error: {_e}")
+    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+# SEPARATE block for the AI status table data
+AI_STATUS_TABLE_AVAILABLE = True
+try:
+    print("Attempting to import data module: ai_status_table...")
+    from charts import ai_status_table
+    print("Successfully imported ai_status_table module.")
+except Exception as _e:
+    AI_STATUS_TABLE_AVAILABLE = False
+    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print(f"CRITICAL: Failed to import ai_status_table module. Pending assets table will be disabled. Error: {_e}")
+    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
 
 # ------------------ Flask app ------------------
 app = Flask(__name__)
@@ -44,7 +64,6 @@ APPS = [
     {"key": "review_me",   "name": "Asset Reviewer - Mechanical",        "url": "https://reviewme.assetcap.facilities.ubc.ca"},
     {"key": "review_bf",   "name": "Asset Reviewer - Backflow Devices",  "url": "https://reviewbf.assetcap.facilities.ubc.ca"},
     {"key": "review_el",   "name": "Asset Reviewer - Electrical",        "url": "https://reviewel.assetcap.facilities.ubc.ca"},
-    # --- NOVO CARTÃO ADICIONADO ---
     {"key": "sdi_process", "name": "SDI Process Application",            "url": "https://sdiprocess.assetcap.facilities.ubc.ca"},
 ]
 
@@ -140,18 +159,53 @@ def _get_building_options() -> List[str]:
     try: return approval_mod.building_options()
     except Exception: return ["All"]
 
-# ------------------ Routes: Dashboard + Chart ------------------
+# ------------------ Routes: Dashboard + Chart (Corrected Logic) ------------------
 @app.get("/")
 def index():
+    """
+    Main dashboard page. This function runs on every page load,
+    ensuring data is always fresh.
+    """
+    print("\n--- [Dashboard Load] ---")
+    
+    ai_status_summary, ai_asset_details = [], []
+    # Use the new, separate flag to check if the data table module is available
+    if AI_STATUS_TABLE_AVAILABLE:
+        print("Attempting to fetch pending assets from 'ai_status_table' module...")
+        try:
+            summary_df, details_df = ai_status_table.get_pending_assets()
+            
+            if summary_df is not None and not summary_df.empty:
+                ai_status_summary = summary_df.to_dict(orient='records')
+                print(f"SUCCESS: Loaded {len(ai_status_summary)} summary rows.")
+            else:
+                print("INFO: Pending assets summary data is empty or None.")
+
+            if details_df is not None and not details_df.empty:
+                ai_asset_details = details_df.to_dict(orient='records')
+                print(f"SUCCESS: Loaded {len(ai_asset_details)} detailed asset rows.")
+            else:
+                print("INFO: Detailed asset data is empty or None.")
+
+        except Exception as e:
+            print(f"ERROR: Failed to get pending assets data: {e}")
+            ai_status_summary, ai_asset_details = [], []
+    else:
+        print("WARNING: ai_status_table module not available, skipping asset data fetch.")
+
     building = request.args.get("building", "All")
     options = _get_building_options()
     if building not in options: building = "All"
     task_labels = {k: v.get("label", k) for k, v in TASKS.items()}
     ts = int(time.time())
+    
+    print("--- [Rendering Template] ---")
     return render_template(
         "dashboard.html", apps=APPS, task_labels=task_labels,
         chart_enabled=CHARTS_AVAILABLE, charts_error=CHARTS_IMPORT_ERROR,
-        building_options=options, selected_building=building, ts=ts
+        building_options=options, selected_building=building, ts=ts,
+        ai_status_summary=ai_status_summary,
+        ai_asset_details=ai_asset_details
     )
 
 @app.get("/chart/approval.png")
@@ -268,5 +322,6 @@ if __name__ == "__main__":
     for key, t in TASKS.items():
         sp = _cmd_script_path(t["cmd"])
         print(f"Task {key}: {t.get('label','')} -> {sp}")
-    app.run(host="127.0.0.1", port=8002, debug=False)
-
+    
+    # Use debug=True to see more detailed errors and auto-reload changes
+    app.run(host="127.0.0.1", port=8002, debug=True)
