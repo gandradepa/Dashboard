@@ -4,7 +4,7 @@
 Asset Management Dashboard – Flask app (Asset-portal-dashboard.py)
 
 Run locally:
-  python3 Asset-portal-dashboard.py
+  python Asset-portal-dashboard.py
 
 Open:
   http://127.0.0.1:8002
@@ -25,33 +25,41 @@ from flask import (
 )
 from markupsafe import Markup
 
-# ------------------ Optional modules (Corrected Logic) ------------------
-
-# Block for analytics charts (approval)
-CHARTS_AVAILABLE = True
+# ------------------ Optional chart modules ------------------
+# We now need to handle THREE potential modules
+CHARTS_AVAILABLE = False
+AI_STATUS_AVAILABLE = False
+COMPLETENESS_CHART_AVAILABLE = False # <-- ADDED FLAG
 CHARTS_IMPORT_ERROR = ""
-try:
-    print("Attempting to import chart module: approval...")
-    from charts import approval as approval_mod
-    print("Successfully imported approval module.")
-except Exception as _e:
-    CHARTS_AVAILABLE = False
-    CHARTS_IMPORT_ERROR = str(_e)
-    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(f"CRITICAL: Failed to import approval module. Visual charts will be disabled. Error: {_e}")
-    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-# SEPARATE block for the AI status table data
-AI_STATUS_TABLE_AVAILABLE = True
 try:
-    print("Attempting to import data module: ai_status_table...")
-    from charts import ai_status_table
-    print("Successfully imported ai_status_table module.")
+    from charts import approval as approval_mod
+    CHARTS_AVAILABLE = True
 except Exception as _e:
-    AI_STATUS_TABLE_AVAILABLE = False
-    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(f"CRITICAL: Failed to import ai_status_table module. Pending assets table will be disabled. Error: {_e}")
-    print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    CHARTS_IMPORT_ERROR = str(_e)
+
+try:
+    from charts import ai_status_table
+    AI_STATUS_AVAILABLE = True
+except Exception as _e:
+    # Append the error if one already exists
+    error_msg = str(_e)
+    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
+         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
+    else:
+        CHARTS_IMPORT_ERROR = error_msg
+
+# --- ADDED THIS NEW TRY/EXCEPT BLOCK ---
+try:
+    from charts import completeness_score as completeness_mod
+    COMPLETENESS_CHART_AVAILABLE = True
+except Exception as _e:
+    error_msg = f"Completeness Chart Error: {str(_e)}"
+    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
+         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
+    else:
+        CHARTS_IMPORT_ERROR = error_msg
+# --- END NEW BLOCK ---
 
 
 # ------------------ Flask app ------------------
@@ -79,8 +87,9 @@ def _windows_detached_flags() -> int:
     return 0
 
 def _cmd_script_path(cmd: List[str]) -> Optional[Path]:
+    # Look for .py or .sh scripts in the command list
     for part in cmd:
-        if part.lower().endswith(".py"):
+        if part.lower().endswith((".py", ".sh")):
             try:
                 return Path(part).resolve()
             except Exception:
@@ -89,8 +98,15 @@ def _cmd_script_path(cmd: List[str]) -> Optional[Path]:
 
 def _launch_cmd_detached(cmd: List[str], cwd: Optional[Path]) -> Path:
     timestamp = int(time.time())
-    script_path = _cmd_script_path(cmd)
-    stem = script_path.stem if script_path else "task"
+    
+    # Prioritize the Python script name for the log file for clarity
+    py_script_path = next((p for p in cmd if p.lower().endswith(".py")), None)
+    if py_script_path:
+        stem = Path(py_script_path).stem
+    else:
+        script_path = _cmd_script_path(cmd)
+        stem = script_path.stem if script_path else "task"
+        
     log_path = LOG_DIR / f"{stem}.{timestamp}.log"
 
     log_fp = open(log_path, "w", encoding="utf-8")
@@ -106,25 +122,33 @@ def _launch_cmd_detached(cmd: List[str], cwd: Optional[Path]) -> Path:
     return log_path
 
 # ------------------ Script locations ------------------
-def _default_api_root() -> Path:
-    return Path("/home/developer/API")
+def _get_api_root() -> Path:
+    return Path(os.environ.get("QR_API_ROOT", "/home/developer/API"))
 
 def _build_tasks() -> Dict[str, Dict]:
-    api_root = Path(os.environ.get("QR_API_ROOT", str(_default_api_root())))
-    interpreter = api_root / "Asset_Management_API_Interpreter.py"
-    old_me = api_root / "API_interface_ME_ver00.py"
-    old_bf = api_root / "API_interface_BF_ver00.py"
-    old_el = api_root / "API_interface_EL_ver00.py"
+    """
+    Builds the task dictionary using a wrapper script to ensure the
+    virtual environment is properly activated for each interpreter task.
+    """
+    api_root = _get_api_root()
+    
+    # --- [CRITICAL CHANGE] ---
+    # This wrapper script activates the venv and then executes the python script.
+    # This is the robust way to handle environments from a non-interactive process.
+    wrapper_script = api_root / "run_interpreter.sh"
+
+    me_script = api_root / "API_interface_ME_ver00.py"
+    bf_script = api_root / "API_interface_BF_ver00.py"
+    el_script = api_root / "API_interface_EL_ver00.py"
 
     tasks: Dict[str, Dict] = {}
-    if interpreter.exists():
-        tasks["qr_api_me"] = {"cmd": [sys.executable, "-X", "utf8", str(interpreter), "--category", "ME"], "cwd": api_root, "label": "AI Interpreter – Mechanical"}
-        tasks["qr_api_bf"] = {"cmd": [sys.executable, "-X", "utf8", str(interpreter), "--category", "BF"], "cwd": api_root, "label": "AI Interpreter – Backflow"}
-        tasks["qr_api_el"] = {"cmd": [sys.executable, "-X", "utf8", str(interpreter), "--category", "EL"], "cwd": api_root, "label": "AI Interpreter – Electrical"}
-    else:
-        tasks["qr_api_me"] = {"cmd": [sys.executable, "-X", "utf8", str(old_me)], "cwd": api_root, "label": "QR API – Mechanical"}
-        tasks["qr_api_bf"] = {"cmd": [sys.executable, "-X", "utf8", str(old_bf)], "cwd": api_root, "label": "QR API – Backflow"}
-        tasks["qr_api_el"] = {"cmd": [sys.executable, "-X", "utf8", str(old_el)], "cwd": api_root, "label": "QR API – Electrical"}
+    
+    # The command is now: /bin/bash /path/to/wrapper.sh /path/to/python_script.py
+    # This ensures the correct environment is loaded every time.
+    tasks["qr_api_me"] = {"cmd": ["/bin/bash", str(wrapper_script), str(me_script)], "cwd": api_root, "label": "AI Interpreter – Mechanical"}
+    tasks["qr_api_bf"] = {"cmd": ["/bin/bash", str(wrapper_script), str(bf_script)], "cwd": api_root, "label": "AI Interpreter – Backflow"}
+    tasks["qr_api_el"] = {"cmd": ["/bin/bash", str(wrapper_script), str(el_script)], "cwd": api_root, "label": "AI Interpreter – Electrical"}
+    
     return tasks
 
 TASKS = _build_tasks()
@@ -133,11 +157,13 @@ def _validate_task_key(task_key: str) -> Dict:
     if task_key not in TASKS:
         abort(404, f"Unknown task: {task_key}")
     task = TASKS[task_key]
-    script_path = _cmd_script_path(task.get("cmd", []))
-    if not task.get("cmd"):
-        abort(404, f"No command configured for: {task_key}")
-    if script_path and not script_path.exists():
-        raise FileNotFoundError(f"Script for {task_key} not found: {script_path}")
+    
+    # Validate that the actual python script exists, not just the wrapper
+    py_script_path_str = next((p for p in task.get("cmd", []) if p.lower().endswith(".py")), None)
+    if not py_script_path_str or not Path(py_script_path_str).exists():
+        print(f"ERROR: Python script for task '{task_key}' not found at: {py_script_path_str}")
+        raise FileNotFoundError(f"Python script for {task_key} not found.")
+        
     return task
 
 def _extract_ts_from_logname(name: str) -> Optional[str]:
@@ -159,63 +185,53 @@ def _get_building_options() -> List[str]:
     try: return approval_mod.building_options()
     except Exception: return ["All"]
 
-# ------------------ Routes: Dashboard + Chart (Corrected Logic) ------------------
+# ------------------ Routes: Dashboard + Chart ------------------
 @app.get("/")
 def index():
-    """
-    Main dashboard page. This function runs on every page load,
-    ensuring data is always fresh.
-    """
-    print("\n--- [Dashboard Load] ---")
-    
-    ai_status_summary, ai_asset_details = [], []
-    # Use the new, separate flag to check if the data table module is available
-    if AI_STATUS_TABLE_AVAILABLE:
-        print("Attempting to fetch pending assets from 'ai_status_table' module...")
-        try:
-            summary_df, details_df = ai_status_table.get_pending_assets()
-            
-            if summary_df is not None and not summary_df.empty:
-                ai_status_summary = summary_df.to_dict(orient='records')
-                print(f"SUCCESS: Loaded {len(ai_status_summary)} summary rows.")
-            else:
-                print("INFO: Pending assets summary data is empty or None.")
-
-            if details_df is not None and not details_df.empty:
-                ai_asset_details = details_df.to_dict(orient='records')
-                print(f"SUCCESS: Loaded {len(ai_asset_details)} detailed asset rows.")
-            else:
-                print("INFO: Detailed asset data is empty or None.")
-
-        except Exception as e:
-            print(f"ERROR: Failed to get pending assets data: {e}")
-            ai_status_summary, ai_asset_details = [], []
-    else:
-        print("WARNING: ai_status_table module not available, skipping asset data fetch.")
-
     building = request.args.get("building", "All")
     options = _get_building_options()
     if building not in options: building = "All"
     task_labels = {k: v.get("label", k) for k, v in TASKS.items()}
     ts = int(time.time())
+
+    summary_data, details_data = None, None
+    print("\n--- [Dashboard Load] ---")
+    if AI_STATUS_AVAILABLE:
+        print("Attempting to fetch pending assets from 'ai_status_table' module...")
+        try:
+            summary, details = ai_status_table.get_pending_assets()
+            if summary is not None and not summary.empty:
+                summary_data = summary.to_dict(orient="records")
+                print(f"SUCCESS: Loaded {len(summary_data)} summary rows.")
+            else:
+                 print("INFO: No summary data returned from module.")
+            if details is not None and not details.empty:
+                details_data = details.to_dict(orient="records")
+                print(f"SUCCESS: Loaded {len(details_data)} detailed asset rows.")
+            else:
+                 print("INFO: No detailed data returned from module.")
+        except Exception as e:
+            print(f"CRITICAL ERROR fetching asset data: {e}")
+    else:
+        print("WARNING: 'ai_status_table' not available, skipping asset data fetch.")
     
     print("--- [Rendering Template] ---")
+
     return render_template(
         "dashboard.html", apps=APPS, task_labels=task_labels,
         chart_enabled=CHARTS_AVAILABLE, charts_error=CHARTS_IMPORT_ERROR,
         building_options=options, selected_building=building, ts=ts,
-        ai_status_summary=ai_status_summary,
-        ai_asset_details=ai_asset_details
+        ai_status_summary=summary_data,
+        ai_asset_details=details_data,
+        completeness_chart_enabled=COMPLETENESS_CHART_AVAILABLE  # <-- ADDED THIS
     )
 
 @app.get("/chart/approval.png")
 def approval_chart():
     if not CHARTS_AVAILABLE:
         return Response("Chart module unavailable", status=503, mimetype="text/plain")
-    
     building = request.args.get("building", "All")
-    chart_type = request.args.get("chart_type", "gauge") 
-
+    chart_type = request.args.get("chart_type", "all") 
     try:
         png_bytes = approval_mod.render_chart_png(building=building, chart_type=chart_type)
         resp = Response(png_bytes, mimetype="image/png")
@@ -224,6 +240,26 @@ def approval_chart():
     except Exception as e:
         print(f"Chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
+
+# --- ADDED THIS ENTIRE NEW ROUTE ---
+@app.get("/chart/completeness.png")
+def completeness_chart():
+    if not COMPLETENESS_CHART_AVAILABLE:
+        return Response("Completeness chart module unavailable", status=503, mimetype="text/plain")
+    
+    building = request.args.get("building", "All")
+    try:
+        png_bytes = completeness_mod.render_chart_png(building=building)
+        if not png_bytes:
+             return Response("No data for this chart", status=200, mimetype="text/plain")
+        
+        resp = Response(png_bytes, mimetype="image/png")
+        resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        return resp
+    except Exception as e:
+        print(f"Completeness chart error for building '{building}': {e}")
+        return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
+# --- END NEW ROUTE ---
 
 # ------------------ Routes: Run Tasks ------------------
 @app.post("/run/<task_key>")
@@ -243,13 +279,14 @@ def log_status(name: str):
         lines = [line for line in text.splitlines() if line.strip()]
         last_line = lines[-1] if lines else ""
 
-        if "Traceback (most recent call last):" in text or "Error:" in text:
+        if "Traceback (most recent call last):" in text or "Error:" in text or "ModuleNotFoundError" in text:
             return jsonify({"status": "error"})
         
-        success_keywords = ["Saved", "Total assets found", "Finished", "Completed", "Done"]
-        if any(keyword.lower() in last_line.lower() for keyword in success_keywords):
-            return jsonify({"status": "success"})
-        
+        success_keywords = ["Saved", "Total assets found", "Finished", "Completed", "Done", "SUMMARY", "Successfully updated database"]
+        if any(keyword.lower() in text.lower() for keyword in success_keywords):
+             if any(keyword.lower() in last_line.lower() for keyword in success_keywords):
+                return jsonify({"status": "success"})
+
         return jsonify({"status": "running"})
     except Exception:
         return jsonify({"status": "error"}), 404
@@ -257,7 +294,7 @@ def log_status(name: str):
 # ------------------ Friendly Logs UI ------------------
 def _title_from_logname(name: str) -> str:
     base = Path(name).stem.rsplit(".", 1)[0]
-    is_interpreter = ("Interpreter" in base) or ("Asset_Management_API_Interpreter" in base)
+    is_interpreter = ("Interpreter" in base) or ("API_interface" in base)
     kind = "API Interpreter" if is_interpreter else "QR API"
     suffix = ""
     base_upper = base.upper()
@@ -278,7 +315,10 @@ def _summarize_log(text: str) -> str:
         line = raw.strip()
         if re.match(r"^Total assets found.*:\s*\d+\s*$", line, flags=re.IGNORECASE) or \
            re.match(r"^Processing\s+QR\s+\d+", line, flags=re.IGNORECASE) or \
-           re.search(r"(^|\s)Saved\s", line, flags=re.IGNORECASE):
+           re.search(r"(^|\s)Saved\s", line, flags=re.IGNORECASE) or \
+           re.search(r"Successfully saved", line, flags=re.IGNORECASE) or \
+           re.search(r"^--- SUMMARY ---", line, flags=re.IGNORECASE) or \
+           re.search(r"Successfully updated database", line, flags=re.IGNORECASE):
             keep.append(line)
     return "\n".join(keep) if keep else "No summary items found."
 
@@ -322,6 +362,4 @@ if __name__ == "__main__":
     for key, t in TASKS.items():
         sp = _cmd_script_path(t["cmd"])
         print(f"Task {key}: {t.get('label','')} -> {sp}")
-    
-    # Use debug=True to see more detailed errors and auto-reload changes
-    app.run(host="127.0.0.1", port=8002, debug=True)
+    app.run(host="127.0.0.1", port=8002, debug=False)

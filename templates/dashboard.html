@@ -333,7 +333,7 @@
         </div>
       </section>
 
-      <!-- MOVED SECTION: Pending Assets (Toggleable) -->
+      <!-- Pending Assets Section -->
       <section class="mb-5">
         <!-- Summary View -->
         <div id="summary-view">
@@ -377,8 +377,7 @@
           </div>
         </div>
       </section>
-      <!-- END MOVED SECTION -->
-
+      
       <!-- Analytics Section -->
       <section class="mb-5">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
@@ -405,6 +404,26 @@
         {% endif %}
       </section>
 
+      <!-- NEW SECTION: Completeness Score -->
+      <section class="mb-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <h2 class="h4 section-title mb-0">AI Data Completeness Score</h2>
+        </div>
+        
+        {% if completeness_chart_enabled %}
+          <div class="analytics-card">
+            <img class="img-fluid" 
+                 alt="Completeness Score Chart" 
+                 src="{{ url_for('completeness_chart', building=selected_building) }}&ts={{ ts }}">
+          </div>
+        {% else %}
+          <div class="alert alert-warning rounded-3">
+            Completeness Score chart is unavailable.
+          </div>
+        {% endif %}
+      </section>
+      <!-- END NEW SECTION -->
+
       <div class="mt-5 text-center">
         <a class="btn ubc-btn" href="{{ url_for('list_logs') }}">View All Logs</a>
       </div>
@@ -424,7 +443,6 @@
             window.location.href = `{{ url_for('index') }}?building=${this.value}`;
         });
         
-        // --- NEW SCRIPT: For toggling between summary and detailed asset views ---
         const summaryView = document.getElementById('summary-view');
         const detailedView = document.getElementById('detailed-view');
         const toDetailedBtn = document.getElementById('toggle-to-detailed-btn');
@@ -443,7 +461,6 @@
               summaryView.style.display = 'block';
           });
         }
-        // --- END NEW SCRIPT ---
 
         document.querySelectorAll('.run-task-btn').forEach(button => {
             button.addEventListener('click', function() {
@@ -517,5 +534,3 @@
     </script>
   </body>
 </html>
-
-
