@@ -89,7 +89,7 @@ def render_chart_png(building: str = "All") -> bytes:
     num_charts = len(data_to_plot)
     fig, axes = plt.subplots(1, num_charts, figsize=(num_charts * 2.5, 5), squeeze=False)
     axes = axes.flatten()
-    cmap = LinearSegmentedColormap.from_list("custom_RdYlGn", ["#9d0208", "#fcf300", "#008000"])
+    cmap = LinearSegmentedColormap.from_list("custom_RdYlGn", ["#008000", "#fcf300","#9d0208" ])
 
     for i, (idx, row) in enumerate(data_to_plot.iterrows()):
         ax = axes[i]
