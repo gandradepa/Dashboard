@@ -1,16 +1,14 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-t" />
     <title>Asset Management Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/static/logos/ubc-facilities_logo.jpg" type="image/jpeg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <!-- Google Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
       :root {
@@ -51,13 +49,13 @@
       .page-title {
         color: var(--ubc-blue);
         font-weight: 700;
-        transition: font-size 0.3s ease;
+        transition: font-size: 0.3s ease;
       }
 
       .page-subtitle {
         color: #5a6e82;
         font-size: 1.1rem;
-        transition: font-size 0.3s ease;
+        transition: font-size: 0.3s ease;
       }
 
       .section-title {
@@ -250,6 +248,20 @@
         background-color: #f8f9fa;
       }
       
+      /* --- COMBINED AND CORRECTED RULE FOR THE DETAILED TABLE --- */
+      #detailed-view .asset-table th,
+      #detailed-view .asset-table td {
+        white-space: nowrap;    /* Prevents text from wrapping */
+        font-size: 0.875rem;      /* Makes font slightly smaller */
+        padding: 0.6rem 0.8rem;   /* Reduces space in cells */
+      }
+
+      .col-shrink-center {
+        width: 1%;
+        white-space: nowrap !important;
+        text-align: center !important;
+      }
+      
       @media (max-width: 768px) {
         .page-title { font-size: 2.2rem; }
         .page-subtitle { font-size: 1rem; }
@@ -295,7 +307,6 @@
         {% endif %}
       {% endwith %}
       
-      <!-- Applications Section -->
       <section class="mb-5">
         <h2 class="h4 section-title mb-4">Applications</h2>
         <div class="row g-4">
@@ -333,9 +344,40 @@
         </div>
       </section>
 
-      <!-- Pending Assets Section -->
       <section class="mb-5">
-        <!-- Summary View -->
+        <h2 class="h4 section-title mb-4">Data Processing Tasks</h2>
+        <div class="row g-4">
+          <div class="col-12 col-md-6 col-lg-4 d-flex">
+            <div class="card tile h-100 w-100">
+              <div class="card-body d-flex flex-column p-4">
+                 <div class="mb-3">
+                   <i data-lucide="database-zap" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
+                 </div>
+                <h3 class="h5 card-title mb-2">Database Sync</h3>
+                <p class="card-text text-muted small mb-4">Process new photos & JSON files to update the asset database.</p>
+                <div class="mt-auto task-runner-wrapper">
+                  <div class="task-runner-container">
+                      <div class="d-grid">
+                          <button class="btn ubc-btn-secondary run-task-btn" type="button" data-task-key="update_db">
+                            {{ task_labels.update_db or 'Run Database Update' }}
+                          </button>
+                      </div>
+                      <div class="progress-bar-container">
+                          <div class="progress-track"><div class="progress-bar-fill"></div></div>
+                          <div class="status-indicator">
+                              <i data-lucide="check-circle" class="status-icon icon-success"></i>
+                              <i data-lucide="x-circle" class="status-icon icon-error"></i>
+                              <span class="status-text"></span>
+                          </div>
+                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="mb-5">
         <div id="summary-view">
           <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <h2 class="h4 section-title mb-0">QR Pending to AI Process</h2>
@@ -344,9 +386,19 @@
           <div class="asset-table-container">
             {% if ai_status_summary %}
               <table class="asset-table">
-                <thead><tr><th>Property</th><th class="text-end">Pending Quantity</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th class="col-shrink-center">Pending Quantity</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {% for row in ai_status_summary %} <tr><td>{{ row.Property or 'N/A' }}</td><td class="text-end">{{ row['Pendency QTY'] }}</td></tr> {% endfor %}
+                  {% for row in ai_status_summary %}
+                    <tr>
+                      <td>{{ row.Property or 'N/A' }}</td>
+                      <td class="col-shrink-center">{{ row['Pendency QTY'] }}</td>
+                    </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             {% else %}
@@ -355,22 +407,19 @@
           </div>
         </div>
 
-        <!-- Detailed View (Initially Hidden) -->
         <div id="detailed-view" style="display: none;">
           <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <h2 class="h4 section-title mb-0">Detailed Pending Assets</h2>
             <button id="toggle-to-summary-btn" class="btn ubc-btn ubc-btn-secondary btn-sm">Back to Summary</button>
           </div>
-          <div class="asset-table-container">
+          <div class="asset-table-container table-responsive">
             {% if ai_asset_details %}
-              <div class="table-responsive">
-                <table class="asset-table">
-                  <thead><tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
-                  <tbody>
-                    {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or 'N/A' }}</td>{% endfor %}</tr>{% endfor %}
-                  </tbody>
-                </table>
-              </div>
+              <table class="asset-table">
+                <thead><tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                  {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or 'N/A' }}</td>{% endfor %}</tr>{% endfor %}
+                </tbody>
+              </table>
             {% else %}
               <div class="text-center p-4"><p class="text-muted mb-0">No detailed asset data to display.</p></div>
             {% endif %}
@@ -378,7 +427,6 @@
         </div>
       </section>
       
-      <!-- Analytics Section -->
       <section class="mb-5">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
             <h2 class="h4 section-title mb-0">Analytics</h2>
@@ -404,7 +452,6 @@
         {% endif %}
       </section>
 
-      <!-- NEW SECTION: Completeness Score -->
       <section class="mb-5">
         <div class="d-flex align-items-center justify-content-between mb-4">
           <h2 class="h4 section-title mb-0">AI Data Completeness Score</h2>
@@ -422,8 +469,6 @@
           </div>
         {% endif %}
       </section>
-      <!-- END NEW SECTION -->
-
       <div class="mt-5 text-center">
         <a class="btn ubc-btn" href="{{ url_for('list_logs') }}">View All Logs</a>
       </div>
