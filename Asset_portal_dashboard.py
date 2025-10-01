@@ -26,10 +26,10 @@ from flask import (
 from markupsafe import Markup
 
 # ------------------ Optional chart modules ------------------
-# We now need to handle THREE potential modules
 CHARTS_AVAILABLE = False
 AI_STATUS_AVAILABLE = False
 COMPLETENESS_CHART_AVAILABLE = False
+OPERATIONAL_COST_CHART_AVAILABLE = False
 CHARTS_IMPORT_ERROR = ""
 
 try:
@@ -39,19 +39,15 @@ except Exception as _e:
     CHARTS_IMPORT_ERROR = str(_e)
 
 try:
-    # --- [CRITICAL CHANGE] ---
-    # Changed 'ai_status_table' to 'ai_status_table_new_version' and aliased it.
     from charts import ai_status_table_new_version as ai_status_table
     AI_STATUS_AVAILABLE = True
 except Exception as _e:
-    # Append the error if one already exists
     error_msg = str(_e)
     if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
          CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
     else:
         CHARTS_IMPORT_ERROR = error_msg
 
-# --- ADDED THIS NEW TRY/EXCEPT BLOCK ---
 try:
     from charts import completeness_score as completeness_mod
     COMPLETENESS_CHART_AVAILABLE = True
@@ -61,7 +57,16 @@ except Exception as _e:
          CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
     else:
         CHARTS_IMPORT_ERROR = error_msg
-# --- END NEW BLOCK ---
+
+try:
+    from charts import operational_cost_result as operational_cost_mod
+    OPERATIONAL_COST_CHART_AVAILABLE = True
+except Exception as _e:
+    error_msg = f"Operational Cost Chart Error: {str(_e)}"
+    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
+         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
+    else:
+        CHARTS_IMPORT_ERROR = error_msg
 
 
 # ------------------ Flask app ------------------
@@ -89,7 +94,6 @@ def _windows_detached_flags() -> int:
     return 0
 
 def _cmd_script_path(cmd: List[str]) -> Optional[Path]:
-    # Look for .py or .sh scripts in the command list
     for part in cmd:
         if part.lower().endswith((".py", ".sh")):
             try:
@@ -101,7 +105,6 @@ def _cmd_script_path(cmd: List[str]) -> Optional[Path]:
 def _launch_cmd_detached(cmd: List[str], cwd: Optional[Path]) -> Path:
     timestamp = int(time.time())
     
-    # Prioritize the Python script name for the log file for clarity
     py_script_path = next((p for p in cmd if p.lower().endswith(".py")), None)
     if py_script_path:
         stem = Path(py_script_path).stem
@@ -128,10 +131,6 @@ def _get_api_root() -> Path:
     return Path(os.environ.get("QR_API_ROOT", "/home/developer/API"))
 
 def _build_tasks() -> Dict[str, Dict]:
-    """
-    Builds the task dictionary using a wrapper script to ensure the
-    virtual environment is properly activated for each interpreter task.
-    """
     api_root = _get_api_root()
     
     wrapper_script = api_root / "run_interpreter.sh"
@@ -146,7 +145,6 @@ def _build_tasks() -> Dict[str, Dict]:
     tasks["qr_api_bf"] = {"cmd": ["/bin/bash", str(wrapper_script), str(bf_script)], "cwd": api_root, "label": "AI Interpreter – Backflow"}
     tasks["qr_api_el"] = {"cmd": ["/bin/bash", str(wrapper_script), str(el_script)], "cwd": api_root, "label": "AI Interpreter – Electrical"}
     
-    # Updated task definition with the correct filename
     update_script = api_root / "updating_process_database.py" 
     tasks["update_db"] = {
         "cmd": ["/bin/bash", str(wrapper_script), str(update_script)],
@@ -163,7 +161,6 @@ def _validate_task_key(task_key: str) -> Dict:
         abort(404, f"Unknown task: {task_key}")
     task = TASKS[task_key]
     
-    # Validate that the actual python script exists, not just the wrapper
     py_script_path_str = next((p for p in task.get("cmd", []) if p.lower().endswith(".py")), None)
     if not py_script_path_str or not Path(py_script_path_str).exists():
         print(f"ERROR: Python script for task '{task_key}' not found at: {py_script_path_str}")
@@ -220,6 +217,19 @@ def index():
     else:
         print("WARNING: 'ai_status_table' not available, skipping asset data fetch.")
     
+    recent_logs = []
+    try:
+        log_files = sorted(LOG_DIR.glob("*.log"), key=os.path.getmtime, reverse=True)
+        for p in log_files[:5]:
+            ts_raw = _extract_ts_from_logname(p.name)
+            recent_logs.append({
+                "name": p.name,
+                "when": _when_from_ts(ts_raw),
+                "title": _title_from_logname(p.name),
+            })
+    except Exception as e:
+        print(f"WARNING: Could not fetch recent logs: {e}")
+
     print("--- [Rendering Template] ---")
 
     return render_template(
@@ -228,7 +238,9 @@ def index():
         building_options=options, selected_building=building, ts=ts,
         ai_status_summary=summary_data,
         ai_asset_details=details_data,
-        completeness_chart_enabled=COMPLETENESS_CHART_AVAILABLE
+        completeness_chart_enabled=COMPLETENESS_CHART_AVAILABLE,
+        operational_cost_chart_enabled=OPERATIONAL_COST_CHART_AVAILABLE,
+        recent_logs=recent_logs
     )
 
 @app.get("/chart/approval.png")
@@ -262,6 +274,22 @@ def completeness_chart():
         return resp
     except Exception as e:
         print(f"Completeness chart error for building '{building}': {e}")
+        return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
+
+@app.get("/chart/operational_cost.png")
+def operational_cost_chart():
+    if not OPERATIONAL_COST_CHART_AVAILABLE:
+        abort(404, "Operational cost chart module not available.")
+    try:
+        chart_type = request.args.get("type", "combo")
+        
+        png_bytes = operational_cost_mod.render_chart_png(chart_type=chart_type)
+        
+        resp = Response(png_bytes, mimetype="image/png")
+        resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        return resp
+    except Exception as e:
+        print(f"Operational cost chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
 
 # ------------------ Routes: Run Tasks ------------------
@@ -334,6 +362,7 @@ def _summarize_log(text: str) -> str:
 
 @app.get("/logs")
 def list_logs():
+    from_view = request.args.get("from", None)
     files = list(LOG_DIR.glob("*.log"))
     rows = []
     for p in files:
@@ -345,7 +374,7 @@ def list_logs():
             "size_kb": f"{max(p.stat().st_size // 1024, 1)} KB",
         })
     rows.sort(key=lambda r: r["when_ts"], reverse=True)
-    return render_template("logs.html", rows=rows)
+    return render_template("logs.html", rows=rows, from_view=from_view)
 
 @app.get("/logs/read")
 def read_log():
@@ -373,3 +402,4 @@ if __name__ == "__main__":
         sp = _cmd_script_path(t["cmd"])
         print(f"Task {key}: {t.get('label','')} -> {sp}")
     app.run(host="127.0.0.1", port=8002, debug=False)
+

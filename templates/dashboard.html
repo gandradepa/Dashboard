@@ -248,12 +248,11 @@
         background-color: #f8f9fa;
       }
       
-      /* --- COMBINED AND CORRECTED RULE FOR THE DETAILED TABLE --- */
       #detailed-view .asset-table th,
       #detailed-view .asset-table td {
-        white-space: nowrap;    /* Prevents text from wrapping */
-        font-size: 0.875rem;      /* Makes font slightly smaller */
-        padding: 0.6rem 0.8rem;   /* Reduces space in cells */
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.6rem 0.8rem;
       }
 
       .col-shrink-center {
@@ -289,147 +288,127 @@
 
     <main id="main" class="container py-5">
       
-      <div class="mb-5">
-        <h1 class="display-5 page-title">Dashboard</h1>
-        <p class="lead page-subtitle">Overview of applications and asset approval analytics.</p>
-      </div>
+      <!-- Main Dashboard View -->
+      <div id="main-view">
+        <div class="mb-5">
+          <h1 class="display-5 page-title">Dashboard</h1>
+          <p class="lead page-subtitle">Overview of applications and asset approval analytics.</p>
+        </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="mb-4">
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3" role="alert">
-                {{ message|safe }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
-      
-      <section class="mb-5">
-        <h2 class="h4 section-title mb-4">Applications</h2>
-        <div class="row g-4">
-          {% for a in apps %}
-          <div class="col-12 col-md-6 col-lg-4 d-flex">
-            <div class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% elif a.key == 'sdi_process' %}sdi-card-highlight{% endif %}">
-              <div class="card-body d-flex flex-column p-4">
-                 <div class="mb-3"> <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i> </div>
-                <h3 class="h5 card-title mb-2">{{ a.name }}</h3>
-                <p class="card-text text-muted small mb-4"><code>{{ a.url | replace('https://', '') }}</code></p>
-                <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
-                  <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
-                  {% if a.key in ["review_bf", "review_me", "review_el"] %}
-                    <div class="task-runner-wrapper">
-                      <div class="task-runner-container">
-                          <div class="d-grid">
-                              <button class="btn btn-outline-secondary btn-sm run-task-btn" type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}"> Run AI Interpreter </button>
-                          </div>
-                          <div class="progress-bar-container">
-                              <div class="progress-track"><div class="progress-bar-fill"></div></div>
-                              <div class="status-indicator">
-                                  <i data-lucide="check-circle" class="status-icon icon-success"></i>
-                                  <i data-lucide="x-circle" class="status-icon icon-error"></i>
-                                  <span class="status-text"></span>
-                              </div>
-                          </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-4">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3" role="alert">
+                  {{ message|safe }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        
+        <section class="mb-5">
+          <h2 class="h4 section-title mb-4">Applications</h2>
+          <div class="row g-4">
+            {% for a in apps %}
+            <div class="col-12 col-md-6 col-lg-4 d-flex">
+              <div class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% elif a.key == 'sdi_process' %}sdi-card-highlight{% endif %}">
+                <div class="card-body d-flex flex-column p-4">
+                   <div class="mb-3"> <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i> </div>
+                  <h3 class="h5 card-title mb-2">{{ a.name }}</h3>
+                  <p class="card-text text-muted small mb-4"><code>{{ a.url | replace('https://', '') }}</code></p>
+                  <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
+                    <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
+                    {% if a.key in ["review_bf", "review_me", "review_el"] %}
+                      <div class="task-runner-wrapper">
+                        <div class="task-runner-container">
+                            <div class="d-grid">
+                                <button class="btn btn-outline-secondary btn-sm run-task-btn" type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}"> Run AI Interpreter </button>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-track"><div class="progress-bar-fill"></div></div>
+                                <div class="status-indicator">
+                                    <i data-lucide="check-circle" class="status-icon icon-success"></i>
+                                    <i data-lucide="x-circle" class="status-icon icon-error"></i>
+                                    <span class="status-text"></span>
+                                </div>
+                            </div>
+                        </div>
                       </div>
-                    </div>
-                  {% endif %}
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
+            {% endfor %}
           </div>
-          {% endfor %}
-        </div>
-      </section>
+        </section>
 
-      <section class="mb-5">
-        <h2 class="h4 section-title mb-4">Data Processing Tasks</h2>
-        <div class="row g-4">
-          <div class="col-12 col-md-6 col-lg-4 d-flex">
-            <div class="card tile h-100 w-100">
-              <div class="card-body d-flex flex-column p-4">
-                 <div class="mb-3">
-                   <i data-lucide="database-zap" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
-                 </div>
-                <h3 class="h5 card-title mb-2">Database Sync</h3>
-                <p class="card-text text-muted small mb-4">Process new photos & JSON files to update the asset database.</p>
-                <div class="mt-auto task-runner-wrapper">
-                  <div class="task-runner-container">
-                      <div class="d-grid">
-                          <button class="btn ubc-btn-secondary run-task-btn" type="button" data-task-key="update_db">
-                            {{ task_labels.update_db or 'Run Database Update' }}
-                          </button>
-                      </div>
-                      <div class="progress-bar-container">
-                          <div class="progress-track"><div class="progress-bar-fill"></div></div>
-                          <div class="status-indicator">
-                              <i data-lucide="check-circle" class="status-icon icon-success"></i>
-                              <i data-lucide="x-circle" class="status-icon icon-error"></i>
-                              <span class="status-text"></span>
-                          </div>
-                      </div>
+        <section class="mb-5">
+          <h2 class="h4 section-title mb-4">Data Processing Tasks</h2>
+          <div class="row g-4">
+            <div class="col-12 col-md-6 col-lg-4 d-flex">
+              <div class="card tile h-100 w-100">
+                <div class="card-body d-flex flex-column p-4">
+                   <div class="mb-3">
+                     <i data-lucide="database-zap" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
+                   </div>
+                  <h3 class="h5 card-title mb-2">Database Sync</h3>
+                  <p class="card-text text-muted small mb-4">Process new photos & JSON files to update the asset database.</p>
+                  <div class="mt-auto task-runner-wrapper">
+                    <div class="task-runner-container">
+                        <div class="d-grid">
+                            <button class="btn ubc-btn-secondary run-task-btn" type="button" data-task-key="update_db">
+                              {{ task_labels.update_db or 'Run Database Update' }}
+                            </button>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-track"><div class="progress-bar-fill"></div></div>
+                            <div class="status-indicator">
+                                <i data-lucide="check-circle" class="status-icon icon-success"></i>
+                                <i data-lucide="x-circle" class="status-icon icon-error"></i>
+                                <span class="status-text"></span>
+                            </div>
+                        </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-      <section class="mb-5">
-        <div id="summary-view">
-          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <h2 class="h4 section-title mb-0">QR Pending to AI Process</h2>
-            <button id="toggle-to-detailed-btn" class="btn ubc-btn ubc-btn-secondary btn-sm">View Detailed List</button>
-          </div>
-          <div class="asset-table-container">
-            {% if ai_status_summary %}
-              <table class="asset-table">
-                <thead>
-                  <tr>
-                    <th>Property</th>
-                    <th class="col-shrink-center">Pending Quantity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for row in ai_status_summary %}
-                    <tr>
-                      <td>{{ row.Property or 'N/A' }}</td>
-                      <td class="col-shrink-center">{{ row['Pendency QTY'] }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            {% else %}
-              <div class="text-center p-4"><p class="text-muted mb-0">No pending asset data to display.</p></div>
-            {% endif %}
-          </div>
+        </section>
+        
+        <section class="mb-5">
+           <h2 class="h4 section-title mb-4">Monitoring</h2>
+           <div class="d-flex flex-wrap align-items-start gap-5">
+              <div>
+                <a id="show-qr-pending-btn" role="button" title="Open QR Pending List" style="cursor: pointer;">
+                  <img src="{{ url_for('static', filename='System Process Logs.png') }}" alt="Open QR Pending" width="300" height="300" style="max-width: 100%; height: auto;">
+                </a>
+              </div>
+              <div>
+                <a id="show-analytics-btn" role="button" title="Open charts" style="cursor: pointer;">
+                  <img src="{{ url_for('static', filename='Asset Reviewer Management.png') }}" alt="Abrir Gráficos" width="300" height="300" style="max-width: 100%; height: auto;">
+                </a>
+              </div>
+              <div>
+                <a id="show-operational-cost-btn" role="button" title="Open Operational Cost" style="cursor: pointer;">
+                  <img src="{{ url_for('static', filename='QR Code Asset Management.png') }}" alt="Open Operational Cost" width="300" height="300" style="max-width: 100%; height: auto;">
+                </a>
+              </div>
+           </div>
+        </section>
+      </div> <!-- End of #main-view -->
+
+      <!-- Analytics View (Initially Hidden) -->
+      <div id="analytics-view" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 page-title">Asset Reviewer Analysis</h1>
+            <button id="back-to-main-btn" class="btn ubc-btn-secondary">Back to Dashboard</button>
         </div>
 
-        <div id="detailed-view" style="display: none;">
-          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <h2 class="h4 section-title mb-0">Detailed Pending Assets</h2>
-            <button id="toggle-to-summary-btn" class="btn ubc-btn ubc-btn-secondary btn-sm">Back to Summary</button>
-          </div>
-          <div class="asset-table-container table-responsive">
-            {% if ai_asset_details %}
-              <table class="asset-table">
-                <thead><tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
-                <tbody>
-                  {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or 'N/A' }}</td>{% endfor %}</tr>{% endfor %}
-                </tbody>
-              </table>
-            {% else %}
-              <div class="text-center p-4"><p class="text-muted mb-0">No detailed asset data to display.</p></div>
-            {% endif %}
-          </div>
-        </div>
-      </section>
-      
-      <section class="mb-5">
-        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
-            <h2 class="h4 section-title mb-0">Analytics</h2>
+        <div class="d-flex flex-wrap align-items-center justify-content-end mb-4 gap-3">
             <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
               <select id="building" name="building" class="form-select">
                 {% for opt in building_options %} <option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option> {% endfor %}
@@ -450,28 +429,160 @@
         {% else %}
           <div class="alert alert-warning rounded-3"> Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}. </div>
         {% endif %}
-      </section>
-
-      <section class="mb-5">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-          <h2 class="h4 section-title mb-0">AI Data Completeness Score</h2>
+      </div> <!-- End of #analytics-view -->
+      
+      <!-- QR Pending View (Initially Hidden) -->
+      <div id="qr-pending-view" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 page-title">QR Pending to AI Process</h1>
+            <button id="back-to-main-btn-qr" class="btn ubc-btn-secondary">Back to Dashboard</button>
         </div>
         
-        {% if completeness_chart_enabled %}
-          <div class="analytics-card">
-            <img class="img-fluid" 
-                 alt="Completeness Score Chart" 
-                 src="{{ url_for('completeness_chart', building=selected_building) }}&ts={{ ts }}">
+        <section class="mb-5">
+          <div id="summary-view">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+              <h2 class="h4 section-title mb-0">Pending Summary</h2>
+              <button id="toggle-to-detailed-btn" class="btn ubc-btn-secondary btn-sm">View Detailed List</button>
+            </div>
+            <div class="asset-table-container">
+              {% if ai_status_summary %}
+                <table class="asset-table">
+                  <thead>
+                    <tr>
+                      <th>Property</th>
+                      <th class="col-shrink-center">Pending Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in ai_status_summary %}
+                      <tr>
+                        <td>{{ row.Property or 'N/A' }}</td>
+                        <td class="col-shrink-center">{{ row['Pendency QTY'] }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <div class="text-center p-4"><p class="text-muted mb-0">No pending asset data to display.</p></div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div id="detailed-view" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+              <h2 class="h4 section-title mb-0">Detailed Pending Assets</h2>
+              <button id="toggle-to-summary-btn" class="btn ubc-btn-secondary btn-sm">Back to Summary</button>
+            </div>
+            <div class="asset-table-container table-responsive">
+              {% if ai_asset_details %}
+                <table class="asset-table">
+                  <thead><tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+                  <tbody>
+                    {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or 'N/A' }}</td>{% endfor %}</tr>{% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <div class="text-center p-4"><p class="text-muted mb-0">No detailed asset data to display.</p></div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-5">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="h4 section-title mb-0">AI Data Completeness Score</h2>
+          </div>
+          {% if completeness_chart_enabled %}
+            <div class="d-flex flex-wrap align-items-center justify-content-start mb-4 gap-3">
+              <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
+                <label for="building-completeness-slicer" class="form-label fw-bold">Select a Building to see the score:</label>
+                <select id="building-completeness-slicer" class="form-select">
+                  <option value="" selected disabled>-- Choose a Building --</option>
+                  {% for opt in building_options %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div id="completeness-chart-container" class="analytics-card" style="display: none;">
+              <img id="completeness-chart-img" class="img-fluid" alt="Completeness Score Chart" src="">
+            </div>
+          {% else %}
+            <div class="alert alert-warning rounded-3">
+              Completeness Score chart is unavailable.
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="mb-5">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="h4 section-title mb-0">Recent Logs</h2>
+            </div>
+            <div class="asset-table-container">
+                {% if recent_logs %}
+                <table class="asset-table">
+                    <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>When</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for log in recent_logs %}
+                        <tr>
+                        <td>{{ log.title }}</td>
+                        <td>{{ log.when }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('read_log', name=log.name) }}" class="btn ubc-btn-secondary btn-sm">View</a>
+                        </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('list_logs', from='monitoring') }}" class="btn ubc-btn">View All Logs</a>
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <p class="text-muted mb-0">No recent logs found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+      </div> <!-- End of #qr-pending-view -->
+
+      <!-- Operational Cost View (Initially Hidden) -->
+      <div id="operational-cost-view" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 page-title">QR Code Asset Management</h1>
+            <button id="back-to-main-btn-op" class="btn ubc-btn-secondary">Back to Dashboard</button>
+        </div>
+        
+        {% if operational_cost_chart_enabled %}
+          <div class="row g-4">
+            <div class="col-12 col-md-6">
+              <div class="analytics-card">
+                <img class="img-fluid" alt="Weighted Average Time" src="{{ url_for('operational_cost_chart', type='weighted_avg_time') }}&ts={{ ts }}">
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="analytics-card">
+                <img class="img-fluid" alt="AI Estimated Cost" src="{{ url_for('operational_cost_chart', type='ai_cost') }}&ts={{ ts }}">
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="analytics-card">
+                <img class="img-fluid" alt="Daily Operational Chart" src="{{ url_for('operational_cost_chart', type='combo') }}&ts={{ ts }}">
+              </div>
+            </div>
           </div>
         {% else %}
-          <div class="alert alert-warning rounded-3">
-            Completeness Score chart is unavailable.
-          </div>
+          <div class="alert alert-warning rounded-3">Operational cost charts are unavailable.</div>
         {% endif %}
-      </section>
-      <div class="mt-5 text-center">
-        <a class="btn ubc-btn" href="{{ url_for('list_logs') }}">View All Logs</a>
       </div>
+
     </main>
 
     <footer class="ubc-footer text-center py-4 mt-5">
@@ -576,6 +687,104 @@
             progressBarContainer.classList.remove('success', 'error');
             buttonWrapper.style.display = 'block';
         }
+
+        // --- View Toggling Logic ---
+        const mainView = document.getElementById('main-view');
+        const analyticsView = document.getElementById('analytics-view');
+        const qrPendingView = document.getElementById('qr-pending-view');
+        const operationalCostView = document.getElementById('operational-cost-view');
+
+        const showAnalyticsBtn = document.getElementById('show-analytics-btn');
+        const showQrPendingBtn = document.getElementById('show-qr-pending-btn');
+        const showOperationalCostBtn = document.getElementById('show-operational-cost-btn');
+        
+        const backToMainBtn = document.getElementById('back-to-main-btn');
+        const backToMainBtnQr = document.getElementById('back-to-main-btn-qr');
+        const backToMainBtnOp = document.getElementById('back-to-main-btn-op');
+
+        function handleViewSwitch() {
+            const hash = window.location.hash;
+            mainView.style.display = 'none';
+            analyticsView.style.display = 'none';
+            qrPendingView.style.display = 'none';
+            operationalCostView.style.display = 'none';
+
+            if (hash === '#qr-pending-view') {
+                qrPendingView.style.display = 'block';
+            } else if (hash === '#analytics-view') {
+                analyticsView.style.display = 'block';
+            } else if (hash === '#operational-cost-view') {
+                operationalCostView.style.display = 'block';
+            } else {
+                mainView.style.display = 'block';
+            }
+            window.scrollTo(0, 0);
+        }
+
+        if (showAnalyticsBtn) {
+            showAnalyticsBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.location.hash = 'analytics-view';
+            });
+        }
+
+        if (showQrPendingBtn) {
+            showQrPendingBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.location.hash = 'qr-pending-view';
+            });
+        }
+
+        if (showOperationalCostBtn) {
+            showOperationalCostBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.location.hash = 'operational-cost-view';
+            });
+        }
+
+        if (backToMainBtn) {
+            backToMainBtn.addEventListener('click', () => { window.location.hash = ''; });
+        }
+        if (backToMainBtnQr) {
+            backToMainBtnQr.addEventListener('click', () => { window.location.hash = ''; });
+        }
+        if (backToMainBtnOp) {
+            backToMainBtnOp.addEventListener('click', () => { window.location.hash = ''; });
+        }
+
+        // --- Completeness Score Chart Logic ---
+        const buildingCompletenessSlicer = document.getElementById('building-completeness-slicer');
+        const completenessChartContainer = document.getElementById('completeness-chart-container');
+        const completenessChartImg = document.getElementById('completeness-chart-img');
+
+        if (buildingCompletenessSlicer) {
+            buildingCompletenessSlicer.addEventListener('change', function() {
+                const selectedBuilding = this.value;
+                if (selectedBuilding) {
+                    completenessChartImg.style.opacity = '0.5';
+                    completenessChartContainer.style.display = 'flex';
+
+                    const timestamp = new Date().getTime();
+                    const chartUrl = `{{ url_for('completeness_chart') }}?building=${encodeURIComponent(selectedBuilding)}&ts=${timestamp}`;
+                    
+                    completenessChartImg.src = chartUrl;
+                    
+                    completenessChartImg.onload = () => {
+                        completenessChartImg.style.opacity = '1';
+                    };
+                    completenessChartImg.onerror = () => {
+                        completenessChartContainer.style.display = 'none';
+                        console.error('Failed to load completeness chart.');
+                    }
+                } else {
+                    completenessChartContainer.style.display = 'none';
+                }
+            });
+        }
+
+        window.addEventListener('pageshow', handleViewSwitch);
+        window.addEventListener('hashchange', handleViewSwitch);
     </script>
   </body>
 </html>
+
