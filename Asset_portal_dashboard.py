@@ -282,8 +282,11 @@ def operational_cost_chart():
         abort(404, "Operational cost chart module not available.")
     try:
         chart_type = request.args.get("type", "combo")
+        # ADDED: Get building from request arguments
+        building = request.args.get("building", "All")
         
-        png_bytes = operational_cost_mod.render_chart_png(chart_type=chart_type)
+        # UPDATED: Pass building to the rendering function
+        png_bytes = operational_cost_mod.render_chart_png(chart_type=chart_type, building=building)
         
         resp = Response(png_bytes, mimetype="image/png")
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -402,4 +405,3 @@ if __name__ == "__main__":
         sp = _cmd_script_path(t["cmd"])
         print(f"Task {key}: {t.get('label','')} -> {sp}")
     app.run(host="127.0.0.1", port=8002, debug=False)
-

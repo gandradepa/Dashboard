@@ -84,8 +84,6 @@ def render_chart_png(building: str = "All") -> bytes:
     if data_to_plot.empty:
         return b''
 
-    property_name = data_to_plot['Property'].iloc[0]
-
     num_charts = len(data_to_plot)
     fig, axes = plt.subplots(1, num_charts, figsize=(num_charts * 2.5, 5), squeeze=False)
     axes = axes.flatten()
@@ -103,8 +101,8 @@ def render_chart_png(building: str = "All") -> bytes:
         ax.set_xticks([])
         ax.spines[['top', 'right', 'bottom']].set_visible(False)
 
-    # --- THIS IS THE CORRECTED LINE ---
-    fig.suptitle(f'Completeness Score for: {property_name}', fontsize=16, fontweight='bold', y=1.05)
+    # UPDATED: The title now dynamically uses the 'building' parameter from the dropdown.
+    fig.suptitle(f'Completeness Score for: {building}', fontsize=16, fontweight='bold', y=1.05)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     
     # --- SAVE TO BUFFER ---
