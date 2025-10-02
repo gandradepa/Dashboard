@@ -19,10 +19,10 @@ def render_chart_png(building: str = "All") -> bytes:
         conn.close()
         building_df = building_df[["Code", "Name"]]
         building_df = building_df.rename(columns={"Code": "building_number", "Name": "Property"})
+        building_df['building_number'] = building_df['building_number'].astype(str)
     except Exception as e:
-        print(f"Warning: Could not read database. {e}")
-        building_data = {'building_number': ['314-1', '201T', '405'], 'Property': ['UBC HOSPITAL - ACU', 'HEBB BUILDING', 'CHEMISTRY/PHYSICS']}
-        building_df = pd.DataFrame(building_data)
+        print(f"CRITICAL: Could not read buildings from database. {e}")
+        return b''
 
     # --- PROCESS JSON FILES ---
     path = r"/home/developer/Output_jason_api"
@@ -43,6 +43,9 @@ def render_chart_png(building: str = "All") -> bytes:
     columns_to_select = ["building_number", "Approved", "asset_type", "completeness_score"]
     existing_columns = [col for col in columns_to_select if col in combined_df.columns]
     completeness_score = combined_df[existing_columns].copy()
+
+    if 'building_number' in completeness_score.columns:
+        completeness_score['building_number'] = completeness_score['building_number'].astype(str)
 
     if 'Approved' not in completeness_score.columns:
         completeness_score['Approved'] = False
@@ -65,19 +68,24 @@ def render_chart_png(building: str = "All") -> bytes:
         found_value=('found_value', 'sum'),
     ).reset_index()
 
-    final_summary['% of Completeness'] = ((final_summary['found_value'] / final_summary['field_qty']) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
-    
     # --- MERGE AND FINALIZE ---
     merged_df = pd.merge(final_summary, building_df, on='building_number', how='left')
-    completeness_summary = merged_df[["Property", "building_number", "asset_type", "% of Completeness"]]
-
+    completeness_summary = merged_df[["Property", "building_number", "asset_type", "field_qty", "found_value"]]
+    completeness_summary['% of Completeness'] = ((completeness_summary['found_value'] / completeness_summary['field_qty'].replace(0, 1)) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
+    
     # --- VISUALIZATION BLOCK ---
     if building != "All":
         data_to_plot = completeness_summary[completeness_summary['Property'] == building].sort_values('asset_type')
     else:
+        # UPDATED: Consolidate data for all buildings when "All" is selected
         if not completeness_summary.empty:
-            first_property = completeness_summary['Property'].iloc[0]
-            data_to_plot = completeness_summary[completeness_summary['Property'] == first_property].sort_values('asset_type')
+            consolidated_data = completeness_summary.groupby('asset_type').agg(
+                field_qty=('field_qty', 'sum'),
+                found_value=('found_value', 'sum'),
+            ).reset_index()
+            
+            consolidated_data['% of Completeness'] = ((consolidated_data['found_value'] / consolidated_data['field_qty'].replace(0, 1)) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
+            data_to_plot = consolidated_data.sort_values('asset_type')
         else:
             data_to_plot = pd.DataFrame()
             
@@ -87,7 +95,7 @@ def render_chart_png(building: str = "All") -> bytes:
     num_charts = len(data_to_plot)
     fig, axes = plt.subplots(1, num_charts, figsize=(num_charts * 2.5, 5), squeeze=False)
     axes = axes.flatten()
-    cmap = LinearSegmentedColormap.from_list("custom_RdYlGn", ["#008000", "#fcf300","#9d0208" ])
+    cmap = LinearSegmentedColormap.from_list("custom_RdYlGn", ["#9d0208", "#fcf300", "#008000"]) # Red to Green
 
     for i, (idx, row) in enumerate(data_to_plot.iterrows()):
         ax = axes[i]
@@ -101,7 +109,6 @@ def render_chart_png(building: str = "All") -> bytes:
         ax.set_xticks([])
         ax.spines[['top', 'right', 'bottom']].set_visible(False)
 
-    # UPDATED: The title now dynamically uses the 'building' parameter from the dropdown.
     fig.suptitle(f'Completeness Score for: {building}', fontsize=16, fontweight='bold', y=1.05)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     

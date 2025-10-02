@@ -49,13 +49,13 @@
       .page-title {
         color: var(--ubc-blue);
         font-weight: 700;
-        transition: font-size: 0.3s ease;
+        transition: font-size 0.3s ease;
       }
 
       .page-subtitle {
         color: #5a6e82;
         font-size: 1.1rem;
-        transition: font-size: 0.3s ease;
+        transition: font-size 0.3s ease;
       }
 
       .section-title {
@@ -177,6 +177,23 @@
       @keyframes progress-bar-stripes {
         from { background-position: 20px 0; }
         to { background-position: 0 0; }
+      }
+
+      /* --- CSS Grid for Application cards --- */
+      .application-card-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      @media (max-width: 991.98px) {
+        .application-card-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 767.98px) {
+        .application-card-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       .analytics-card-grid {
@@ -309,9 +326,9 @@
         
         <section class="mb-5">
           <h2 class="h4 section-title mb-4">Applications</h2>
-          <div class="row g-4">
+          <div class="application-card-grid">
             {% for a in apps %}
-            <div class="col-12 col-md-6 col-lg-4 d-flex">
+            <div class="d-flex">
               <div class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% elif a.key == 'sdi_process' %}sdi-card-highlight{% endif %}">
                 <div class="card-body d-flex flex-column p-4">
                    <div class="mb-3"> <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i> </div>
@@ -342,14 +359,14 @@
             </div>
             {% endfor %}
 
-            <div class="col-12 col-md-6 col-lg-4 d-flex">
+            <div class="d-flex">
               <div class="card tile h-100 w-100">
                 <div class="card-body d-flex flex-column p-4">
                   <div class="mb-3">
                     <i data-lucide="link" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
                   </div>
                   <h3 class="h5 card-title mb-3">Useful Links</h3>
-                  <div class="d-flex flex-column gap-3">
+                  <div class="d-flex flex-column gap-2">
                     <div>
                       <a href="https://ubc-prod.planoncloud.com" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
                         <i data-lucide="external-link" width="16" height="16"></i>
@@ -357,15 +374,15 @@
                       </a>
                     </div>
                     <div>
-                      <a href="https://vpfo.finpbiprd.ubc.ca/reportspbi/powerbi/Facilities/Building%20Operations/Maintenance%20Plainning/Asset%20Management%20-%20TSBC_Cost%20Analysis" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
-                        <i data-lucide="external-link" width="16" height="16"></i>
-                        <span class="fw-medium">Asset Management - Cost Analysis</span>
-                      </a>
-                    </div>
-                    <div>
                       <a href="https://online-services.technicalsafetybc.ca" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
                         <i data-lucide="external-link" width="16" height="16"></i>
                         <span class="fw-medium">TSBC Website</span>
+                      </a>
+                    </div>
+                    <div>
+                      <a href="https://shareit.it.ubc.ca/teams/Teams/EMMS/Documents/Forms/AllItems.aspx?slrid=3eada9a1-9499-c00f-1021-8e1819a3802f&RootFolder=%2fteams%2fTeams%2fEMMS%2fDocuments%2fSDIs%2fA%2e%20Templates%20for%20Business%20to%20Complete%2fAssets&FolderCTID=0x012000D967664AD9CFBA498624A47403A4C88E" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
+                        <i data-lucide="external-link" width="16" height="16"></i>
+                        <span class="fw-medium">SDI Templates</span>
                       </a>
                     </div>
                   </div>

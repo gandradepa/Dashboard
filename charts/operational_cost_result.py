@@ -175,7 +175,7 @@ def render_chart_png(chart_type: str = "combo", building: str = "All") -> bytes:
             value = f"{m_avg:02d}:{s_avg:02d}"
             _draw_card(ax, value, "Weighted Avg Time to Capture\nan Asset (MM:SS)")
         elif chart_type == "ai_cost":
-            ai_est_cost = total_qty * 0.10
+            ai_est_cost = total_qty * 0.01
             value = f"${ai_est_cost:.2f}"
             _draw_card(ax, value, "Annual AI Estimated Cost\n(Last 12 Months)")
 
