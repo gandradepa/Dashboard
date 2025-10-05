@@ -27,6 +27,11 @@
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         color: var(--dark-grey);
       }
+      
+      /* --- ALTERAÇÃO 1: Esconde todas as visualizações por padrão para evitar o "piscar" --- */
+      #main-view, #analytics-view, #qr-pending-view, #operational-cost-view {
+        display: none;
+      }
 
       .ubc-navbar {
         background-color: rgba(255, 255, 255, 0.8);
@@ -452,7 +457,9 @@
           </div>
         </section>
         
-      </div> <div id="analytics-view" style="display: none;">
+      </div>
+
+      <div id="analytics-view">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-5 page-title">Asset Reviewer Analysis</h1>
             <button id="back-to-main-btn" class="btn ubc-btn-secondary">Back to Dashboard</button>
@@ -479,7 +486,9 @@
         {% else %}
           <div class="alert alert-warning rounded-3"> Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}. </div>
         {% endif %}
-      </div> <div id="qr-pending-view" style="display: none;">
+      </div>
+
+      <div id="qr-pending-view">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-5 page-title">QR Pending to AI Process</h1>
             <button id="back-to-main-btn-qr" class="btn ubc-btn-secondary">Back to Dashboard</button>
@@ -571,7 +580,9 @@
                 {% endif %}
             </div>
         </section>
-      </div> <div id="operational-cost-view" style="display: none;">
+      </div>
+      
+      <div id="operational-cost-view">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="display-5 page-title">QR Code Asset Management</h1>
             <button id="back-to-main-btn-op" class="btn ubc-btn-secondary">Back to Dashboard</button>
@@ -649,7 +660,7 @@
         lucide.createIcons();
 
         document.getElementById('building').addEventListener('change', function() {
-            window.location.href = `{{ url_for('index') }}?building=${this.value}`;
+            window.location.href = `{{ url_for('index') }}?building=${this.value}#analytics-view`;
         });
         
         const summaryView = document.getElementById('summary-view');
