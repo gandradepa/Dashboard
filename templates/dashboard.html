@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-t" />
+    <meta charset="utf-8" />
     <title>Dashboard Management for New Assets</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/static/logos/ubc-facilities_logo.jpg" type="image/jpeg">
@@ -28,7 +28,6 @@
         color: var(--dark-grey);
       }
       
-      /* --- ALTERAÇÃO 1: Esconde todas as visualizações por padrão para evitar o "piscar" --- */
       #main-view, #analytics-view, #qr-pending-view, #operational-cost-view {
         display: none;
       }
@@ -184,7 +183,6 @@
         to { background-position: 0 0; }
       }
 
-      /* --- CSS Grid for Application cards --- */
       .application-card-grid {
         display: grid;
         gap: 1.5rem;
@@ -296,13 +294,17 @@
     <header>
       <nav class="navbar navbar-expand-lg ubc-navbar sticky-top" aria-label="Primary">
         <div class="container d-flex justify-content-between align-items-center">
-          <a class="navbar-brand d-flex align-items-center gap-md-3 gap-2" href="{{ url_for('index') }}">
+          <a class="navbar-brand d-flex align-items-center gap-md-3 gap-2" href="{{ url_for('main.index') }}">
             <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
             <span class="ubc-brand d-none d-md-inline">Dashboard Management for New Assets</span>
           </a>
           <div class="d-flex align-items-center gap-md-3 gap-2">
              <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" alt="UBC Facilities Logo" class="ubc-facilities-logo" />
              <i data-lucide="circle-user-round" style="color: var(--ubc-blue);"></i>
+             <a href="{{ url_for('main.change_password') }}" class="btn btn-sm btn-outline-secondary" title="Change Password">
+                <i data-lucide="key-round" class="align-middle"></i>
+             </a>
+             <a href="{{ url_for('auth.logout') }}" class="btn btn-sm ubc-btn-secondary ms-2">Logout</a>
           </div>
         </div>
       </nav>
@@ -313,7 +315,7 @@
       <div id="main-view">
         <div class="mb-5">
           <h1 class="display-5 page-title">Dashboard</h1>
-          <p class="lead page-subtitle">Overview of applications and monitoring tools in the process of creating new assets</p>
+          <p class="lead page-subtitle">Welcome, <strong>{{ username }}</strong>! Overview of applications and monitoring tools.</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -476,11 +478,11 @@
         {% if chart_enabled %}
           <div class="analytics-card-grid">
               <div class="analytics-card bar-chart-card">
-                  <img class="img-fluid" alt="Bar Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}" style="width: 100%; height: 100%; object-fit: fill;">
+                  <img class="img-fluid" alt="Bar Chart" src="{{ url_for('main.approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}" style="width: 100%; height: 100%; object-fit: fill;">
               </div>
               <div class="kpi-pie-wrapper">
-                  <div class="analytics-card kpi-card"> <img class="img-fluid" alt="Gauge Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}"> </div>
-                  <div class="analytics-card pie-chart-card"> <img class="img-fluid" alt="Donut Chart" src="{{ url_for('approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}"> </div>
+                  <div class="analytics-card kpi-card"> <img class="img-fluid" alt="Gauge Chart" src="{{ url_for('main.approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}"> </div>
+                  <div class="analytics-card pie-chart-card"> <img class="img-fluid" alt="Donut Chart" src="{{ url_for('main.approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}"> </div>
               </div>
           </div>
         {% else %}
@@ -564,14 +566,14 @@
                         <td>{{ log.title }}</td>
                         <td>{{ log.when }}</td>
                         <td class="text-end">
-                            <a href="{{ url_for('read_log', name=log.name) }}" class="btn ubc-btn-secondary btn-sm">View</a>
+                            <a href="{{ url_for('main.read_log', name=log.name) }}" class="btn ubc-btn-secondary btn-sm">View</a>
                         </td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
                 <div class="text-center mt-4">
-                    <a href="{{ url_for('list_logs', from='monitoring') }}" class="btn ubc-btn">View All Logs</a>
+                    <a href="{{ url_for('main.list_logs', from='monitoring') }}" class="btn ubc-btn">View All Logs</a>
                 </div>
                 {% else %}
                 <div class="text-center p-4">
@@ -602,17 +604,17 @@
           <div class="row g-4">
             <div class="col-12 col-md-6">
               <div class="analytics-card">
-                <img id="op-chart-weighted-avg" class="img-fluid" alt="Weighted Average Time" src="{{ url_for('operational_cost_chart', type='weighted_avg_time', building=selected_building) }}&ts={{ ts }}">
+                <img id="op-chart-weighted-avg" class="img-fluid" alt="Weighted Average Time" src="{{ url_for('main.operational_cost_chart', type='weighted_avg_time', building=selected_building) }}&ts={{ ts }}">
               </div>
             </div>
             <div class="col-12 col-md-6">
               <div class="analytics-card">
-                <img id="op-chart-ai-cost" class="img-fluid" alt="AI Estimated Cost" src="{{ url_for('operational_cost_chart', type='ai_cost', building=selected_building) }}&ts={{ ts }}">
+                <img id="op-chart-ai-cost" class="img-fluid" alt="AI Estimated Cost" src="{{ url_for('main.operational_cost_chart', type='ai_cost', building=selected_building) }}&ts={{ ts }}">
               </div>
             </div>
             <div class="col-12">
               <div class="analytics-card">
-                <img id="op-chart-combo" class="img-fluid" alt="Daily Operational Chart" src="{{ url_for('operational_cost_chart', type='combo', building=selected_building) }}&ts={{ ts }}">
+                <img id="op-chart-combo" class="img-fluid" alt="Daily Operational Chart" src="{{ url_for('main.operational_cost_chart', type='combo', building=selected_building) }}&ts={{ ts }}">
               </div>
             </div>
           </div>
@@ -637,7 +639,7 @@
             </div>
 
             <div id="completeness-chart-container" class="analytics-card" style="display: flex;">
-              <img id="completeness-chart-img" class="img-fluid" alt="Completeness Score Chart" src="{{ url_for('completeness_chart', building='All') }}&ts={{ ts }}">
+              <img id="completeness-chart-img" class="img-fluid" alt="Completeness Score Chart" src="{{ url_for('main.completeness_chart', building='All') }}&ts={{ ts }}">
             </div>
           {% else %}
             <div class="alert alert-warning rounded-3">
@@ -660,7 +662,7 @@
         lucide.createIcons();
 
         document.getElementById('building').addEventListener('change', function() {
-            window.location.href = `{{ url_for('index') }}?building=${this.value}#analytics-view`;
+            window.location.href = `{{ url_for('main.index') }}?building=${this.value}#analytics-view`;
         });
         
         const summaryView = document.getElementById('summary-view');
@@ -829,7 +831,7 @@
                     completenessChartContainer.style.display = 'flex';
 
                     const timestamp = new Date().getTime();
-                    const chartUrl = `{{ url_for('completeness_chart') }}?building=${encodeURIComponent(selectedBuilding)}&ts=${timestamp}`;
+                    const chartUrl = `{{ url_for('main.completeness_chart') }}?building=${encodeURIComponent(selectedBuilding)}&ts=${timestamp}`;
                     
                     completenessChartImg.src = chartUrl;
                     

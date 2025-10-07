@@ -21,9 +21,20 @@ from typing import Dict, List, Optional
 
 from flask import (
     Flask, render_template, redirect, url_for, flash,
-    request, abort, Response, jsonify, send_from_directory
+    request, abort, Response, jsonify, send_from_directory, Blueprint
 )
 from markupsafe import Markup
+
+## NEW ## -> Import authentication and environment variable libraries
+from flask_login import login_user, logout_user, login_required, current_user
+from dotenv import load_dotenv
+
+## NEW ## -> Add the shared auth_service directory to Python's path
+# This allows us to import our shared modules for database models and login control
+sys.path.append('/home/developer/auth_service')
+from auth_model import db, bcrypt, User
+from auth_controller import login_manager
+
 
 # ------------------ Optional chart modules ------------------
 CHARTS_AVAILABLE = False
@@ -69,9 +80,22 @@ except Exception as _e:
         CHARTS_IMPORT_ERROR = error_msg
 
 
-# ------------------ Flask app ------------------
+# ------------------ Flask app Configuration ------------------
+## NEW ## -> Load environment variables from the central .env file
+load_dotenv('/home/developer/.env')
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
+
+## NEW ## -> Configure the app using variables from the .env file for security and SSO
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
+app.config['SESSION_COOKIE_DOMAIN'] = os.getenv('SESSION_COOKIE_DOMAIN')
+
+## NEW ## -> Connect the extensions (db, bcrypt, login_manager) to this specific app
+db.init_app(app)
+bcrypt.init_app(app)
+login_manager.init_app(app)
+
 
 # ------------------ Cards shown on the dashboard ------------------
 APPS = [
@@ -187,8 +211,45 @@ def _get_building_options() -> List[str]:
     try: return approval_mod.building_options()
     except Exception: return ["All"]
 
-# ------------------ Routes: Dashboard + Chart ------------------
-@app.get("/")
+
+##-------------------------------------------------------------##
+## Authentication Routes Blueprint                             ##
+##-------------------------------------------------------------##
+auth_bp = Blueprint('auth', __name__, template_folder='templates')
+
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form.get('username')).first()
+        if user and user.check_password(request.form.get('password')):
+            login_user(user, remember=request.form.get('remember'))
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('main.index'))
+        else:
+            flash('Invalid username or password.', 'danger')
+            return redirect(url_for('auth.login'))
+            
+    return render_template('login.html')
+
+@auth_bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('auth.login'))
+
+app.register_blueprint(auth_bp)
+
+
+##-------------------------------------------------------------##
+## Main Application Routes Blueprint                           ##
+##-------------------------------------------------------------##
+main_bp = Blueprint('main', __name__, template_folder='templates')
+
+@main_bp.get("/")
+@login_required
 def index():
     building = request.args.get("building", "All")
     options = _get_building_options()
@@ -240,10 +301,45 @@ def index():
         ai_asset_details=details_data,
         completeness_chart_enabled=COMPLETENESS_CHART_AVAILABLE,
         operational_cost_chart_enabled=OPERATIONAL_COST_CHART_AVAILABLE,
-        recent_logs=recent_logs
+        recent_logs=recent_logs,
+        username=current_user.username
     )
 
-@app.get("/chart/approval.png")
+@main_bp.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form.get('old_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if not current_user.check_password(old_password):
+            flash('Your old password was entered incorrectly. Please try again.', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        if new_password != confirm_password:
+            flash('New passwords do not match.', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        if len(new_password) < 8:
+            flash('New password must be at least 8 characters long.', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
+            flash('New password must contain at least one special character (e.g., !@#$%).', 'danger')
+            return redirect(url_for('main.change_password'))
+
+        current_user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        db.session.commit()
+
+        flash('Your password has been updated successfully!', 'success')
+        return redirect(url_for('main.index'))
+        
+    return render_template('change_password.html')
+
+# ------------------ Chart Routes ------------------
+@main_bp.get("/chart/approval.png")
+@login_required
 def approval_chart():
     if not CHARTS_AVAILABLE:
         return Response("Chart module unavailable", status=503, mimetype="text/plain")
@@ -258,7 +354,8 @@ def approval_chart():
         print(f"Chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
 
-@app.get("/chart/completeness.png")
+@main_bp.get("/chart/completeness.png")
+@login_required
 def completeness_chart():
     if not COMPLETENESS_CHART_AVAILABLE:
         return Response("Completeness chart module unavailable", status=503, mimetype="text/plain")
@@ -276,16 +373,14 @@ def completeness_chart():
         print(f"Completeness chart error for building '{building}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
 
-@app.get("/chart/operational_cost.png")
+@main_bp.get("/chart/operational_cost.png")
+@login_required
 def operational_cost_chart():
     if not OPERATIONAL_COST_CHART_AVAILABLE:
         abort(404, "Operational cost chart module not available.")
     try:
         chart_type = request.args.get("type", "combo")
-        # ADDED: Get building from request arguments
         building = request.args.get("building", "All")
-        
-        # UPDATED: Pass building to the rendering function
         png_bytes = operational_cost_mod.render_chart_png(chart_type=chart_type, building=building)
         
         resp = Response(png_bytes, mimetype="image/png")
@@ -295,8 +390,9 @@ def operational_cost_chart():
         print(f"Operational cost chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
 
-# ------------------ Routes: Run Tasks ------------------
-@app.post("/run/<task_key>")
+# ------------------ Task Routes ------------------
+@main_bp.post("/run/<task_key>")
+@login_required
 def run_task(task_key: str):
     try:
         task = _validate_task_key(task_key)
@@ -305,7 +401,8 @@ def run_task(task_key: str):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-@app.get("/log_status/<name>")
+@main_bp.get("/log_status/<name>")
+@login_required
 def log_status(name: str):
     try:
         path = _safe_log_path(name)
@@ -325,7 +422,7 @@ def log_status(name: str):
     except Exception:
         return jsonify({"status": "error"}), 404
 
-# ------------------ Friendly Logs UI ------------------
+# ------------------ Log UI Routes ------------------
 def _title_from_logname(name: str) -> str:
     base = Path(name).stem.rsplit(".", 1)[0]
     is_interpreter = "API_interface" in base
@@ -363,7 +460,8 @@ def _summarize_log(text: str) -> str:
             keep.append(line)
     return "\n".join(keep) if keep else "No summary items found."
 
-@app.get("/logs")
+@main_bp.get("/logs")
+@login_required
 def list_logs():
     from_view = request.args.get("from", None)
     files = list(LOG_DIR.glob("*.log"))
@@ -379,7 +477,8 @@ def list_logs():
     rows.sort(key=lambda r: r["when_ts"], reverse=True)
     return render_template("logs.html", rows=rows, from_view=from_view)
 
-@app.get("/logs/read")
+@main_bp.get("/logs/read")
+@login_required
 def read_log():
     name = request.args.get("name", "")
     mode = request.args.get("mode", "summary")
@@ -392,11 +491,15 @@ def read_log():
         is_summary=(mode != "raw"), content=content
     )
 
-@app.get("/logs/download")
+@main_bp.get("/logs/download")
+@login_required
 def download_log():
     name = request.args.get("name", "")
     _safe_log_path(name)
     return send_from_directory(LOG_DIR, name, as_attachment=True, mimetype="text/plain")
+
+app.register_blueprint(main_bp)
+
 
 # ------------------ Main ------------------
 if __name__ == "__main__":
