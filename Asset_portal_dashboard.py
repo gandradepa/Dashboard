@@ -446,35 +446,58 @@ def _when_from_ts(ts: Optional[str]) -> str:
     except Exception: pass
     return "—"
 
-def _summarize_log(text: str) -> str:
+# CORRECTED: Single, correct version of the function
+def _summarize_log(text: str = None, path: Path = None) -> str:
+    """Efficiently summarizes a log file by reading line-by-line from a path."""
+    if not path:
+        lines = text.splitlines() if text else []
+    else:
+        lines = path.open("r", encoding="utf-8", errors="replace")
+
     keep = []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if re.match(r"^Total assets found.*:\s*\d+\s*$", line, flags=re.IGNORECASE) or \
-           re.match(r"^Processing\s+QR\s+\d+", line, flags=re.IGNORECASE) or \
-           re.search(r"(^|\s)Saved\s", line, flags=re.IGNORECASE) or \
-           re.search(r"Successfully saved", line, flags=re.IGNORECASE) or \
-           re.search(r"^--- SUMMARY ---", line, flags=re.IGNORECASE) or \
-           re.search(r"Success! Updated", line, flags=re.IGNORECASE) or \
-           re.search(r"Successfully updated database", line, flags=re.IGNORECASE):
-            keep.append(line)
+    try:
+        for raw in lines:
+            line = raw.strip()
+            # This 'if' block now correctly captures all relevant summary lines
+            if re.search(r"Successfully processed and saved", line, flags=re.IGNORECASE) or \
+               re.search(r"^--- SUMMARY ---", line, flags=re.IGNORECASE) or \
+               re.search(r"^Total assets processed:", line, flags=re.IGNORECASE) or \
+               re.search(r"^Successfully saved:", line, flags=re.IGNORECASE):
+                keep.append(line)
+    finally:
+        if hasattr(lines, 'close'):
+            lines.close()
+            
     return "\n".join(keep) if keep else "No summary items found."
 
 @main_bp.get("/logs")
 @login_required
 def list_logs():
     from_view = request.args.get("from", None)
-    files = list(LOG_DIR.glob("*.log"))
     rows = []
-    for p in files:
-        ts_raw = _extract_ts_from_logname(p.name)
-        rows.append({
-            "name": p.name, "when": _when_from_ts(ts_raw),
-            "when_ts": int(ts_raw) if ts_raw and ts_raw.isdigit() else 0,
-            "title": _title_from_logname(p.name),
-            "size_kb": f"{max(p.stat().st_size // 1024, 1)} KB",
-        })
-    rows.sort(key=lambda r: r["when_ts"], reverse=True)
+    try:
+        # Sort all log files by modification time, descending
+        all_files = sorted(LOG_DIR.glob("*.log"), key=os.path.getmtime, reverse=True)
+
+        # Limit the list to only the 200 most recent files to prevent memory errors
+        recent_files = all_files[:200]
+
+        for p in recent_files:
+            try:
+                ts_raw = _extract_ts_from_logname(p.name)
+                rows.append({
+                    "name": p.name, 
+                    "when": _when_from_ts(ts_raw),
+                    "title": _title_from_logname(p.name),
+                    "size_kb": f"{max(p.stat().st_size // 1024, 1)} KB",
+                })
+            except Exception as e:
+                print(f"WARNING: Skipping log file '{p.name}' due to error: {e}")
+
+    except Exception as e:
+        print(f"CRITICAL: Could not read logs directory: {e}")
+        flash("Error: Could not read the log directory.", "danger")
+
     return render_template("logs.html", rows=rows, from_view=from_view)
 
 @main_bp.get("/logs/read")
@@ -483,14 +506,36 @@ def read_log():
     name = request.args.get("name", "")
     mode = request.args.get("mode", "summary")
     path = _safe_log_path(name)
-    text = path.read_text(encoding="utf-8", errors="replace")
-    content = _summarize_log(text) if mode != "raw" else text
+    
+    # Set a 5MB limit for viewing raw logs in the browser
+    RAW_VIEW_LIMIT_BYTES = 5 * 1024 * 1024 
+    content = ""
+    is_summary = (mode != "raw")
+
+    try:
+        if is_summary:
+            # Efficiently summarize from the file path
+            content = _summarize_log(path=path)
+        else:  # Raw mode
+            file_size = path.stat().st_size
+            if file_size > RAW_VIEW_LIMIT_BYTES:
+                size_mb = file_size / 1024 / 1024
+                content = (f"Error: Raw log file is too large to display ({size_mb:.2f} MB).\n\n"
+                           f"Please use the 'Download' button to view the full log.")
+            else:
+                content = path.read_text(encoding="utf-8", errors="replace")
+
+    except Exception as e:
+        print(f"CRITICAL ERROR reading log {name}: {e}")
+        flash(f"Could not read log file: {e}", "danger")
+        content = f"Error: A critical error occurred while trying to read the log file."
+
     return render_template(
         "log_read.html", name=name, title=_title_from_logname(name),
         when=_when_from_ts(_extract_ts_from_logname(name)),
-        is_summary=(mode != "raw"), content=content
+        is_summary=is_summary, content=content
     )
-
+    
 @main_bp.get("/logs/download")
 @login_required
 def download_log():
