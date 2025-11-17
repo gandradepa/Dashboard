@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FLS Charts</title>
+    <style>
+        /* Make html and body fill the iframe height exactly */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            background-color: #f4f7fb;
+            box-sizing: border-box; /* Ensures padding is included in height */
+        }
+
+        body {
+            /* Use flexbox to control layout */
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: center;
+            align-items: stretch; /* Makes containers the same height */
+            gap: 20px; 
+            padding: 10px;
+        }
+
+        .chart-container {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 15px;
+            flex: 1; /* Each container will grow to take up 1 equal share of space */
+            min-width: 400px; 
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        iframe {
+            width: 100%;
+            border: none;
+            flex-grow: 1; /* Make iframe grow to fill its parent */
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <iframe src="{{ url_for('static', filename='outstanding_devices_chart.html') }}?v={{ ts }}"></iframe>
+    </div>
+    
+    <div class="chart-container">
+        <iframe src="{{ url_for('static', filename='priority_chart.html') }}?v={{ ts }}"></iframe>
+    </div>
+</body>
+</html>

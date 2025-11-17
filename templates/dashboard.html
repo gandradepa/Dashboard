@@ -10,6 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
       :root {
         --ubc-blue: #002145;
@@ -28,7 +33,7 @@
         color: var(--dark-grey);
       }
       
-      #main-view, #analytics-view, #qr-pending-view, #operational-cost-view {
+      #main-view, #analytics-view, #qr-pending-view, #operational-cost-view, #fls-assets-view {
         display: none;
       }
 
@@ -249,11 +254,15 @@
         width: 100%;
         border-collapse: collapse;
       }
+      
+      /* [START OF CHANGE] Increased horizontal padding from 1.5rem to 3.0rem */
       .asset-table th, .asset-table td {
-        padding: 0.75rem 1rem;
+        padding: 0.75rem 3.0rem;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
       }
+      /* [END OF CHANGE] */
+      
       .asset-table th {
         font-weight: 600;
         color: var(--ubc-blue);
@@ -288,6 +297,235 @@
         .ubc-brand { font-size: 0.9rem; }
         main.container { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
       }
+      
+      .container-fluid-fls {
+          max-width: 100% !important;
+          padding-left: 2rem;
+          padding-right: 2rem;
+      }
+
+      #fls-assets-view {
+          min-width: 1400px;
+      }
+      
+      tr.disabled {
+          color: #6c757d; 
+          background-color: #f8f9fa; 
+      }
+      tr.disabled .delete-row {
+          cursor: not-allowed;
+      }
+
+      /* [START] --- STYLES FOR FLS ASSETS VIEW (FROM SCREENSHOT) --- */
+      .btn-excel {
+        background-color: #28a745;
+        color: white;
+      }
+      .btn-excel:hover {
+        background-color: #218838;
+        color: white;
+      }
+      .btn-pdf {
+        background-color: #dc3545;
+        color: white;
+      }
+      .btn-pdf:hover {
+        background-color: #c82333;
+        color: white;
+      }
+      .btn-email {
+        background-color: #007bff;
+        color: white;
+      }
+      .btn-email:hover {
+        background-color: #0069d9;
+        color: white;
+      }
+      .btn-teams {
+        background-color: #464775; 
+        color: white;
+      }
+      .btn-teams:hover {
+        background-color: #313252;
+        color: white;
+      }
+      
+      #delete-selected-btn {
+          background-color: #dc3545;
+          border-color: #dc3545;
+      }
+      #delete-selected-btn:hover {
+          background-color: #c82333;
+          border-color: #bd2130;
+      }
+      
+      #fls-assets-view .action-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+      }
+      
+      #fls-assets-view .action-buttons .btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 500;
+      }
+
+      #fls-assets-view .filter-container {
+          display: flex;
+          flex-wrap: nowrap;
+          gap: 1rem;
+          align-items: center;
+          padding: 1rem;
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          margin-bottom: 1.5rem;
+      }
+      
+      #fls-assets-view .filter-container .search-wrapper {
+          flex-grow: 1;
+          min-width: 200px;
+      }
+      
+      #fls-assets-view .filter-container .search-wrapper .input-group {
+          width: 100%;
+      }
+      
+      #fls-assets-view .filter-container > div {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-shrink: 0;
+      }
+      
+      #fls-assets-view .filter-container label {
+          margin-bottom: 0;
+          white-space: nowrap;
+      }
+      
+      #fls-assets-view .filter-container .form-select,
+      #fls-assets-view .filter-container .form-control {
+          min-width: 150px;
+      }
+      
+      #fls-assets-view .filter-container #reset-filters-btn {
+          background: none;
+          border: none;
+          color: var(--ubc-blue);
+      }
+      #fls-assets-view .filter-container #reset-filters-btn:hover {
+          background-color: var(--light-grey);
+      }
+      
+      #fls-assets-view .table-container {
+          background-color: var(--card-bg);
+          border-radius: 16px;
+          padding: 1.5rem;
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+          overflow-x: auto;
+      }
+      
+      #fls-assets-view #asset-table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      #fls-assets-view #asset-table th,
+      #fls-assets-view #asset-table td {
+          padding: 0.75rem 1rem;
+          text-align: left;
+          border-bottom: 1px solid var(--border-color);
+          white-space: nowrap;
+          font-size: 0.875rem;
+      }
+      
+      #fls-assets-view #asset-table th {
+          font-weight: 600;
+          color: var(--ubc-blue);
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+      }
+      
+      #fls-assets-view #asset-table tbody tr:last-child td {
+          border-bottom: none;
+      }
+      
+      #fls-assets-view #asset-table tbody tr:hover {
+          background-color: #f8f9fa;
+      }
+      
+      #fls-assets-view #asset-table .edit-row,
+      #fls-assets-view #asset-table .delete-row {
+          cursor: pointer;
+          color: var(--ubc-blue-light);
+      }
+      #fls-assets-view #asset-table .delete-row {
+          color: var(--error-red);
+      }
+      #fls-assets-view #asset-table .delete-row.disabled {
+          color: #6c757d;
+          cursor: not-allowed;
+      }
+      /* [END] --- STYLES FOR FLS ASSETS VIEW --- */
+
+      /* [START] --- STYLES FOR FLS ASSET MODAL (FROM SCREENSHOT) --- */
+      #asset-modal-bootstrap .modal-header {
+          background-color: var(--ubc-blue);
+          color: white;
+      }
+      #asset-modal-bootstrap .modal-title {
+          color: white;
+      }
+      #asset-modal-bootstrap .modal-header .btn-close {
+          filter: invert(1) grayscale(100%) brightness(200%);
+      }
+      
+      #asset-form {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem 1.5rem; /* row-gap column-gap */
+      }
+      #asset-form .form-group {
+          margin-bottom: 0; /* Remove default margin, grid gap handles it */
+      }
+      #asset-form .full-width {
+          grid-column: span 2;
+      }
+      
+      /* Style for readonly/disabled inputs to match screenshot */
+      #asset-form input[readonly],
+      #asset-form select[disabled] {
+          background-color: #e9ecef;
+          opacity: 1;
+      }
+
+      #asset-modal-bootstrap .modal-footer {
+          justify-content: space-between;
+      }
+      
+      /* Override footer button styles to match screenshot */
+      #asset-modal-bootstrap .modal-footer #modal-cancel-btn {
+          background-color: #6c757d;
+          color: white;
+          border: none;
+      }
+      #asset-modal-bootstrap .modal-footer #modal-cancel-btn:hover {
+          background-color: #5a6268;
+      }
+      #asset-modal-bootstrap .modal-footer #modal-save-btn {
+          background-color: #28a745;
+          color: white;
+          border: none;
+      }
+      #asset-modal-bootstrap .modal-footer #modal-save-btn:hover {
+          background-color: #218838;
+      }
+      /* [END] --- STYLES FOR FLS ASSET MODAL --- */
+
     </style>
   </head>
   <body class="ubc-body">
@@ -298,7 +536,7 @@
             <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
             <span class="ubc-brand d-none d-md-inline">Dashboard Management for New Assets</span>
           </a>
-          <div class="d-flex align-items-center gap-md-3 gap-2">
+          <div class="d-flex align-items: center gap-md-3 gap-2">
              <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" alt="UBC Facilities Logo" class="ubc-facilities-logo" />
              <i data-lucide="circle-user-round" style="color: var(--ubc-blue);"></i>
              <a href="{{ url_for('main.change_password') }}" class="btn btn-sm btn-outline-secondary" title="Change Password">
@@ -451,6 +689,14 @@
                         <a id="show-operational-cost-btn" role="button" title="Open Operational Cost" style="cursor: pointer;">
                           <img src="{{ url_for('static', filename='QR Code Asset Management.png') }}" alt="Open Operational Cost" width="200" height="200" style="max-width: 100%; height: auto; border-radius: 8px;">
                         </a>
+                      </div>
+                      <div>
+                        <div class="card h-100" style="width: 200px; height: 200px; border-radius: 8px; background-color: #e9ecef;">
+                            <a id="show-fls-assets-btn" role="button" title="Open FLS Assets" class="text-decoration-none d-flex flex-column justify-content-center align-items-center h-100">
+                                <i data-lucide="clipboard-list" style="color: var(--ubc-blue); width: 64px; height: 64px;"></i>
+                                <span class="mt-2 fw-bold" style="color: var(--ubc-blue);">FLS Assets</span>
+                            </a>
+                        </div>
                       </div>
                    </div>
               </div>
@@ -649,6 +895,279 @@
         </section>
       </div>
 
+      <div id="fls-assets-view">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 page-title">FLS New Device Entry</h1>
+            <button id="back-to-main-btn-fls" class="btn ubc-btn-secondary">Back to Dashboard</button>
+        </div>
+
+        <div class="mb-5">
+            <h2 class="section-title d-flex align-items-center gap-2 mb-3">
+                <i data-lucide="bar-chart-3"></i>
+                Devices in Process - Monitor
+            </h2>
+            <div class="card">
+                <div class="card-body p-0">
+                    <iframe id="charts-iframe" src="{{ url_for('main.fls_charts') }}" style="width: 100%; height: 550px; border: none;" title="FLS Charts"></iframe>
+                </div>
+            </div>
+        </div>
+        
+        <h2 class="section-title d-flex align-items-center gap-2 mb-3">
+            <i data-lucide="table"></i>
+            Device Administration
+        </h2>
+        
+        <div class="action-buttons">
+            <button id="add-row-btn" class="btn ubc-btn">
+                <i data-lucide="plus-circle"></i> Add New Asset
+            </button>
+            <button id="delete-selected-btn" class="btn" style="display: none;"> <i data-lucide="trash-2"></i> Delete Selected
+            </button>
+            <button id="export-btn" class="btn btn-excel" title="Export to Excel">
+                <i data-lucide="file-spreadsheet"></i> Excel
+            </button>
+            <button id="pdf-btn" class="btn btn-pdf" title="Download as PDF">
+                <i data-lucide="file-text"></i> PDF
+            </button>
+            <button id="email-pdf-btn" class="btn btn-email" title="Email as PDF">
+                 <i data-lucide="mail"></i> Email PDF
+            </button> 
+            <button id="teams-btn" class="btn btn-teams" title="Post to Teams">
+                <i data-lucide="send"></i> Post to Teams
+            </button>
+        </div>
+        <div class="filter-container">
+            <div class="search-wrapper">
+                <div class="input-group">
+                    <span class="input-group-text"><i data-lucide="search"></i></span>
+                    <input type="text" id="global-search-input" class="form-control" placeholder="Search across all fields...">
+                </div>
+            </div>
+            <div>
+                <label for="status-filter">Status:</label>
+                <select id="status-filter" class="form-select">
+                    <option value="" selected>All</option>
+                    <option value="0">Ongoing</option> 
+                    <option value="1">Approved</option>
+                </select>
+            </div>
+            <div>
+                <label for="property-filter">Property:</label>
+                <select id="property-filter" class="form-select">
+                    <option value="">All</option>
+                    </select>
+            </div>
+            <div>
+                <label for="start-date-filter">Date From:</label>
+                <input type="date" id="start-date-filter" class="form-control">
+            </div>
+            <div>
+                <label for="end-date-filter">Date To:</label>
+                <input type="date" id="end-date-filter" class="form-control">
+            </div>
+            <button id="reset-filters-btn" class="btn" title="Reset Filters">
+                <i data-lucide="rotate-ccw"></i> Reset
+            </button>
+        </div>
+        <div id="message-container"></div>
+    
+        <div class="table-container">
+            <table id="asset-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all-checkbox" class="form-check-input" title="Select All Visible"></th>
+                        <th>Work Order</th>
+                        <th>Asset Tag</th>
+                        <th>Asset Group</th>
+                        <th>Description</th>
+                        <th>Property</th>
+                        <th>Space</th>
+                        <th>Attribute Set</th>
+                        <th>Device Address</th>
+                        <th>Device Type</th>
+                        <th>UN Account Number</th>
+                        <th>Planon Code</th>
+                        <th>Creation Date</th> 
+                        <th>Status</th>
+                        <th>Workflow</th>
+                        <th>Actions</th>
+                        <th>Delete</th>
+                    </tr>
+                 </thead>
+                <tbody id="table-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="modal fade" id="delete-confirm-modal-bootstrap" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel"><i data-lucide="alert-triangle" class="me-2"></i> Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                 <p id="delete-confirm-message" class="mb-0">Are you sure you want to delete this row?</p>
+              </div>
+              <div class="modal-footer justify-content-center">
+                <button type="button" class="btn ubc-btn-secondary" data-bs-dismiss="modal" id="cancel-delete-btn">Cancel</button>
+                <button type="button" class="btn ubc-btn-danger" id="confirm-delete-btn">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal fade" id="asset-modal-bootstrap" tabindex="-1" aria-labelledby="assetModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered"> <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-title">Edit Asset</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="asset-form" onsubmit="return false;" novalidate>
+                            <input type="hidden" id="modal-asset-index">
+                            
+                            <div class="form-group">
+                                <label for="modal-work-order">Work Order *</label>
+                                <input type="text" id="modal-work-order" class="form-control">
+                                <div class="invalid-feedback">Work Order is required.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-asset-tag">Asset Tag *</label>
+                                <input type="text" id="modal-asset-tag" class="form-control">
+                                <div class="invalid-feedback">Asset Tag is required.</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-property">Property *</label>
+                                <select id="modal-property" class="form-select"></select>
+                                <div class="invalid-feedback">Property is required.</div>
+                            </div>
+    
+                            <div class="form-group">
+                                <label for="modal-space">Space</label>
+                                <select id="modal-space" class="form-select" disabled>
+                                    <option value="">Select property first...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-asset-group">Asset Group</label>
+                                <select id="modal-asset-group" class="form-select"></select>
+                            </div>
+    
+                            <div class="form-group">
+                                <label for="modal-un-account">UN Account Number</label>
+                                <input type="text" id="modal-un-account" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-planon-code">Planon Code</label>
+                                <input type="text" id="modal-planon-code" class="form-control">
+                            </div>
+                            
+                            <div></div> <div class="form-group full-width">
+                                <label for="modal-description">Description</label>
+                                <input type="text" id="modal-description" class="form-control" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-device-address">Device Address</label>
+                                <input type="text" id="modal-device-address" class="form-control" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-device-type">Device Type</label>
+                                <input type="text" id="modal-device-type" class="form-control" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-attribute-set">Attribute Set</label>
+                                <input type="text" id="modal-attribute-set" class="form-control" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-status">Status</label>
+                                <select id="modal-status" class="form-select">
+                                    <option value="">Select...</option>
+                                    <option value="0">Ongoing</option> 
+                                    <option value="1">Approved</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-creation-date">Creation Date</label>
+                                <input type="text" id="modal-creation-date" class="form-control" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="modal-workflow">Workflow</label>
+                                <select id="modal-workflow" class="form-select">
+                                </select>
+                            </div>
+    
+                        </form>
+                        </div>
+                    <div class="modal-footer">
+                        <span class="me-auto text-muted fst-italic"><small>* Mandatory Information.</small></span>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="modal-cancel-btn">Cancel</button>
+                        <button type="button" class="btn btn-success" id="modal-save-btn">Save Asset</button>
+                    </div>
+                    </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="bulk-edit-modal-bootstrap" tabindex="-1" aria-labelledby="bulkEditModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bulk-edit-modal-title">Bulk Edit Assets</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Apply changes to <strong id="bulk-edit-count">0</strong> selected assets. Only checked fields will be updated.</p>
+                        <form id="bulk-edit-form" onsubmit="return false;">
+                            <div class="input-group mb-3">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-property" aria-label="Checkbox for enabling property edit">
+                                </div>
+                                <select id="bulk-modal-property" class="form-select" disabled></select>
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-space" aria-label="Checkbox for enabling space edit">
+                                </div>
+                                <select id="bulk-modal-space" class="form-select" disabled>
+                                    <option value="">Select property first...</option>
+                                </select>
+                            </div>
+                            <div class="input-group mb-3">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-status" aria-label="Checkbox for enabling status edit">
+                                </div>
+                                <select id="bulk-modal-status" class="form-select" disabled>
+                                    <option value="">Select Status...</option>
+                                    <option value="0">Ongoing</option>
+                                    <option value="1">Approved</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-workflow" aria-label="Checkbox for enabling workflow edit">
+                                </div>
+                                <select id="bulk-modal-workflow" class="form-select" disabled>
+                            </div>
+                        </form>
+                    </div>
+    
+                    <div class="modal-footer"><button type="button" class="btn ubc-btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn ubc-btn-success" id="bulk-modal-save-btn">Apply Changes</button></div>
+                </div>
+            </div>
+        </div>
+      </div>
+
     </main>
 
     <footer class="ubc-footer text-center py-4 mt-5">
@@ -656,8 +1175,7 @@
         <small class="footer-text"> &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved. </small>
       </div>
     </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         lucide.createIcons();
 
@@ -759,11 +1277,16 @@
         const analyticsView = document.getElementById('analytics-view');
         const qrPendingView = document.getElementById('qr-pending-view');
         const operationalCostView = document.getElementById('operational-cost-view');
+        const flsAssetsView = document.getElementById('fls-assets-view');
+        
+        // Get a reference to the <main> element
+        const mainElement = document.getElementById('main'); 
 
         const showAnalyticsBtn = document.getElementById('show-analytics-btn');
         const showQrPendingBtn = document.getElementById('show-qr-pending-btn');
         const showOperationalCostBtn = document.getElementById('show-operational-cost-btn');
-        
+        const showFlsAssetsBtn = document.getElementById('show-fls-assets-btn');
+
         const backToMainBtn = document.getElementById('back-to-main-btn');
         const backToMainBtnQr = document.getElementById('back-to-main-btn-qr');
         const backToMainBtnOp = document.getElementById('back-to-main-btn-op');
@@ -774,6 +1297,10 @@
             analyticsView.style.display = 'none';
             qrPendingView.style.display = 'none';
             operationalCostView.style.display = 'none';
+            flsAssetsView.style.display = 'none';
+            
+            // Remove the wide-view class by default
+            mainElement.classList.remove('container-fluid-fls'); 
 
             if (hash === '#qr-pending-view') {
                 qrPendingView.style.display = 'block';
@@ -781,6 +1308,12 @@
                 analyticsView.style.display = 'block';
             } else if (hash === '#operational-cost-view') {
                 operationalCostView.style.display = 'block';
+            } else if (hash === '#fls-assets-view') {
+                flsAssetsView.style.display = 'block';
+                
+                // Add the wide-view class ONLY for the FLS view
+                mainElement.classList.add('container-fluid-fls'); 
+                
             } else {
                 mainView.style.display = 'block';
             }
@@ -808,6 +1341,13 @@
             });
         }
 
+        if (showFlsAssetsBtn) {
+            showFlsAssetsBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.location.hash = 'fls-assets-view';
+            });
+        }
+
         if (backToMainBtn) {
             backToMainBtn.addEventListener('click', () => { window.location.hash = ''; });
         }
@@ -816,6 +1356,10 @@
         }
         if (backToMainBtnOp) {
             backToMainBtnOp.addEventListener('click', () => { window.location.hash = ''; });
+        }
+        const backToMainBtnFls = document.getElementById('back-to-main-btn-fls');
+        if (backToMainBtnFls) {
+            backToMainBtnFls.addEventListener('click', () => { window.location.hash = ''; });
         }
 
         // --- Completeness Score Chart Logic ---
@@ -882,6 +1426,741 @@
 
         window.addEventListener('pageshow', handleViewSwitch);
         window.addEventListener('hashchange', handleViewSwitch);
+    </script>
+
+    <script>
+        // --- Data from Flask for FLS Assets ---
+        // This script will now fetch data dynamically
+        document.addEventListener('DOMContentLoaded', () => {
+            const flsView = document.getElementById('fls-assets-view');
+            if (!flsView) return;
+
+            // Only initialize the FLS script if the view is present
+            initializeFlsAssets();
+        });
+
+        async function initializeFlsAssets() {
+            try {
+                const response = await fetch("{{ url_for('main.get_fls_asset_data') }}");
+                if (!response.ok) {
+                    throw new Error(`Failed to load FLS data: ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // Pass fetched data to the main FLS script logic
+                runFlsScript(
+                    data.property_list || [],
+                    data.spaces_by_property || {},
+                    data.device_type_map || {},
+                    data.existing_assets || [],
+                    data.asset_group_options || [], 
+                    data.asset_group_lookup_map || {} 
+                );
+
+            } catch (error) {
+                console.error("Error initializing FLS Assets:", error);
+                const tableBody = document.getElementById('table-body');
+                if(tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="17" class="text-center text-danger p-4">Error: Could not load asset data. ${error.message}</td></tr>`;
+                }
+            }
+        }
+
+        function runFlsScript(
+            propertyList, 
+            spacesByPropertyData, 
+            deviceTypeMapData, 
+            existingAssets,
+            assetGroupOptions,      
+            assetGroupLookupMap     
+        ) {
+            
+            lucide.createIcons();
+
+            let currentAssets = {};
+            let isNewAssetMode = false; // Flag to track modal mode
+            const tableBody = document.getElementById('table-body');
+            const messageContainer = document.getElementById('message-container');
+            const statusFilter = document.getElementById('status-filter');
+            const propertyFilter = document.getElementById('property-filter');
+            const startDateFilter = document.getElementById('start-date-filter');
+            const endDateFilter = document.getElementById('end-date-filter');
+            const resetFiltersBtn = document.getElementById('reset-filters-btn');
+            const globalSearchInput = document.getElementById('global-search-input');
+            const addRowBtn = document.getElementById('add-row-btn');
+            const exportBtn = document.getElementById('export-btn');
+            const pdfBtn = document.getElementById('pdf-btn');
+            const emailPdfBtn = document.getElementById('email-pdf-btn');
+            const teamsBtn = document.getElementById('teams-btn');
+            const bulkEditBtn = document.getElementById('bulk-edit-btn'); // This element is hidden in the new design but logic remains
+            const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const assetModal = new bootstrap.Modal(document.getElementById('asset-modal-bootstrap'));
+            const assetForm = document.getElementById('asset-form');
+            const modalTitle = document.getElementById('modal-title');
+            const modalIndex = document.getElementById('modal-asset-index');
+            const modalWorkOrder = document.getElementById('modal-work-order');
+            const modalAssetTag = document.getElementById('modal-asset-tag');
+            const modalAssetGroup = document.getElementById('modal-asset-group');
+            const modalDescription = document.getElementById('modal-description');
+            const modalProperty = document.getElementById('modal-property');
+            const modalSpace = document.getElementById('modal-space');
+            const modalAttributeSet = document.getElementById('modal-attribute-set');
+            const modalDeviceAddress = document.getElementById('modal-device-address');
+            const modalDeviceType = document.getElementById('modal-device-type');
+            const modalUnAccount = document.getElementById('modal-un-account');
+            const modalPlanonCode = document.getElementById('modal-planon-code');
+            const modalCreationDate = document.getElementById('modal-creation-date');
+            const modalStatus = document.getElementById('modal-status');
+            const modalWorkflow = document.getElementById('modal-workflow');
+            const modalSaveBtn = document.getElementById('modal-save-btn');
+            
+            const deleteConfirmModal = new bootstrap.Modal(document.getElementById('delete-confirm-modal-bootstrap'));
+            const deleteConfirmMessage = document.getElementById('delete-confirm-message');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            let pendingDeleteIndices = [];
+            let pendingSingleDeleteIndex = null;
+            
+            // --- Bulk Edit Modal Elements ---
+            const bulkEditModal = new bootstrap.Modal(document.getElementById('bulk-edit-modal-bootstrap'));
+            const bulkModalSaveBtn = document.getElementById('bulk-modal-save-btn');
+            const bulkEditForm = document.getElementById('bulk-edit-form');
+            const bulkEditCount = document.getElementById('bulk-edit-count');
+            const bulkModalProperty = document.getElementById('bulk-modal-property');
+            const bulkModalSpace = document.getElementById('bulk-modal-space');
+            const bulkModalStatus = document.getElementById('bulk-modal-status');
+            const bulkModalWorkflow = document.getElementById('bulk-modal-workflow');
+
+
+            function createReadOnlyRow(asset) {
+                const row = document.createElement('tr'); row.dataset.index = asset.index;
+                const getValue = (val) => val ?? '';
+                const statusMap = {'0': 'Ongoing', '1': 'Approved'};
+                const statusText = statusMap[String(asset.status)] || 'N/A';
+                
+                const planonCodeValue = getValue(asset.planon_code);
+                
+                // --- UPDATE: Full workflow logic now applied to table row ---
+                let dynamicWorkflowText = '';
+                if (planonCodeValue) {
+                    dynamicWorkflowText = "Complete";
+                } else if (!getValue(asset.asset_group) || !getValue(asset.space)) {
+                    dynamicWorkflowText = "Electrical Team";
+                } else {
+                    dynamicWorkflowText = "Asset Management";
+                }
+                // --- END OF UPDATE ---
+
+                const deleteDisabledClass = planonCodeValue ? 'disabled' : '';
+                
+                if (deleteDisabledClass) {
+                    row.classList.add(deleteDisabledClass);
+                }
+                
+                // [START] MODIFIED ROW HTML
+                row.innerHTML = `
+                    <td><input type="checkbox" class="row-checkbox form-check-input" ${planonCodeValue ? 'disabled' : ''}></td>
+                    <td>${getValue(asset.work_order)}</td>
+                    <td>${getValue(asset.asset_tag)}</td> 
+                    <td>${getValue(asset.asset_group)}</td>
+                    <td>${getValue(asset.description)}</td>
+                    <td>${getValue(asset.property)}</td>
+                    <td>${getValue(asset.space)}</td>
+                    <td>${getValue(asset.attribute_set)}</td>
+                    <td>${getValue(asset.device_address)}</td>
+                    <td>${getValue(asset.device_type)}</td>
+                    <td>${getValue(asset.un_account_number)}</td>
+                    <td>${planonCodeValue}</td>
+                    <td>${getValue(asset.creation_date)}</td>
+                    <td>${statusText}</td>
+                    <td>${dynamicWorkflowText}</td>
+                    <td><a href="#" class="edit-row" title="Edit Asset"><i data-lucide="edit" class="lucide"></i></a></td>
+                    <td class="delete-row ${deleteDisabledClass}" title="${planonCodeValue ? 'Cannot delete - Planon Code exists' : 'Delete Row'}">
+                        <i data-lucide="trash-2" class="lucide"></i>
+                    </td>
+                `;
+                // [END] MODIFIED ROW HTML
+                
+                row.dataset.planonCode = planonCodeValue;
+                return row;
+            }
+
+            function renderTable() {
+                tableBody.innerHTML = '';
+                const sortedIndices = Object.keys(currentAssets).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                sortedIndices.forEach(index => {
+                    tableBody.appendChild(createReadOnlyRow(currentAssets[index]));
+                });
+                lucide.createIcons();
+                filterTable();
+                updateActionButtons(); // Update button visibility after render
+                selectAllCheckbox.checked = false;
+            }
+
+            function updateWorkflowStatus() {
+                const planonCode = modalPlanonCode.value.trim();
+                const assetGroup = modalAssetGroup.value; 
+                const space = modalSpace.value;
+
+                if (planonCode) {
+                    modalWorkflow.value = "Complete";
+                } else if (!assetGroup || !space) {
+                    modalWorkflow.value = "Electrical Team";
+                } else {
+                    modalWorkflow.value = "Asset Management";
+                }
+            }
+            
+            function togglePlanonCodeEditability() {
+                if (modalStatus.value === "1") { // "1" is Approved
+                    modalPlanonCode.readOnly = false;
+                    modalPlanonCode.title = '';
+                } else {
+                    modalPlanonCode.readOnly = true;
+                    modalPlanonCode.title = 'Status must be "Approved" to edit the Planon Code.';
+                }
+            }
+
+            function openModalForNew() {
+                assetForm.reset();
+                assetForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
+                    el.classList.remove('is-invalid', 'is-valid');
+                });
+                isNewAssetMode = true; // Set flag
+                modalTitle.innerText = 'Add New Asset';
+                modalIndex.value = Date.now().toString() + Math.floor(Math.random() * 100);
+                modalStatus.value = '0';
+                modalSpace.innerHTML = '<option value="">Select property first...</option>';
+                modalSpace.disabled = true;
+                modalCreationDate.value = '(Will be set on save)';
+                assetModal.show();
+                
+                updateWorkflowStatus();
+                togglePlanonCodeEditability(); 
+            }
+
+            function openModalForEdit(index) {
+                const asset = currentAssets[index];
+                if (!asset) return;
+                assetForm.reset();
+                assetForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
+                    el.classList.remove('is-invalid', 'is-valid');
+                });
+                isNewAssetMode = false; // Set flag
+                modalTitle.innerText = 'Edit Asset';
+                modalIndex.value = asset.index;
+                modalWorkOrder.value = asset.work_order || '';
+                modalAssetTag.value = asset.asset_tag || '';
+                
+                const assetGroupName = asset.asset_group || '';
+                let matchingOptionValue = '';
+                if (assetGroupName) {
+                    for (let option of modalAssetGroup.options) {
+                        if (option.value.startsWith(assetGroupName + ' | ') || option.value === assetGroupName) {
+                            matchingOptionValue = option.value;
+                            break;
+                        }
+                    }
+                }
+                modalAssetGroup.value = matchingOptionValue;
+
+                modalDescription.value = asset.description || '';
+                modalProperty.value = asset.property || '';
+                modalAttributeSet.value = asset.attribute_set || '';
+                modalDeviceAddress.value = asset.device_address || '';
+                modalDeviceType.value = asset.device_type || '';
+                modalUnAccount.value = asset.un_account_number || '';
+                modalPlanonCode.value = asset.planon_code || ''; 
+                modalCreationDate.value = asset.creation_date || '';
+                modalStatus.value = String(asset.status ?? "");
+                
+                populateSpaceDropdown(asset.property, asset.space); 
+                
+                assetModal.show();
+ 
+                updateWorkflowStatus();
+                togglePlanonCodeEditability(); 
+            }
+            
+            function openModalForDuplicate(index) {
+                const asset = currentAssets[index];
+                if (!asset) return;
+                
+                openModalForEdit(index); // First, load all data just like an edit
+                
+                // Now, override fields for duplication
+                isNewAssetMode = true; // It's a "new" asset
+                modalTitle.innerText = 'Duplicate Asset';
+                
+                // Get a new unique index
+                modalIndex.value = Date.now().toString() + Math.floor(Math.random() * 100);
+                
+                // Clear fields that should not be copied
+                modalPlanonCode.value = '';
+                modalCreationDate.value = '(Will be set on save)';
+                
+                // Set default status for a new asset
+                modalStatus.value = '0'; // Ongoing
+                
+                // Re-run the status/workflow logic
+                updateWorkflowStatus();
+                togglePlanonCodeEditability(); 
+            }
+
+            function populateSpaceDropdown(selectedProperty, selectedSpace = null) {
+                modalSpace.disabled = !selectedProperty;
+                modalSpace.innerHTML = selectedProperty ? '<option value="">Select Space...</option>' : '<option value="">Select property first...</option>';
+                if (selectedProperty) {
+                    const spaces = spacesByPropertyData[selectedProperty] || [];
+                    spaces.sort().forEach(space => {
+                        modalSpace.innerHTML += `<option value="${space}" ${selectedSpace === space ? 'selected' : ''}>${space}</option>`;
+                    });
+                }
+            }
+
+            async function saveModalData() {
+                const workOrder = modalWorkOrder.value.trim();
+                const assetTag = modalAssetTag.value.trim();
+                const property = modalProperty.value;
+
+                let isValid = true;
+                [modalWorkOrder, modalAssetTag, modalProperty].forEach(el => {
+                    el.classList.remove('is-invalid', 'is-valid');
+                });
+                if (!workOrder) {
+                    modalWorkOrder.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    modalWorkOrder.classList.add('is-valid');
+                }
+                if (!assetTag) {
+                    modalAssetTag.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    modalAssetTag.classList.add('is-valid');
+                }
+                if (!property) {
+                    modalProperty.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    modalProperty.classList.add('is-valid');
+                }
+                if (!isValid) {
+                    return; 
+                }
+
+                const assetGroupSelectedOption = modalAssetGroup.value;
+                const assetGroupName = assetGroupSelectedOption ? assetGroupSelectedOption.split(' | ')[0] : '';
+
+                const asset = {
+                    'index': modalIndex.value, 
+                    'work_order': workOrder, 
+                    'asset_tag': assetTag,
+                    'asset_group': assetGroupName, 
+                    'description': modalDescription.value.trim(), 
+                    'property': property,
+                    'space': modalSpace.value, 
+                    'attribute_set': modalAttributeSet.value.trim(), 
+                    'device_address': modalDeviceAddress.value.trim(),
+                    'device_type': modalDeviceType.value.trim(),
+                    'un_account_number': modalUnAccount.value.trim(), 
+                    'planon_code': modalPlanonCode.value.trim(),
+                    'status': modalStatus.value, 
+                    'workflow': modalWorkflow.value 
+                };
+                try {
+                    modalSaveBtn.disabled = true;
+                    const response = await fetch("{{ url_for('main.add_fls_assets') }}", {
+                        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify([asset])
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        const savedAsset = result.assets[0];
+                        currentAssets[savedAsset.index] = savedAsset;
+                        renderTable();
+                        assetModal.hide();
+                        showMessage(result.message, 'success');
+                    } else {
+                        showMessage(result.message || 'An unknown error occurred.', 'error');
+                    }
+                } catch (error) {
+                    showMessage(`Network error: ${error.message}`, 'error');
+                } finally {
+                    modalSaveBtn.disabled = false;
+                }
+            }
+
+            function showMessage(message, type) {
+                messageContainer.textContent = message;
+                messageContainer.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+                messageContainer.style.display = 'block';
+                if (type === 'success') setTimeout(() => { messageContainer.style.display = 'none'; }, 4000);
+            }
+
+            function filterTable() {
+                let statusValue = statusFilter.value;
+                if (statusValue === "Ongoing") statusValue = "0";
+                else if (statusValue === "Approved") statusValue = "1";
+                
+                const propertyValue = propertyFilter.value;
+                const searchValue = globalSearchInput.value.toLowerCase();
+                
+                const startDateValue = startDateFilter.value;
+                const endDateValue = endDateFilter.value;
+
+                const startDate = startDateValue ? new Date(startDateValue + 'T00:00:00') : null;
+                const endDate = endDateValue ? new Date(endDateValue + 'T23:59:59') : null;
+
+                tableBody.querySelectorAll('tr').forEach(row => {
+                    const asset = currentAssets[row.dataset.index];
+                    let show = true;
+                    
+                    if (statusValue && String(asset.status) !== statusValue) show = false;
+                    if (propertyValue && asset.property !== propertyValue) show = false;
+                    
+                    if (show && (startDate || endDate) && asset.creation_date) {
+                        try {
+                            const parts = asset.creation_date.split('/');
+                            if (parts.length === 3) {
+                                const assetDate = new Date(parts[2], parts[0] - 1, parts[1]);
+                                if (startDate && assetDate < startDate) show = false;
+                                if (endDate && assetDate > endDate) show = false;
+                            } else {
+                                if(startDate || endDate) show = false; 
+                            }
+                        } catch (e) {
+                            console.warn("Invalid date format for asset:", asset.index, asset.creation_date);
+                            if(startDate || endDate) show = false; 
+                        }
+                    }
+                    
+                    if (show && searchValue && !Object.values(asset).join(' ').toLowerCase().includes(searchValue)) show = false;
+                    
+                    row.style.display = show ? '' : 'none';
+                });
+            }
+
+            function initializeModalDropdowns() {
+                modalAssetGroup.innerHTML = '<option value="">Select...</option>' + assetGroupOptions.map(g => `<option value="${g}">${g}</option>`).join('');
+                
+                modalProperty.innerHTML = '<option value="">Select...</option>' + propertyList.sort().map(p => `<option value="${p}">${p}</option>`).join('');
+                propertyFilter.innerHTML = '<option value="">All</option>' + propertyList.map(p => `<option value="${p}">${p}</option>`).join('');
+
+                const workflowOptions = [
+                    "New", "Assigned", "In Progress", "Pending", // From charts
+                    "Electrical Team", "Asset Management", "Complete" // From new logic
+                ];
+                const uniqueWorkflowOptions = [...new Set(workflowOptions)];
+                modalWorkflow.innerHTML = '<option value="">Select...</option>' + uniqueWorkflowOptions.map(w => `<option value="${w}">${w}</option>`).join('');
+            }
+
+            async function executeDelete() {
+                const indices = pendingDeleteIndices.length > 0 ? pendingDeleteIndices : (pendingSingleDeleteIndex ? [pendingSingleDeleteIndex] : []);
+                if (indices.length === 0) return;
+                try {
+                    const response = await fetch("{{ url_for('main.delete_fls_assets') }}", {
+                        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ indices })
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        indices.forEach(index => { delete currentAssets[index]; });
+                        renderTable();
+                        showMessage(result.message, 'success');
+                    } else {
+                        showMessage(result.message || 'Error deleting rows.', 'error');
+                    }
+                } catch (error) {
+                    showMessage(`Network error: ${error.message}`, 'error');
+                } finally {
+                    deleteConfirmModal.hide();
+                    pendingDeleteIndices = [];
+                    pendingSingleDeleteIndex = null;
+                }
+            }
+            
+            // --- Bulk Edit Functions ---
+            
+            function updateActionButtons() {
+                const selectedCount = tableBody.querySelectorAll('.row-checkbox:checked').length;
+                if (selectedCount > 0) {
+                    deleteSelectedBtn.style.display = 'inline-block';
+                    if (bulkEditBtn) bulkEditBtn.style.display = 'inline-block'; // Keep check for safety
+                } else {
+                    deleteSelectedBtn.style.display = 'none';
+                    if (bulkEditBtn) bulkEditBtn.style.display = 'none';
+                }
+            }
+
+            function populateBulkSpaceDropdown(selectedProperty) {
+                bulkModalSpace.disabled = !selectedProperty;
+                bulkModalSpace.innerHTML = selectedProperty ? '<option value="">Select Space...</option>' : '<option value="">Select property first...</option>';
+                
+                if (selectedProperty) {
+                    const spaces = spacesByPropertyData[selectedProperty] || [];
+                    spaces.sort().forEach(space => {
+                        bulkModalSpace.innerHTML += `<option value="${space}">${space}</option>`;
+                    });
+                }
+            }
+
+            function openBulkEditModal() {
+                const selectedIndices = Array.from(tableBody.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('tr').dataset.index);
+                
+                if (selectedIndices.length === 0) {
+                    showMessage("No rows selected for bulk edit.", "error");
+                    return;
+                }
+
+                bulkEditCount.textContent = selectedIndices.length;
+
+                // Populate dropdowns by copying from the single-edit modal
+                bulkModalProperty.innerHTML = modalProperty.innerHTML;
+                bulkModalStatus.innerHTML = modalStatus.innerHTML;
+                bulkModalWorkflow.innerHTML = modalWorkflow.innerHTML;
+                
+                // Reset form state
+                bulkEditForm.reset();
+                bulkEditForm.querySelectorAll('select').forEach(sel => sel.disabled = true);
+                bulkModalSpace.innerHTML = '<option value="">Select property first...</option>'; // Special case for space
+                
+                bulkEditModal.show();
+            }
+
+            async function saveBulkEditData() {
+                const updates = {};
+                
+                // Map from modal select ID to DB column name
+                const fieldMap = {
+                    'bulk-modal-property': 'Property',
+                    'bulk-modal-space': 'Space',
+                    'bulk-modal-status': 'Status',
+                    'bulk-modal-workflow': 'Workflow'
+                };
+
+                bulkEditForm.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                    const targetId = checkbox.dataset.target;
+                    const targetSelect = document.getElementById(targetId);
+                    const columnName = fieldMap[targetId];
+                    
+                    if (columnName && targetSelect.value !== "") {
+                        updates[columnName] = targetSelect.value;
+                    }
+                });
+
+                if (Object.keys(updates).length === 0) {
+                    showMessage("No changes selected to apply.", "error");
+                    return;
+                }
+                
+                const indices = Array.from(tableBody.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('tr').dataset.index);
+
+                const payload = {
+                    indices: indices,
+                    updates: updates
+                };
+
+                try {
+                    bulkModalSaveBtn.disabled = true;
+                    const response = await fetch("{{ url_for('main.bulk_update_assets') }}", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        // Update local data store with returned assets
+                        result.assets.forEach(asset => {
+                            currentAssets[asset.index] = asset;
+                        });
+                        renderTable(); // Re-render the table with updated data
+                        bulkEditModal.hide();
+                        showMessage(result.message, 'success');
+                    } else {
+                        showMessage(result.message || 'An unknown error occurred.', 'error');
+                    }
+
+                } catch (error) {
+                    showMessage(`Network error: ${error.message}`, 'error');
+                } finally {
+                    bulkModalSaveBtn.disabled = false;
+                }
+            }
+
+            // --- Add Event Listeners for Bulk Edit ---
+            if (bulkEditBtn) bulkEditBtn.addEventListener('click', openBulkEditModal); // Check if exists
+            bulkModalSaveBtn.addEventListener('click', saveBulkEditData);
+
+            // Add listeners to modal checkboxes to enable/disable dropdowns
+            bulkEditForm.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const targetId = e.target.dataset.target;
+                    const targetSelect = document.getElementById(targetId);
+                    if (targetSelect) {
+                        targetSelect.disabled = !e.target.checked;
+                        // If checking property, and it's already populated, enable space
+                        if(targetId === 'bulk-modal-property' && e.target.checked) {
+                             populateBulkSpaceDropdown(targetSelect.value);
+                        }
+                    }
+                });
+            });
+
+            // Add listener to property dropdown to populate space dropdown
+            bulkModalProperty.addEventListener('change', (e) => {
+                populateBulkSpaceDropdown(e.target.value);
+            });
+
+
+            // --- Original Event Listeners ---
+            addRowBtn.addEventListener('click', openModalForNew);
+            modalSaveBtn.addEventListener('click', saveModalData);
+            confirmDeleteBtn.addEventListener('click', executeDelete);
+            
+            [statusFilter, propertyFilter, globalSearchInput, startDateFilter, endDateFilter].forEach(el => 
+                el.addEventListener('input', filterTable)
+            );
+            
+            resetFiltersBtn.addEventListener('click', () => {
+                statusFilter.value = 'Ongoing'; 
+                propertyFilter.value = ''; 
+                globalSearchInput.value = ''; 
+                startDateFilter.value = ''; 
+                endDateFilter.value = '';   
+                filterTable();
+            });
+            
+            selectAllCheckbox.addEventListener('click', () => {
+                tableBody.querySelectorAll('tr .row-checkbox:not(:disabled)').forEach(cb => {
+                    if (cb.closest('tr').style.display !== 'none') cb.checked = selectAllCheckbox.checked;
+                });
+                updateActionButtons(); 
+            });
+            
+            deleteSelectedBtn.addEventListener('click', () => {
+                pendingDeleteIndices = Array.from(tableBody.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('tr').dataset.index);
+                if (pendingDeleteIndices.length > 0) {
+                    deleteConfirmMessage.textContent = `Are you sure you want to delete ${pendingDeleteIndices.length} selected row(s)?`;
+                    deleteConfirmModal.show();
+                } else {
+                    showMessage("No rows selected.", "error");
+                }
+            });
+            
+            // [START] MODIFIED TABLE CLICK LISTENER
+            tableBody.addEventListener('click', (event) => {
+                const row = event.target.closest('tr');
+                if (!row) return;
+
+                // Handle checkbox click
+                if (event.target.classList.contains('row-checkbox')) {
+                    updateActionButtons();
+                    return; // Don't open modal if just clicking checkbox
+                }
+                
+                // Handle edit click
+                if (event.target.closest('.edit-row')) {
+                    event.preventDefault();
+                    openModalForEdit(row.dataset.index);
+                    return;
+                }
+
+                // Handle delete click
+                if (event.target.closest('.delete-row:not(.disabled)')) {
+                    pendingSingleDeleteIndex = row.dataset.index;
+                    deleteConfirmMessage.textContent = 'Are you sure you want to delete this row?';
+                    deleteConfirmModal.show();
+                    return;
+                }
+            });
+            // [END] MODIFIED TABLE CLICK LISTENER
+            
+            modalProperty.addEventListener('change', (e) => {
+                populateSpaceDropdown(e.target.value);
+                
+                if (isNewAssetMode) {
+                   modalAttributeSet.value = '';
+                }
+                updateWorkflowStatus(); 
+            });
+
+            modalAssetGroup.addEventListener('change', (e) => {
+                
+                const selectedOptionText = e.target.value;
+                const assetTagValue = modalAssetTag.value.trim();
+
+                let assetGroupName = '';
+                let fullClassification = null;
+
+                if (selectedOptionText) {
+                    const parts = selectedOptionText.split(' | ');
+                    assetGroupName = parts[0] ? parts[0].trim() : '';
+                    fullClassification = parts[1] ? parts[1].trim() : null;
+                }
+                
+                if (isNewAssetMode) {
+                    if (assetTagValue) {
+                        modalDescription.value = `${assetGroupName} - ${assetTagValue}`;
+                    } else {
+                        modalDescription.value = assetGroupName;
+                    }
+                }
+
+                if (fullClassification && deviceTypeMapData[fullClassification]) {
+                    modalDeviceType.value = deviceTypeMapData[fullClassification];
+                } else {
+                    modalDeviceType.value = '';
+                }
+                
+                updateWorkflowStatus();
+            });
+            
+            modalAssetTag.addEventListener('input', (e) => {
+                const assetTagValue = e.target.value.trim();
+                
+                modalDeviceAddress.value = assetTagValue;
+
+                if (!isNewAssetMode) {
+                    return;
+                }
+
+                const selectedOptionText = modalAssetGroup.value;
+                
+                if (!selectedOptionText) {
+                    return;
+                }
+
+                const assetGroupName = selectedOptionText.split(' | ')[0];
+                
+                if (assetTagValue) {
+                    modalDescription.value = `${assetGroupName} - ${assetTagValue}`;
+                } else {
+                    modalDescription.value = assetGroupName;
+                }
+            });
+            
+            modalSpace.addEventListener('change', () => {
+                updateWorkflowStatus();
+
+                if (isNewAssetMode) {
+                    if (modalSpace.value) {
+                        modalAttributeSet.value = 'FireAlarmDevice';
+                    } else {
+                        modalAttributeSet.value = '';
+                    }
+                }
+            });
+            
+            modalPlanonCode.addEventListener('input', updateWorkflowStatus);
+            
+            modalStatus.addEventListener('change', togglePlanonCodeEditability);
+
+            // Initialization
+            initializeModalDropdowns();
+            existingAssets.forEach(asset => { currentAssets[asset.index] = asset; });
+            renderTable();
+            updateActionButtons(); 
+        }
     </script>
   </body>
 </html>

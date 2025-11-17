@@ -13,8 +13,9 @@ Open:
 import os
 import sys
 import re
-import time
+import time  # <-- Fix included: For cache-busting
 import subprocess
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -31,8 +32,11 @@ from dotenv import load_dotenv
 
 ## NEW ## -> Add the shared auth_service directory to Python's path
 # This allows us to import our shared modules for database models and login control
-sys.path.append('/home/developer/auth_service')
+sys.path.append('/home/developer/auth_service') # This should point to your shared auth service directory
+
+# Removed FLSAsset, Property, Space, AssetGroup, DeviceTypeMap from import
 from auth_model import db, bcrypt, User
+
 from auth_controller import login_manager
 
 
@@ -41,6 +45,7 @@ CHARTS_AVAILABLE = False
 AI_STATUS_AVAILABLE = False
 COMPLETENESS_CHART_AVAILABLE = False
 OPERATIONAL_COST_CHART_AVAILABLE = False
+FLS_CHARTS_AVAILABLE = False
 CHARTS_IMPORT_ERROR = ""
 
 try:
@@ -79,6 +84,34 @@ except Exception as _e:
     else:
         CHARTS_IMPORT_ERROR = error_msg
 
+## --- This block now tries to import the chart module but will not break the app if it fails --- ##
+try:
+    # First, try the original import path
+    from charts import fls_chart as fls_charts_mod
+    FLS_CHARTS_AVAILABLE = True
+    print("Successfully imported 'fls_chart' from 'charts' package.")
+except ImportError as _e1:
+    try:
+        # If that fails, try importing from the root directory
+        import fls_chart as fls_charts_mod
+        FLS_CHARTS_AVAILABLE = True
+        print("Successfully imported 'fls_chart' from root directory (fallback).")
+    except Exception as _e2:
+        # If both fail, record the errors
+        error_msg = f"FLS Charts Error: Failed to import 'fls_chart' from 'charts' package ({_e1}) AND from root directory ({_e2})"
+        if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
+             CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
+        else:
+            CHARTS_IMPORT_ERROR = error_msg
+        print(CHARTS_IMPORT_ERROR) # Print error to console
+except Exception as _e:
+    # Catch any other unexpected import errors
+    error_msg = f"FLS Charts Error: {str(_e)}"
+    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
+         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
+    else:
+        CHARTS_IMPORT_ERROR = error_msg
+    print(CHARTS_IMPORT_ERROR) # Print error to console
 
 # ------------------ Flask app Configuration ------------------
 ## NEW ## -> Load environment variables from the central .env file
@@ -110,6 +143,9 @@ APPS = [
 BASE_DIR = Path(__file__).resolve().parent
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
+
+## --- Path to the SQLite DB --- ##
+DB_PATH = r"/home/developer/asset_capture_app_dev/data/QR_codes.db"
 
 # ------------------ Runner helpers ------------------
 def _windows_detached_flags() -> int:
@@ -305,6 +341,147 @@ def index():
         username=current_user.username
     )
 
+# ----------------- [START OF UPDATED CODE] -----------------
+@main_bp.get("/data/fls_assets")
+@login_required
+def get_fls_asset_data():
+    """
+    Provides all necessary data for the FLS Assets table view.
+    ALL data is now sourced from QR_codes.db using sqlite3.
+    """
+    
+    # 1. Initialize empty lists
+    properties = []
+    spaces_by_prop = {}
+    device_map = {}
+    asset_group_options = []
+    existing_assets = []
+    conn = None
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row  # This allows accessing columns by name
+        cursor = conn.cursor()
+
+        # --- 1. Get Property List (from Buildings table) ---
+        try:
+            cursor.execute('SELECT "Name" FROM Buildings ORDER BY "Name"')
+            properties = [row['Name'] for row in cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"WARNING: Could not query 'Buildings' table from QR_codes.db: {e}")
+            properties = []
+
+        # --- 2. Get Spaces by Property (from Buildings_with_SpaceUID view) ---
+        spaces_by_prop = {}
+        try:
+            cursor.execute('''
+                SELECT "Name", "Location" FROM Buildings_with_SpaceUID 
+                WHERE "Location" IS NOT NULL AND TRIM("Location") != ''
+            ''')
+            for row in cursor.fetchall():
+                property_name = row['Name']
+                space_location = row['Location']
+                if property_name not in spaces_by_prop:
+                    spaces_by_prop[property_name] = []
+                spaces_by_prop[property_name].append(space_location)
+        except sqlite3.Error as e:
+            print(f"WARNING: Could not query 'Buildings_with_SpaceUID' view from QR_codes.db: {e}")
+            spaces_by_prop = {}
+        
+        # --- 3. Get Asset Group Options AND Device Type Map from 'fls_asset_group' ---
+        # This one query now populates two different data structures.
+        device_map = {}
+        asset_group_options = []
+        try:
+            cursor.execute("""
+                SELECT
+                    "Full Classification",
+                    "Device Type",
+                    CASE
+                        WHEN Name IS NOT NULL AND "Full Classification" IS NOT NULL
+                            THEN Name || ' | ' || "Full Classification"
+                        WHEN Name IS NULL
+                            THEN "Full Classification"
+                        ELSE Name
+                    END AS "AssetGroupOption"
+                FROM "fls_asset_group"
+                ORDER BY "AssetGroupOption"
+            """)
+            for row in cursor.fetchall():
+                # Add to the asset group dropdown list
+                asset_group_options.append(row['AssetGroupOption'])
+                
+                # Add to the device type map
+                if row['Full Classification'] and row['Device Type']:
+                    device_map[row['Full Classification']] = row['Device Type']
+                    
+        except sqlite3.Error as e:
+            print(f"WARNING: Could not query 'fls_asset_group' table from QR_codes.db: {e}")
+            device_map = {}
+            asset_group_options = []
+        # --- [END OF FIX] ---
+        
+        # --- 4. Get existing assets from 'new_device' table ---
+        cursor.execute("SELECT * FROM new_device ORDER BY [Creation Date] DESC")
+        rows = cursor.fetchall()
+        
+        if not rows:
+            print("FLS get_fls_asset_data: 'new_device' table is empty.")
+        
+        for row in rows:
+            row_dict = dict(row)
+            status_val = row_dict.get('Status') 
+            
+            if str(status_val) not in ('0', '1'):
+                workflow_val = row_dict.get('Workflow')
+                workflow_normalized = (workflow_val or "").strip().lower()
+                status_val = '1' if workflow_normalized.startswith('complete') else '0'
+            else:
+                status_val = str(status_val)
+            
+            asset = {
+                "index": row_dict.get('index'),
+                "work_order": row_dict.get('Work Order'),
+                "asset_tag": row_dict.get('Asset Tag'),
+                "asset_group": row_dict.get('Asset Group'),
+                "description": row_dict.get('Description'),
+                "property": row_dict.get('Property'),
+                "space": row_dict.get('Space'),
+                "attribute_set": row_dict.get('Attribute Set'),
+                "device_address": row_dict.get('Device Address'),
+                "device_type": row_dict.get('Device Type'),
+                "un_account_number": row_dict.get('UN Account Number'),
+                "planon_code": row_dict.get('Planon Code'),
+                "creation_date": row_dict.get('Creation Date'),
+                "status": status_val,
+                "workflow": row_dict.get('Workflow')
+            }
+            existing_assets.append(asset)
+        
+        print(f"FLS get_fls_asset_data: Successfully loaded {len(existing_assets)} assets from QR_codes.db.")
+
+    except Exception as e:
+        print(f"CRITICAL ERROR fetching FLS data from QR_codes.db: {e}")
+        import traceback
+        traceback.print_exc()
+        # This is a critical failure, return a 500 error
+        return jsonify({"error": f"Failed to load FLS asset data from QR_codes.db: {e}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+    # 3. Return all data
+    return jsonify({
+        "existing_assets": existing_assets,
+        "property_list": properties,
+        "spaces_by_property": spaces_by_prop,
+        "device_type_map": device_map,
+        "asset_group_options": asset_group_options,
+        "asset_group_lookup_map": {} # This was part of the old logic, not supported by new schema.
+    })
+# ----------------- [END OF UPDATED CODE] -----------------
+
+
 @main_bp.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -389,6 +566,263 @@ def operational_cost_chart():
     except Exception as e:
         print(f"Operational cost chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
+
+@main_bp.get("/chart/fls_charts.html")
+@login_required
+def fls_charts():
+    if not FLS_CHARTS_AVAILABLE:
+        return Response("FLS charts module not available.", status=503, mimetype="text/plain")
+    try:
+        # This will generate the charts into the static directory
+        fls_charts_mod.generate_charts()
+        
+        # --- THIS IS THE CACHE-BUSTING FIX ---
+        # Get a timestamp to use for cache-busting
+        ts = int(time.time())
+        
+        # Pass the timestamp to the template
+        return render_template("fls_charts_container.html", ts=ts)
+    except Exception as e:
+        print(f"FLS charts generation error: {e}")
+        return Response(f"Chart generation error: {e}", status=500, mimetype="text/plain")
+
+# ------------------ FLS Asset CRUD Routes ------------------
+
+@main_bp.post("/fls/add_assets")
+@login_required
+def add_fls_assets():
+    """
+    Adds a new asset or updates an existing one in the QR_codes.db
+    using an INSERT ... ON CONFLICT (upsert) command.
+    This now saves ALL fields from the modal.
+    """
+    data = request.get_json()
+    if not data or not isinstance(data, list):
+        return jsonify({"success": False, "message": "Invalid data format."}), 400
+
+    conn = None
+    try:
+        asset_data = data[0]
+        
+        # --- Prepare all data from modal ---
+        asset_index = asset_data.get('index')
+        
+        # Generate creation date string, used *only* if inserting
+        creation_date = datetime.utcnow().strftime('%m/%d/%Y')
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # --- Use INSERT ... ON CONFLICT (Upsert) ---
+        # This query is now expanded to include all 15 columns
+        query = """
+            INSERT INTO new_device (
+                "index", "Asset Tag", "Asset Group", "Description", "Property", "Space",
+                "Attribute Set", "Device Address", "Device Type", "UN Account Number",
+                "Status", "Work Order", "Creation Date", "Planon Code", "Workflow"
+            ) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT("index") DO UPDATE SET
+                "Asset Tag" = excluded."Asset Tag",
+                "Asset Group" = excluded."Asset Group",
+                "Description" = excluded."Description",
+                "Property" = excluded."Property",
+                "Space" = excluded."Space",
+                "Attribute Set" = excluded."Attribute Set",
+                "Device Address" = excluded."Device Address",
+                "Device Type" = excluded."Device Type",
+                "UN Account Number" = excluded."UN Account Number",
+                "Status" = excluded."Status",
+                "Work Order" = excluded."Work Order",
+                "Planon Code" = excluded."Planon Code",
+                "Workflow" = excluded."Workflow"
+        """
+        
+        # Build the parameters tuple in the correct order
+        params = (
+            asset_index,
+            asset_data.get('asset_tag'),
+            asset_data.get('asset_group'),
+            asset_data.get('description'),
+            asset_data.get('property'),
+            asset_data.get('space'),
+            asset_data.get('attribute_set'),
+            asset_data.get('device_address'),
+            asset_data.get('device_type'),
+            asset_data.get('un_account_number'),
+            asset_data.get('status'),
+            asset_data.get('work_order'),
+            creation_date,  # This is only used on INSERT
+            asset_data.get('planon_code'),
+            asset_data.get('workflow')
+        )
+        
+        cursor.execute(query, params)
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            # Fetch the *actual* creation date from the DB
+            cursor.execute('SELECT "Creation Date" FROM new_device WHERE "index" = ?', (asset_index,))
+            result = cursor.fetchone()
+            if result:
+                asset_data['creation_date'] = result[0]
+            else:
+                asset_data['creation_date'] = creation_date
+            
+            message = "Asset successfully saved."
+        else:
+            message = "No changes detected."
+
+        # Return the saved asset data so the frontend table can update
+        # (it's already in the correct format in asset_data)
+        
+        return jsonify({"success": True, "message": message, "assets": [asset_data]})
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"ERROR in add_fls_assets: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "message": f"Database error: {e}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+
+@main_bp.post("/fls/delete_assets")
+@login_required
+def delete_fls_assets():
+    data = request.get_json()
+    indices = data.get('indices', [])
+    if not indices:
+        return jsonify({"success": False, "message": "No asset indices provided."}), 400
+    
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        # Create placeholders for the IN clause
+        placeholders = ', '.join('?' for _ in indices)
+        # --- FIX: Use "index" instead of QR_code_ID ---
+        query = f'DELETE FROM new_device WHERE "index" IN ({placeholders})'
+        
+        cursor.execute(query, indices)
+        conn.commit()
+        
+        print(f"FLS delete_fls_assets: Deleted {len(indices)} assets.")
+        return jsonify({"success": True, "message": f"Successfully deleted {len(indices)} asset(s)."})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"ERROR in delete_fls_assets: {e}")
+        return jsonify({"success": False, "message": f"Database error: {e}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+@main_bp.post("/fls/bulk_update_assets")
+@login_required
+def bulk_update_assets():
+    """
+    Updates multiple assets at once based on user selection.
+    Only updates columns that are explicitly allowed.
+    """
+    data = request.get_json()
+    indices = data.get('indices', [])
+    updates = data.get('updates', {})
+
+    if not indices:
+        return jsonify({"success": False, "message": "No asset indices provided."}), 400
+    if not updates:
+        return jsonify({"success": False, "message": "No updates specified."}), 400
+
+    # Whitelist of columns allowed for bulk update.
+    # This matches the fields available in the bulk edit modal.
+    ALLOWED_BULK_UPDATE_COLS = {"Property", "Space", "Status", "Workflow"}
+    
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row  # To fetch updated rows by column name
+        cursor = conn.cursor()
+
+        set_clauses = []
+        params = []
+        
+        for column_name, value in updates.items():
+            if column_name in ALLOWED_BULK_UPDATE_COLS:
+                # Use quoted column names
+                set_clauses.append(f'"{column_name}" = ?')
+                params.append(value)
+            else:
+                return jsonify({"success": False, "message": f"Bulk update for column '{column_name}' is not allowed."}), 400
+
+        if not set_clauses:
+            return jsonify({"success": False, "message": "No valid update fields provided."}), 400
+
+        set_query_part = ", ".join(set_clauses)
+        where_placeholders = ', '.join('?' for _ in indices)
+        
+        # --- FIX: Use "index" instead of QR_code_ID ---
+        query = f'UPDATE new_device SET {set_query_part} WHERE "index" IN ({where_placeholders})'
+        
+        params.extend(indices)
+        
+        cursor.execute(query, params)
+        conn.commit()
+        
+        print(f"FLS bulk_update_assets: Updated {len(indices)} assets with fields: {list(updates.keys())}.")
+
+        # --- Fetch the updated rows to send back to the client ---
+        select_placeholders = ', '.join('?' for _ in indices)
+        # --- FIX: Use "index" instead of QR_code_ID ---
+        select_query = f'SELECT * FROM new_device WHERE "index" IN ({select_placeholders})'
+        cursor.execute(select_query, indices)
+        updated_rows = cursor.fetchall()
+
+        # Format the rows in the same way as get_fls_asset_data
+        assets_list = []
+        for row in updated_rows:
+            row_dict = dict(row)
+            status_val = row_dict.get('Status')
+            if str(status_val) not in ('0', '1'):
+                status_val = '0' # Default to 'Ongoing' if invalid
+            else:
+                status_val = str(status_val)
+
+            # --- FIX: Read all columns from the DB row ---
+            asset = {
+                "index": row_dict.get('index'),
+                "work_order": row_dict.get('Work Order'),
+                "asset_tag": row_dict.get('Asset Tag'),
+                "asset_group": row_dict.get('Asset Group'),
+                "description": row_dict.get('Description'),
+                "property": row_dict.get('Property'),
+                "space": row_dict.get('Space'),
+                "attribute_set": row_dict.get('Attribute Set'),
+                "device_address": row_dict.get('Device Address'),
+                "device_type": row_dict.get('Device Type'),
+                "un_account_number": row_dict.get('UN Account Number'),
+                "planon_code": row_dict.get('Planon Code'),
+                "creation_date": row_dict.get('Creation Date'),
+                "status": status_val,
+                "workflow": row_dict.get('Workflow')
+            }
+            assets_list.append(asset)
+
+        return jsonify({"success": True, "message": "Assets updated successfully.", "assets": assets_list})
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"ERROR in bulk_update_assets: {e}")
+        return jsonify({"success": False, "message": f"Database error: {e}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
 
 # ------------------ Task Routes ------------------
 @main_bp.post("/run/<task_key>")
@@ -536,7 +970,7 @@ def read_log():
         is_summary=is_summary, content=content
     )
     
-@main_bp.get("/logs/download")
+@main_bp.get("/logs/download") # <-- THIS IS THE CORRECTED TYPO
 @login_required
 def download_log():
     name = request.args.get("name", "")
