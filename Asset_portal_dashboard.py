@@ -351,11 +351,14 @@ def get_fls_asset_data():
     """
     
     # 1. Initialize empty lists
-    properties = []
+    all_properties = [] # <-- [NEW] Renamed from 'properties'
+    filter_properties = [] # <-- [NEW] List for the filter
     spaces_by_prop = {}
     device_map = {}
     asset_group_options = []
     existing_assets = []
+    property_asset_tag_map = {}
+    property_name_to_code_map = {}
     conn = None
 
     try:
@@ -363,13 +366,31 @@ def get_fls_asset_data():
         conn.row_factory = sqlite3.Row  # This allows accessing columns by name
         cursor = conn.cursor()
 
-        # --- 1. Get Property List (from Buildings table) ---
+        # --- 1a. Get Property List for MODAL (from Buildings table) ---
         try:
-            cursor.execute('SELECT "Name" FROM Buildings ORDER BY "Name"')
-            properties = [row['Name'] for row in cursor.fetchall()]
+            # Fetch both Name and Code to build the name->code map
+            cursor.execute('SELECT "Name", "Code" FROM Buildings ORDER BY "Name"')
+            for row in cursor.fetchall():
+                all_properties.append(row['Name']) # <-- [NEW] Populate all_properties
+                property_name_to_code_map[row['Name']] = row['Code']
         except sqlite3.Error as e:
             print(f"WARNING: Could not query 'Buildings' table from QR_codes.db: {e}")
-            properties = []
+            all_properties = []
+
+        # --- 1b. Get Property List for FILTER (from new_device table) ---
+        try:
+            cursor.execute('''
+                SELECT DISTINCT "Property" FROM new_device 
+                WHERE "Property" IS NOT NULL AND TRIM("Property") != '' 
+                ORDER BY "Property"
+            ''')
+            for row in cursor.fetchall():
+                filter_properties.append(row['Property'])
+            print(f"Found {len(filter_properties)} distinct properties in new_device for filtering.")
+        except sqlite3.Error as e:
+            print(f"WARNING: Could not query 'new_device' for distinct properties: {e}")
+            filter_properties = [] # Default to empty on error
+
 
         # --- 2. Get Spaces by Property (from Buildings_with_SpaceUID view) ---
         spaces_by_prop = {}
@@ -389,7 +410,6 @@ def get_fls_asset_data():
             spaces_by_prop = {}
         
         # --- 3. Get Asset Group Options AND Device Type Map from 'fls_asset_group' ---
-        # This one query now populates two different data structures.
         device_map = {}
         asset_group_options = []
         try:
@@ -408,10 +428,7 @@ def get_fls_asset_data():
                 ORDER BY "AssetGroupOption"
             """)
             for row in cursor.fetchall():
-                # Add to the asset group dropdown list
                 asset_group_options.append(row['AssetGroupOption'])
-                
-                # Add to the device type map
                 if row['Full Classification'] and row['Device Type']:
                     device_map[row['Full Classification']] = row['Device Type']
                     
@@ -419,9 +436,19 @@ def get_fls_asset_data():
             print(f"WARNING: Could not query 'fls_asset_group' table from QR_codes.db: {e}")
             device_map = {}
             asset_group_options = []
-        # --- [END OF FIX] ---
+
+        # --- 4. Get Property to Asset Tag mapping from 'Asset_System_info' ---
+        try:
+            cursor.execute('SELECT "Property code", "Asset Tag" FROM Asset_System_info')
+            for row in cursor.fetchall():
+                if row['Property code'] and row['Asset Tag']:
+                    property_asset_tag_map[row['Property code']] = row['Asset Tag']
+        except sqlite3.Error as e:
+            print(f"WARNING: Could not query 'Asset_System_info' view from QR_codes.db: {e}")
+            property_asset_tag_map = {}
         
-        # --- 4. Get existing assets from 'new_device' table ---
+        
+        # --- 5. Get existing assets from 'new_device' table ---
         cursor.execute("SELECT * FROM new_device ORDER BY [Creation Date] DESC")
         rows = cursor.fetchall()
         
@@ -447,6 +474,7 @@ def get_fls_asset_data():
                 "description": row_dict.get('Description'),
                 "property": row_dict.get('Property'),
                 "space": row_dict.get('Space'),
+                "space_details": row_dict.get('Space Details'),
                 "attribute_set": row_dict.get('Attribute Set'),
                 "device_address": row_dict.get('Device Address'),
                 "device_type": row_dict.get('Device Type'),
@@ -464,7 +492,6 @@ def get_fls_asset_data():
         print(f"CRITICAL ERROR fetching FLS data from QR_codes.db: {e}")
         import traceback
         traceback.print_exc()
-        # This is a critical failure, return a 500 error
         return jsonify({"error": f"Failed to load FLS asset data from QR_codes.db: {e}"}), 500
     finally:
         if conn:
@@ -473,11 +500,14 @@ def get_fls_asset_data():
     # 3. Return all data
     return jsonify({
         "existing_assets": existing_assets,
-        "property_list": properties,
+        "property_list": all_properties, # <-- [NEW] Full list for modal
+        "filter_property_list": filter_properties, # <-- [NEW] Filtered list for filter
         "spaces_by_property": spaces_by_prop,
         "device_type_map": device_map,
         "asset_group_options": asset_group_options,
-        "asset_group_lookup_map": {} # This was part of the old logic, not supported by new schema.
+        "asset_group_lookup_map": {},
+        "property_asset_tag_map": property_asset_tag_map,
+        "property_name_to_code_map": property_name_to_code_map
     })
 # ----------------- [END OF UPDATED CODE] -----------------
 
@@ -614,20 +644,21 @@ def add_fls_assets():
         cursor = conn.cursor()
 
         # --- Use INSERT ... ON CONFLICT (Upsert) ---
-        # This query is now expanded to include all 15 columns
+        # [NEW] This query is now expanded to include 16 columns
         query = """
             INSERT INTO new_device (
-                "index", "Asset Tag", "Asset Group", "Description", "Property", "Space",
+                "index", "Asset Tag", "Asset Group", "Description", "Property", "Space", "Space Details",
                 "Attribute Set", "Device Address", "Device Type", "UN Account Number",
                 "Status", "Work Order", "Creation Date", "Planon Code", "Workflow"
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT("index") DO UPDATE SET
                 "Asset Tag" = excluded."Asset Tag",
                 "Asset Group" = excluded."Asset Group",
                 "Description" = excluded."Description",
                 "Property" = excluded."Property",
                 "Space" = excluded."Space",
+                "Space Details" = excluded."Space Details",
                 "Attribute Set" = excluded."Attribute Set",
                 "Device Address" = excluded."Device Address",
                 "Device Type" = excluded."Device Type",
@@ -646,6 +677,7 @@ def add_fls_assets():
             asset_data.get('description'),
             asset_data.get('property'),
             asset_data.get('space'),
+            asset_data.get('space_details'), # <-- [NEW] Added Space Details
             asset_data.get('attribute_set'),
             asset_data.get('device_address'),
             asset_data.get('device_type'),
@@ -801,6 +833,7 @@ def bulk_update_assets():
                 "description": row_dict.get('Description'),
                 "property": row_dict.get('Property'),
                 "space": row_dict.get('Space'),
+                "space_details": row_dict.get('Space Details'), # <-- [NEW] Added Space Details
                 "attribute_set": row_dict.get('Attribute Set'),
                 "device_address": row_dict.get('Device Address'),
                 "device_type": row_dict.get('Device Type'),

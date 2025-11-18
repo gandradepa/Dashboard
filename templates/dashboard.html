@@ -386,8 +386,8 @@
       }
       
       #fls-assets-view .filter-container .search-wrapper {
-          flex-grow: 1;
-          min-width: 200px;
+          flex-grow: 0.5; /* Reduced from 1 to allow other elements more space */
+          min-width: 150px;
       }
       
       #fls-assets-view .filter-container .search-wrapper .input-group {
@@ -411,6 +411,11 @@
           min-width: 150px;
       }
       
+      /* [START OF CHANGE] Reduce width of Property filter */
+      #fls-assets-view .filter-container #property-filter {
+          min-width: 105px; /* Reduced from 150px by ~30% */
+      }
+      /* [END OF CHANGE] */
       #fls-assets-view .filter-container #reset-filters-btn {
           background: none;
           border: none;
@@ -467,6 +472,10 @@
           color: var(--error-red);
       }
       #fls-assets-view #asset-table .delete-row.disabled {
+          color: #6c757d;
+          cursor: not-allowed;
+      }
+      #fls-assets-view #asset-table .edit-row.disabled {
           color: #6c757d;
           cursor: not-allowed;
       }
@@ -937,6 +946,7 @@
                 <i data-lucide="send"></i> Post to Teams
             </button>
         </div>
+        
         <div class="filter-container">
             <div class="search-wrapper">
                 <div class="input-group">
@@ -950,6 +960,12 @@
                     <option value="" selected>All</option>
                     <option value="0">Ongoing</option> 
                     <option value="1">Approved</option>
+                </select>
+            </div>
+            <div>
+                <label for="workflow-filter">Workflow:</label>
+                <select id="workflow-filter" class="form-select">
+                    <option value="" selected>All</option>
                 </select>
             </div>
             <div>
@@ -970,6 +986,7 @@
                 <i data-lucide="rotate-ccw"></i> Reset
             </button>
         </div>
+        
         <div id="message-container"></div>
     
         <div class="table-container">
@@ -983,6 +1000,7 @@
                         <th>Description</th>
                         <th>Property</th>
                         <th>Space</th>
+                        <th>Space Details</th>
                         <th>Attribute Set</th>
                         <th>Device Address</th>
                         <th>Device Type</th>
@@ -1054,6 +1072,11 @@
                             </div>
                             
                             <div class="form-group">
+                                <label for="modal-space-details">Space Details</label>
+                                <input type="text" id="modal-space-details" class="form-control">
+                                <div class="invalid-feedback">Space Details is required for this workflow.</div>
+                            </div>
+                            <div class="form-group">
                                 <label for="modal-asset-group">Asset Group</label>
                                 <select id="modal-asset-group" class="form-select"></select>
                             </div>
@@ -1068,7 +1091,7 @@
                                 <input type="text" id="modal-planon-code" class="form-control">
                             </div>
                             
-                            <div></div> <div class="form-group full-width">
+                            <div class="form-group full-width">
                                 <label for="modal-description">Description</label>
                                 <input type="text" id="modal-description" class="form-control" readonly>
                             </div>
@@ -1447,33 +1470,42 @@
                 }
                 const data = await response.json();
                 
-                // Pass fetched data to the main FLS script logic
+                // [START OF CHANGE] - Pass the new 'filter_property_list'
                 runFlsScript(
                     data.property_list || [],
+                    data.filter_property_list || [], // <-- [NEW] Pass the new filter list
                     data.spaces_by_property || {},
                     data.device_type_map || {},
                     data.existing_assets || [],
                     data.asset_group_options || [], 
-                    data.asset_group_lookup_map || {} 
+                    data.asset_group_lookup_map || {},
+                    data.property_asset_tag_map || {},
+                    data.property_name_to_code_map || {}
                 );
+                // [END OF CHANGE]
 
             } catch (error) {
                 console.error("Error initializing FLS Assets:", error);
                 const tableBody = document.getElementById('table-body');
                 if(tableBody) {
-                    tableBody.innerHTML = `<tr><td colspan="17" class="text-center text-danger p-4">Error: Could not load asset data. ${error.message}</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="18" class="text-center text-danger p-4">Error: Could not load asset data. ${error.message}</td></tr>`;
                 }
             }
         }
 
+        // [START OF CHANGE] - Accept the new 'filterPropertyList'
         function runFlsScript(
-            propertyList, 
+            propertyList,       // This is the FULL list for the modal
+            filterPropertyList, // This is the DISTINCT list from new_device for the filter
             spacesByPropertyData, 
             deviceTypeMapData, 
             existingAssets,
             assetGroupOptions,      
-            assetGroupLookupMap     
+            assetGroupLookupMap,
+            propertyAssetTagMap,
+            propertyNameCodeMap
         ) {
+        // [END OF CHANGE]
             
             lucide.createIcons();
 
@@ -1482,6 +1514,9 @@
             const tableBody = document.getElementById('table-body');
             const messageContainer = document.getElementById('message-container');
             const statusFilter = document.getElementById('status-filter');
+            
+            const workflowFilter = document.getElementById('workflow-filter');
+            
             const propertyFilter = document.getElementById('property-filter');
             const startDateFilter = document.getElementById('start-date-filter');
             const endDateFilter = document.getElementById('end-date-filter');
@@ -1505,6 +1540,9 @@
             const modalDescription = document.getElementById('modal-description');
             const modalProperty = document.getElementById('modal-property');
             const modalSpace = document.getElementById('modal-space');
+            
+            const modalSpaceDetails = document.getElementById('modal-space-details');
+            
             const modalAttributeSet = document.getElementById('modal-attribute-set');
             const modalDeviceAddress = document.getElementById('modal-device-address');
             const modalDeviceType = document.getElementById('modal-device-type');
@@ -1549,15 +1587,18 @@
                 } else {
                     dynamicWorkflowText = "Asset Management";
                 }
-                // --- END OF UPDATE ---
+                
+                // Use the asset's stored workflow value if it exists, otherwise use the dynamic one
+                const workflowToDisplay = getValue(asset.workflow) || dynamicWorkflowText;
+
 
                 const deleteDisabledClass = planonCodeValue ? 'disabled' : '';
+                const editDisabledClass = planonCodeValue ? 'disabled' : '';
                 
                 if (deleteDisabledClass) {
                     row.classList.add(deleteDisabledClass);
                 }
                 
-                // [START] MODIFIED ROW HTML
                 row.innerHTML = `
                     <td><input type="checkbox" class="row-checkbox form-check-input" ${planonCodeValue ? 'disabled' : ''}></td>
                     <td>${getValue(asset.work_order)}</td>
@@ -1566,20 +1607,20 @@
                     <td>${getValue(asset.description)}</td>
                     <td>${getValue(asset.property)}</td>
                     <td>${getValue(asset.space)}</td>
-                    <td>${getValue(asset.attribute_set)}</td>
+                    <td>${getValue(asset.space_details)}</td> <td>${getValue(asset.attribute_set)}</td>
                     <td>${getValue(asset.device_address)}</td>
                     <td>${getValue(asset.device_type)}</td>
                     <td>${getValue(asset.un_account_number)}</td>
                     <td>${planonCodeValue}</td>
                     <td>${getValue(asset.creation_date)}</td>
                     <td>${statusText}</td>
-                    <td>${dynamicWorkflowText}</td>
-                    <td><a href="#" class="edit-row" title="Edit Asset"><i data-lucide="edit" class="lucide"></i></a></td>
+                    <td>${workflowToDisplay}</td> <td><a href="#" class="edit-row ${editDisabledClass}" title="${editDisabledClass ? 'Cannot edit - Planon Code exists' : 'Edit Asset'}">
+                        <i data-lucide="edit" class="lucide"></i>
+                    </a></td>
                     <td class="delete-row ${deleteDisabledClass}" title="${planonCodeValue ? 'Cannot delete - Planon Code exists' : 'Delete Row'}">
                         <i data-lucide="trash-2" class="lucide"></i>
                     </td>
                 `;
-                // [END] MODIFIED ROW HTML
                 
                 row.dataset.planonCode = planonCodeValue;
                 return row;
@@ -1665,6 +1706,9 @@
                 modalAssetGroup.value = matchingOptionValue;
 
                 modalDescription.value = asset.description || '';
+                
+                modalSpaceDetails.value = asset.space_details || '';
+                
                 modalProperty.value = asset.property || '';
                 modalAttributeSet.value = asset.attribute_set || '';
                 modalDeviceAddress.value = asset.device_address || '';
@@ -1674,11 +1718,17 @@
                 modalCreationDate.value = asset.creation_date || '';
                 modalStatus.value = String(asset.status ?? "");
                 
+                // Load the saved workflow value
+                modalWorkflow.value = asset.workflow || '';
+                
                 populateSpaceDropdown(asset.property, asset.space); 
                 
                 assetModal.show();
  
+                // Update workflow status *after* loading, in case it needs to be overridden
+                // (e.g., if it was 'Electrical Team' but is now 'Complete')
                 updateWorkflowStatus();
+                
                 togglePlanonCodeEditability(); 
             }
             
@@ -1724,9 +1774,10 @@
                 const property = modalProperty.value;
 
                 let isValid = true;
-                [modalWorkOrder, modalAssetTag, modalProperty].forEach(el => {
+                [modalWorkOrder, modalAssetTag, modalProperty, modalSpaceDetails].forEach(el => {
                     el.classList.remove('is-invalid', 'is-valid');
                 });
+                
                 if (!workOrder) {
                     modalWorkOrder.classList.add('is-invalid');
                     isValid = false;
@@ -1745,6 +1796,18 @@
                 } else {
                     modalProperty.classList.add('is-valid');
                 }
+                
+                // --- [NEW VALIDATION CHECK] ---
+                const workflow = modalWorkflow.value;
+                const spaceDetails = modalSpaceDetails.value.trim();
+                
+                if (workflow === "Asset Management" && !spaceDetails) {
+                    alert("Please set the Space Details value before saving asset"); 
+                    modalSpaceDetails.classList.add('is-invalid');
+                    isValid = false; 
+                }
+                // --- [END NEW VALIDATION CHECK] ---
+
                 if (!isValid) {
                     return; 
                 }
@@ -1760,6 +1823,7 @@
                     'description': modalDescription.value.trim(), 
                     'property': property,
                     'space': modalSpace.value, 
+                    'space_details': modalSpaceDetails.value.trim(), // Send the editable value
                     'attribute_set': modalAttributeSet.value.trim(), 
                     'device_address': modalDeviceAddress.value.trim(),
                     'device_type': modalDeviceType.value.trim(),
@@ -1768,6 +1832,7 @@
                     'status': modalStatus.value, 
                     'workflow': modalWorkflow.value 
                 };
+                
                 try {
                     modalSaveBtn.disabled = true;
                     const response = await fetch("{{ url_for('main.add_fls_assets') }}", {
@@ -1802,6 +1867,7 @@
                 if (statusValue === "Ongoing") statusValue = "0";
                 else if (statusValue === "Approved") statusValue = "1";
                 
+                const workflowValue = workflowFilter.value; // Get workflow filter value
                 const propertyValue = propertyFilter.value;
                 const searchValue = globalSearchInput.value.toLowerCase();
                 
@@ -1816,6 +1882,29 @@
                     let show = true;
                     
                     if (statusValue && String(asset.status) !== statusValue) show = false;
+                    
+                    // Handle workflow filtering.
+                    const assetWorkflow = asset.workflow || ''; // Use empty string if null/undefined
+                    if (workflowValue && assetWorkflow !== workflowValue) {
+                        // Special case: if user filters for "Complete", "Asset Management", or "Electrical Team",
+                        // and the asset's saved workflow is empty, we must check the *calculated* value.
+                        
+                        let calculatedWorkflow = '';
+                        if (asset.planon_code) {
+                            calculatedWorkflow = "Complete";
+                        } else if (!asset.asset_group || !asset.space) {
+                            calculatedWorkflow = "Electrical Team";
+                        } else {
+                            calculatedWorkflow = "Asset Management";
+                        }
+                        
+                        // If the asset's *saved* workflow is different from the filter
+                        // AND the *calculated* workflow is ALSO different, then hide it.
+                        if (assetWorkflow !== workflowValue && calculatedWorkflow !== workflowValue) {
+                            show = false;
+                        }
+                    }
+                    
                     if (propertyValue && asset.property !== propertyValue) show = false;
                     
                     if (show && (startDate || endDate) && asset.creation_date) {
@@ -1840,19 +1929,30 @@
                 });
             }
 
+            // [START OF CHANGE]
             function initializeModalDropdowns() {
                 modalAssetGroup.innerHTML = '<option value="">Select...</option>' + assetGroupOptions.map(g => `<option value="${g}">${g}</option>`).join('');
                 
+                // Use the FULL list (propertyList) for the MODAL
                 modalProperty.innerHTML = '<option value="">Select...</option>' + propertyList.sort().map(p => `<option value="${p}">${p}</option>`).join('');
-                propertyFilter.innerHTML = '<option value="">All</option>' + propertyList.map(p => `<option value="${p}">${p}</option>`).join('');
+                
+                // Use the NEW FILTER list (filterPropertyList) for the FILTER
+                propertyFilter.innerHTML = '<option value="">All</option>' + filterPropertyList.map(p => `<option value="${p}">${p}</option>`).join('');
 
                 const workflowOptions = [
-                    "New", "Assigned", "In Progress", "Pending", // From charts
+                    // "New", "Assigned", "In Progress", "Pending", // Removed as per request
                     "Electrical Team", "Asset Management", "Complete" // From new logic
                 ];
-                const uniqueWorkflowOptions = [...new Set(workflowOptions)];
+                
+                const uniqueWorkflowOptions = [...new Set(workflowOptions)].sort(); // Sorted
+                
+                // Populate modal
                 modalWorkflow.innerHTML = '<option value="">Select...</option>' + uniqueWorkflowOptions.map(w => `<option value="${w}">${w}</option>`).join('');
+                
+                // Populate filter (workflowFilter is available in this scope)
+                workflowFilter.innerHTML = '<option value="" selected>All</option>' + uniqueWorkflowOptions.map(w => `<option value="${w}">${w}</option>`).join('');
             }
+            // [END OF CHANGE]
 
             async function executeDelete() {
                 const indices = pendingDeleteIndices.length > 0 ? pendingDeleteIndices : (pendingSingleDeleteIndex ? [pendingSingleDeleteIndex] : []);
@@ -2017,12 +2117,14 @@
             modalSaveBtn.addEventListener('click', saveModalData);
             confirmDeleteBtn.addEventListener('click', executeDelete);
             
-            [statusFilter, propertyFilter, globalSearchInput, startDateFilter, endDateFilter].forEach(el => 
+            // Add workflowFilter to the list of event listeners
+            [statusFilter, workflowFilter, propertyFilter, globalSearchInput, startDateFilter, endDateFilter].forEach(el => 
                 el.addEventListener('input', filterTable)
             );
             
             resetFiltersBtn.addEventListener('click', () => {
                 statusFilter.value = 'Ongoing'; 
+                workflowFilter.value = ''; // Reset workflow filter
                 propertyFilter.value = ''; 
                 globalSearchInput.value = ''; 
                 startDateFilter.value = ''; 
@@ -2059,7 +2161,7 @@
                 }
                 
                 // Handle edit click
-                if (event.target.closest('.edit-row')) {
+                if (event.target.closest('.edit-row:not(.disabled)')) {
                     event.preventDefault();
                     openModalForEdit(row.dataset.index);
                     return;
@@ -2080,6 +2182,18 @@
                 
                 if (isNewAssetMode) {
                    modalAttributeSet.value = '';
+                }
+
+                // --- [NEW LOGIC] ---
+                // Set UN Account Number based on the selected property
+                const selectedPropertyName = e.target.value;
+                const propertyCode = propertyNameCodeMap[selectedPropertyName];
+
+                // Use the property code to look up the asset tag
+                if (propertyCode && propertyAssetTagMap[propertyCode]) {
+                    modalUnAccount.value = propertyAssetTagMap[propertyCode];
+                } else {
+                    modalUnAccount.value = '';
                 }
                 updateWorkflowStatus(); 
             });
