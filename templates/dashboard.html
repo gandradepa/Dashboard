@@ -1434,6 +1434,15 @@
                 }
                 const data = await response.json();
                 
+                // DEBUG: Log what we received from backend
+                console.log("FLS Data from Backend:", {
+                    asset_group_lookup_map_size: Object.keys(data.asset_group_lookup_map || {}).length,
+                    asset_group_options_count: (data.asset_group_options || []).length,
+                    existing_assets_count: (data.existing_assets || []).length,
+                    first_asset: (data.existing_assets || [])[0],
+                    first_few_lookup_keys: Object.keys(data.asset_group_lookup_map || {}).slice(0, 3)
+                });
+                
                 // --- [NEW] Calculate and display the FLS assets badge count ---
                 const incompleteCount = (data.existing_assets || []).filter(asset => {
                     const planonCode = asset.planon_code || '';
@@ -1537,9 +1546,14 @@
             function updateFieldsFromAssetGroup(forceOverride = false) {
                 const selectedAssetGroup = modalAssetGroup.value;
                 const lookupData = assetGroupLookupMap[selectedAssetGroup];
-                console.log("Updating fields from asset group:", {
+                
+                // DEBUG: Detailed logging
+                console.log("updateFieldsFromAssetGroup called:", {
                     selectedAssetGroup,
-                    lookupData,
+                    lookupDataFound: !!lookupData,
+                    lookupData: lookupData,
+                    assetGroupLookupMapSize: Object.keys(assetGroupLookupMap).length,
+                    firstFewKeys: Object.keys(assetGroupLookupMap).slice(0, 3),
                     forceOverride,
                     isNewAssetMode
                 });
@@ -1553,15 +1567,17 @@
                     modalAttributeSet.value = lookupData.attribute_set || '';
                     modalDeviceAddress.value = lookupData.device_address || '';
                     modalDeviceType.value = lookupData.device_type || '';
+                    console.log("Fields populated from lookup data");
                 } else if (!selectedAssetGroup) {
                     // If no asset group selected (e.g., "Select..."), clear the fields
                     modalDescription.value = '';
                     modalAttributeSet.value = '';
                     modalDeviceAddress.value = '';
                     modalDeviceType.value = '';
+                    console.log("No asset group selected, fields cleared");
                 } else {
                     // Asset group selected but no lookup data found - leave fields as is
-                    // (this shouldn't normally happen)
+                    console.warn(`Asset group '${selectedAssetGroup}' selected but NOT FOUND in assetGroupLookupMap`);
                 }
                 
                 updateWorkflowStatus();
@@ -1701,7 +1717,7 @@
 
             function openModalForEdit(index) {
                 const asset = currentAssets[index];
-                console.log("Opening modal for edit:", asset);
+                console.log("Opening modal for edit - Asset data from currentAssets:", asset);
                 if (!asset) return;
                 assetForm.reset();
                 assetForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
@@ -1714,16 +1730,22 @@
                 modalAssetTag.value = asset.asset_tag || '';
                 
                 const assetGroupName = asset.asset_group || '';
+                console.log("Asset group from database:", assetGroupName);
                 let matchingOptionValue = '';
                 if (assetGroupName) {
                     for (let option of modalAssetGroup.options) {
                         if (option.value.startsWith(assetGroupName + ' | ') || option.value === assetGroupName) {
                             matchingOptionValue = option.value;
+                            console.log("Found matching dropdown option:", matchingOptionValue);
                             break;
                         }
                     }
+                    if (!matchingOptionValue) {
+                        console.warn(`No matching dropdown option found for asset group: '${assetGroupName}'`);
+                    }
                 }
                 modalAssetGroup.value = matchingOptionValue;
+                console.log("Set modalAssetGroup.value to:", matchingOptionValue);
 
                 modalSpaceDetails.value = asset.space_details || '';
                 
@@ -1741,6 +1763,7 @@
                 populateSpaceDropdown(asset.property, asset.space); 
                 
                 // Call updateFieldsFromAssetGroup to populate Description and Attribute Set from the lookup map
+                console.log("About to call updateFieldsFromAssetGroup");
                 updateFieldsFromAssetGroup(); 
                 
                 assetModal.show();
