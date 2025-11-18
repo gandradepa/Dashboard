@@ -255,13 +255,11 @@
         border-collapse: collapse;
       }
       
-      /* [START OF CHANGE] Increased horizontal padding from 1.5rem to 3.0rem */
       .asset-table th, .asset-table td {
         padding: 0.75rem 3.0rem;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
       }
-      /* [END OF CHANGE] */
       
       .asset-table th {
         font-weight: 600;
@@ -316,48 +314,17 @@
           cursor: not-allowed;
       }
 
-      /* [START] --- STYLES FOR FLS ASSETS VIEW (FROM SCREENSHOT) --- */
-      .btn-excel {
-        background-color: #28a745;
-        color: white;
-      }
-      .btn-excel:hover {
-        background-color: #218838;
-        color: white;
-      }
-      .btn-pdf {
-        background-color: #dc3545;
-        color: white;
-      }
-      .btn-pdf:hover {
-        background-color: #c82333;
-        color: white;
-      }
-      .btn-email {
-        background-color: #007bff;
-        color: white;
-      }
-      .btn-email:hover {
-        background-color: #0069d9;
-        color: white;
-      }
-      .btn-teams {
-        background-color: #464775; 
-        color: white;
-      }
-      .btn-teams:hover {
-        background-color: #313252;
-        color: white;
-      }
+      .btn-excel { background-color: #28a745; color: white; }
+      .btn-excel:hover { background-color: #218838; color: white; }
+      .btn-pdf { background-color: #dc3545; color: white; }
+      .btn-pdf:hover { background-color: #c82333; color: white; }
+      .btn-email { background-color: #007bff; color: white; }
+      .btn-email:hover { background-color: #0069d9; color: white; }
+      .btn-teams { background-color: #464775; color: white; }
+      .btn-teams:hover { background-color: #313252; color: white; }
       
-      #delete-selected-btn {
-          background-color: #dc3545;
-          border-color: #dc3545;
-      }
-      #delete-selected-btn:hover {
-          background-color: #c82333;
-          border-color: #bd2130;
-      }
+      #delete-selected-btn { background-color: #dc3545; border-color: #dc3545; }
+      #delete-selected-btn:hover { background-color: #c82333; border-color: #bd2130; }
       
       #fls-assets-view .action-buttons {
           display: flex;
@@ -386,11 +353,11 @@
       }
       
       #fls-assets-view .filter-container .search-wrapper {
-          flex-grow: 0.5; /* Reduced from 1 to allow other elements more space */
+          flex-grow: 0.5; 
           min-width: 150px;
       }
       
-      #fls-assets-view .filter-container .search-wrapper .input-group {
+      #fls-assets-view .filter-container .input-group {
           width: 100%;
       }
       
@@ -411,11 +378,10 @@
           min-width: 150px;
       }
       
-      /* [START OF CHANGE] Reduce width of Property filter */
       #fls-assets-view .filter-container #property-filter {
-          min-width: 105px; /* Reduced from 150px by ~30% */
+          min-width: 105px; 
       }
-      /* [END OF CHANGE] */
+
       #fls-assets-view .filter-container #reset-filters-btn {
           background: none;
           border: none;
@@ -479,9 +445,7 @@
           color: #6c757d;
           cursor: not-allowed;
       }
-      /* [END] --- STYLES FOR FLS ASSETS VIEW --- */
 
-      /* [START] --- STYLES FOR FLS ASSET MODAL (FROM SCREENSHOT) --- */
       #asset-modal-bootstrap .modal-header {
           background-color: var(--ubc-blue);
           color: white;
@@ -496,16 +460,15 @@
       #asset-form {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem 1.5rem; /* row-gap column-gap */
+          gap: 1rem 1.5rem;
       }
       #asset-form .form-group {
-          margin-bottom: 0; /* Remove default margin, grid gap handles it */
+          margin-bottom: 0;
       }
       #asset-form .full-width {
           grid-column: span 2;
       }
       
-      /* Style for readonly/disabled inputs to match screenshot */
       #asset-form input[readonly],
       #asset-form select[disabled] {
           background-color: #e9ecef;
@@ -516,7 +479,6 @@
           justify-content: space-between;
       }
       
-      /* Override footer button styles to match screenshot */
       #asset-modal-bootstrap .modal-footer #modal-cancel-btn {
           background-color: #6c757d;
           color: white;
@@ -533,8 +495,6 @@
       #asset-modal-bootstrap .modal-footer #modal-save-btn:hover {
           background-color: #218838;
       }
-      /* [END] --- STYLES FOR FLS ASSET MODAL --- */
-
     </style>
   </head>
   <body class="ubc-body">
@@ -634,7 +594,7 @@
                       </a>
                     </div>
                     <div>
-                      <a href="https://shareit.it.ubc.ca/teams/Teams/EMMS/Documents/Forms/AllItems.aspx?slrid=3eada9a1-9499-c00f-1021-8e1819a3802f&RootFolder=%2fteams%2fTeams%2fEMMS%2fDocuments%2fSDIs%2fA%2e%20Templates%20for%20Business%20to%20Complete%2fAssets&FolderCTID=0x012000D967664AD9CFBA498624A47403A4C88E" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
+                      <a href="https://shareit.it.ubc.ca/teams/Teams/EMMS/Documents/Forms/AllItems.aspx" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
                         <i data-lucide="external-link" width="16" height="16"></i>
                         <span class="fw-medium">SDI Templates</span>
                       </a>
@@ -700,10 +660,13 @@
                         </a>
                       </div>
                       <div>
-                        <div class="card h-100" style="width: 200px; height: 200px; border-radius: 8px; background-color: #e9ecef;">
-                            <a id="show-fls-assets-btn" role="button" title="Open FLS Assets" class="text-decoration-none d-flex flex-column justify-content-center align-items-center h-100">
+                        <div class="card h-100 position-relative" style="width: 200px; height: 200px; border-radius: 8px; background-color: #e9ecef;">
+                            <a id="show-fls-assets-btn" role="button" title="Open FLS Assets" class="text-decoration-none d-flex flex-column justify-content-center align-items-center h-100 position-relative">
                                 <i data-lucide="clipboard-list" style="color: var(--ubc-blue); width: 64px; height: 64px;"></i>
                                 <span class="mt-2 fw-bold" style="color: var(--ubc-blue);">FLS Assets</span>
+                                 <span id="fls-assets-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 1rem; margin-top: 1rem; margin-left: -1rem;">
+                                    <span class="visually-hidden">incomplete items</span>
+                                 </span>
                             </a>
                         </div>
                       </div>
@@ -917,7 +880,7 @@
             </h2>
             <div class="card">
                 <div class="card-body p-0">
-                    <iframe id="charts-iframe" src="{{ url_for('main.fls_charts') }}" style="width: 100%; height: 550px; border: none;" title="FLS Charts"></iframe>
+                    <iframe id="charts-iframe" src="{{ url_for('main.fls_charts') }}" style="width: 100%; height: 650px; border: none;" title="FLS Charts"></iframe>
                 </div>
             </div>
         </div>
@@ -1010,6 +973,7 @@
                         <th>Status</th>
                         <th>Workflow</th>
                         <th>Actions</th>
+                        <th>Duplicate</th>
                         <th>Delete</th>
                     </tr>
                  </thead>
@@ -1470,6 +1434,20 @@
                 }
                 const data = await response.json();
                 
+                // --- [NEW] Calculate and display the FLS assets badge count ---
+                const incompleteCount = (data.existing_assets || []).filter(asset => {
+                    const planonCode = asset.planon_code || '';
+                    return !planonCode.trim();
+                }).length;
+
+                const badge = document.getElementById('fls-assets-badge');
+                if (badge && incompleteCount > 0) {
+                    badge.textContent = incompleteCount;
+                    badge.style.display = 'block';
+                } else if (badge) {
+                    badge.style.display = 'none';
+                }
+                
                 // [START OF CHANGE] - Pass the new 'filter_property_list'
                 runFlsScript(
                     data.property_list || [],
@@ -1510,6 +1488,9 @@
             lucide.createIcons();
 
             let currentAssets = {};
+            existingAssets.forEach(asset => {
+                currentAssets[asset.index] = asset;
+            });
             let isNewAssetMode = false; // Flag to track modal mode
             const tableBody = document.getElementById('table-body');
             const messageContainer = document.getElementById('message-container');
@@ -1553,6 +1534,39 @@
             const modalWorkflow = document.getElementById('modal-workflow');
             const modalSaveBtn = document.getElementById('modal-save-btn');
             
+            function updateFieldsFromAssetGroup(forceOverride = false) {
+                const selectedAssetGroup = modalAssetGroup.value;
+                const lookupData = assetGroupLookupMap[selectedAssetGroup];
+                console.log("Updating fields from asset group:", {
+                    selectedAssetGroup,
+                    lookupData,
+                    forceOverride,
+                    isNewAssetMode
+                });
+
+                // Description, Attribute Set, Device Address, and Device Type are READ-ONLY lookup fields
+                // They should ALWAYS be populated from the assetGroupLookupMap based on the selected asset group
+                // regardless of whether we're in new or edit mode
+                if (lookupData) {
+                    // Populate from lookup data
+                    modalDescription.value = lookupData.description || '';
+                    modalAttributeSet.value = lookupData.attribute_set || '';
+                    modalDeviceAddress.value = lookupData.device_address || '';
+                    modalDeviceType.value = lookupData.device_type || '';
+                } else if (!selectedAssetGroup) {
+                    // If no asset group selected (e.g., "Select..."), clear the fields
+                    modalDescription.value = '';
+                    modalAttributeSet.value = '';
+                    modalDeviceAddress.value = '';
+                    modalDeviceType.value = '';
+                } else {
+                    // Asset group selected but no lookup data found - leave fields as is
+                    // (this shouldn't normally happen)
+                }
+                
+                updateWorkflowStatus();
+            }
+
             const deleteConfirmModal = new bootstrap.Modal(document.getElementById('delete-confirm-modal-bootstrap'));
             const deleteConfirmMessage = document.getElementById('delete-confirm-message');
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
@@ -1614,9 +1628,14 @@
                     <td>${planonCodeValue}</td>
                     <td>${getValue(asset.creation_date)}</td>
                     <td>${statusText}</td>
-                    <td>${workflowToDisplay}</td> <td><a href="#" class="edit-row ${editDisabledClass}" title="${editDisabledClass ? 'Cannot edit - Planon Code exists' : 'Edit Asset'}">
-                        <i data-lucide="edit" class="lucide"></i>
-                    </a></td>
+                    <td>${workflowToDisplay}</td> <td>
+                        <a href="#" class="edit-row ${editDisabledClass}" title="${editDisabledClass ? 'Cannot edit - Planon Code exists' : 'Edit Asset'}">
+                            <i data-lucide="edit" class="lucide"></i>
+                        </a>
+                        <a href="#" class="duplicate-row" title="Duplicate Asset" style="margin-left: 8px;">
+                            <i data-lucide="copy" class="lucide"></i>
+                        </a>
+                    </td>
                     <td class="delete-row ${deleteDisabledClass}" title="${planonCodeValue ? 'Cannot delete - Planon Code exists' : 'Delete Row'}">
                         <i data-lucide="trash-2" class="lucide"></i>
                     </td>
@@ -1653,12 +1672,12 @@
             }
             
             function togglePlanonCodeEditability() {
-                if (modalStatus.value === "1") { // "1" is Approved
+                if (modalWorkflow.value === "Asset Management") {
                     modalPlanonCode.readOnly = false;
                     modalPlanonCode.title = '';
                 } else {
                     modalPlanonCode.readOnly = true;
-                    modalPlanonCode.title = 'Status must be "Approved" to edit the Planon Code.';
+                    modalPlanonCode.title = 'Workflow must be "Asset Management" to edit the Planon Code.';
                 }
             }
 
@@ -1682,6 +1701,7 @@
 
             function openModalForEdit(index) {
                 const asset = currentAssets[index];
+                console.log("Opening modal for edit:", asset);
                 if (!asset) return;
                 assetForm.reset();
                 assetForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
@@ -1705,16 +1725,13 @@
                 }
                 modalAssetGroup.value = matchingOptionValue;
 
-                modalDescription.value = asset.description || '';
-                
                 modalSpaceDetails.value = asset.space_details || '';
                 
                 modalProperty.value = asset.property || '';
-                modalAttributeSet.value = asset.attribute_set || '';
                 modalDeviceAddress.value = asset.device_address || '';
                 modalDeviceType.value = asset.device_type || '';
                 modalUnAccount.value = asset.un_account_number || '';
-                modalPlanonCode.value = asset.planon_code || ''; 
+                modalPlanonCode.value = asset.planon_code || '';
                 modalCreationDate.value = asset.creation_date || '';
                 modalStatus.value = String(asset.status ?? "");
                 
@@ -1723,13 +1740,16 @@
                 
                 populateSpaceDropdown(asset.property, asset.space); 
                 
+                // Call updateFieldsFromAssetGroup to populate Description and Attribute Set from the lookup map
+                updateFieldsFromAssetGroup(); 
+                
                 assetModal.show();
  
                 // Update workflow status *after* loading, in case it needs to be overridden
                 // (e.g., if it was 'Electrical Team' but is now 'Complete')
                 updateWorkflowStatus();
                 
-                togglePlanonCodeEditability(); 
+                togglePlanonCodeEditability();
             }
             
             function openModalForDuplicate(index) {
@@ -2151,28 +2171,34 @@
             
             // [START] MODIFIED TABLE CLICK LISTENER
             tableBody.addEventListener('click', (event) => {
-                const row = event.target.closest('tr');
+                const target = event.target.closest('a.edit-row, a.duplicate-row, td.delete-row');
+                if (!target) return;
+
+                const row = target.closest('tr');
                 if (!row) return;
 
-                // Handle checkbox click
-                if (event.target.classList.contains('row-checkbox')) {
-                    updateActionButtons();
-                    return; // Don't open modal if just clicking checkbox
-                }
-                
-                // Handle edit click
-                if (event.target.closest('.edit-row:not(.disabled)')) {
-                    event.preventDefault();
-                    openModalForEdit(row.dataset.index);
-                    return;
-                }
+                const index = row.dataset.index;
 
-                // Handle delete click
-                if (event.target.closest('.delete-row:not(.disabled)')) {
-                    pendingSingleDeleteIndex = row.dataset.index;
-                    deleteConfirmMessage.textContent = 'Are you sure you want to delete this row?';
+                if (target.matches('.edit-row')) {
+                    if (target.classList.contains('disabled')) {
+                        event.preventDefault();
+                        showMessage('This asset cannot be edited because it already has a Planon Code.', 'error');
+                        return;
+                    }
+                    event.preventDefault();
+                    openModalForEdit(index);
+                } else if (target.matches('.duplicate-row')) {
+                    event.preventDefault();
+                    openModalForDuplicate(index);
+                } else if (target.matches('.delete-row')) {
+                    if (target.classList.contains('disabled')) {
+                        event.preventDefault();
+                        return;
+                    }
+                    pendingSingleDeleteIndex = index;
+                    pendingDeleteIndices = [];
+                    deleteConfirmMessage.textContent = `Are you sure you want to delete the asset with Work Order "${currentAssets[index].work_order}"?`;
                     deleteConfirmModal.show();
-                    return;
                 }
             });
             // [END] MODIFIED TABLE CLICK LISTENER
@@ -2195,6 +2221,7 @@
                 } else {
                     modalUnAccount.value = '';
                 }
+                togglePlanonCodeEditability();
                 updateWorkflowStatus(); 
             });
 
@@ -2218,14 +2245,21 @@
                     } else {
                         modalDescription.value = assetGroupName;
                     }
-                }
 
-                if (fullClassification && deviceTypeMapData[fullClassification]) {
-                    modalDeviceType.value = deviceTypeMapData[fullClassification];
+                    if (fullClassification && deviceTypeMapData[fullClassification]) {
+                        modalDeviceType.value = deviceTypeMapData[fullClassification];
+                    } else {
+                        modalDeviceType.value = '';
+                    }
                 } else {
-                    modalDeviceType.value = '';
+                    // In edit mode, only update device type from classification lookup
+                    // Description, Device Address, and Attribute Set should stay as-is
+                    if (fullClassification && deviceTypeMapData[fullClassification]) {
+                        modalDeviceType.value = deviceTypeMapData[fullClassification];
+                    }
                 }
                 
+                togglePlanonCodeEditability();
                 updateWorkflowStatus();
             });
             
@@ -2254,6 +2288,7 @@
             });
             
             modalSpace.addEventListener('change', () => {
+                togglePlanonCodeEditability();
                 updateWorkflowStatus();
 
                 if (isNewAssetMode) {
@@ -2265,8 +2300,14 @@
                 }
             });
             
-            modalPlanonCode.addEventListener('input', updateWorkflowStatus);
+            modalPlanonCode.addEventListener('input', () => {
+                updateWorkflowStatus();
+                togglePlanonCodeEditability();
+            });
             
+            // [NEW] Add listener to workflow dropdown to toggle editability when it changes.
+            // The status change can also affect the workflow, so we listen to both.
+            modalWorkflow.addEventListener('change', togglePlanonCodeEditability); 
             modalStatus.addEventListener('change', togglePlanonCodeEditability);
 
             // Initialization

@@ -70,8 +70,8 @@ def render_chart_png(building: str = "All") -> bytes:
 
     # --- MERGE AND FINALIZE ---
     merged_df = pd.merge(final_summary, building_df, on='building_number', how='left')
-    completeness_summary = merged_df[["Property", "building_number", "asset_type", "field_qty", "found_value"]]
-    completeness_summary['% of Completeness'] = ((completeness_summary['found_value'] / completeness_summary['field_qty'].replace(0, 1)) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
+    completeness_summary = merged_df[["Property", "building_number", "asset_type", "field_qty", "found_value"]].copy()
+    completeness_summary.loc[:, '% of Completeness'] = ((completeness_summary['found_value'] / completeness_summary['field_qty'].replace(0, 1)) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
     
     # --- VISUALIZATION BLOCK ---
     if building != "All":
@@ -84,7 +84,7 @@ def render_chart_png(building: str = "All") -> bytes:
                 found_value=('found_value', 'sum'),
             ).reset_index()
             
-            consolidated_data['% of Completeness'] = ((consolidated_data['found_value'] / consolidated_data['field_qty'].replace(0, 1)) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
+            consolidated_data.loc[:, '% of Completeness'] = ((consolidated_data['found_value'] / consolidated_data['field_qty'].replace(0, 1)) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(2)
             data_to_plot = consolidated_data.sort_values('asset_type')
         else:
             data_to_plot = pd.DataFrame()

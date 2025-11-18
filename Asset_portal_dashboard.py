@@ -13,12 +13,23 @@ Open:
 import os
 import sys
 import re
-import time  # <-- Fix included: For cache-busting
+import time
 import subprocess
 import sqlite3
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# --- [CONFIGURATION] Python Path Setup ---
+# Ensure the current directory and parent directory are in the python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 from flask import (
     Flask, render_template, redirect, url_for, flash,
@@ -26,21 +37,18 @@ from flask import (
 )
 from markupsafe import Markup
 
-## NEW ## -> Import authentication and environment variable libraries
+## Import authentication and environment variable libraries
 from flask_login import login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
 
-## NEW ## -> Add the shared auth_service directory to Python's path
-# This allows us to import our shared modules for database models and login control
-sys.path.append('/home/developer/auth_service') # This should point to your shared auth service directory
+## Add the shared auth_service directory to Python's path
+sys.path.append('/home/developer/auth_service') 
 
-# Removed FLSAsset, Property, Space, AssetGroup, DeviceTypeMap from import
 from auth_model import db, bcrypt, User
-
 from auth_controller import login_manager
 
 
-# ------------------ Optional chart modules ------------------
+# ------------------ Chart Modules Import Section ------------------
 CHARTS_AVAILABLE = False
 AI_STATUS_AVAILABLE = False
 COMPLETENESS_CHART_AVAILABLE = False
@@ -48,83 +56,81 @@ OPERATIONAL_COST_CHART_AVAILABLE = False
 FLS_CHARTS_AVAILABLE = False
 CHARTS_IMPORT_ERROR = ""
 
+# 1. Try Import: Approval Charts
 try:
     from charts import approval as approval_mod
     CHARTS_AVAILABLE = True
 except Exception as _e:
     CHARTS_IMPORT_ERROR = str(_e)
 
+# 2. Try Import: AI Status Table
 try:
     from charts import ai_status_table_new_version as ai_status_table
     AI_STATUS_AVAILABLE = True
 except Exception as _e:
     error_msg = str(_e)
-    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
-         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
-    else:
-        CHARTS_IMPORT_ERROR = error_msg
+    if CHARTS_IMPORT_ERROR: CHARTS_IMPORT_ERROR += f" | {error_msg}"
+    else: CHARTS_IMPORT_ERROR = error_msg
 
+# 3. Try Import: Completeness Score
 try:
     from charts import completeness_score as completeness_mod
     COMPLETENESS_CHART_AVAILABLE = True
 except Exception as _e:
     error_msg = f"Completeness Chart Error: {str(_e)}"
-    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
-         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
-    else:
-        CHARTS_IMPORT_ERROR = error_msg
+    if CHARTS_IMPORT_ERROR: CHARTS_IMPORT_ERROR += f" | {error_msg}"
+    else: CHARTS_IMPORT_ERROR = error_msg
 
+# 4. Try Import: Operational Cost
 try:
     from charts import operational_cost_result as operational_cost_mod
     OPERATIONAL_COST_CHART_AVAILABLE = True
 except Exception as _e:
     error_msg = f"Operational Cost Chart Error: {str(_e)}"
-    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
-         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
-    else:
-        CHARTS_IMPORT_ERROR = error_msg
+    if CHARTS_IMPORT_ERROR: CHARTS_IMPORT_ERROR += f" | {error_msg}"
+    else: CHARTS_IMPORT_ERROR = error_msg
 
-## --- This block now tries to import the chart module but will not break the app if it fails --- ##
+# 5. Try Import: FLS Charts (Altair Version - Robust Import)
+print("--- Attempting to import FLS Charts ---")
 try:
-    # First, try the original import path
-    from charts import fls_chart as fls_charts_mod
-    FLS_CHARTS_AVAILABLE = True
-    print("Successfully imported 'fls_chart' from 'charts' package.")
-except ImportError as _e1:
+    # Check if altair is installed first
+    import altair
+    
+    # Try importing locally first, then as package
     try:
-        # If that fails, try importing from the root directory
         import fls_chart as fls_charts_mod
-        FLS_CHARTS_AVAILABLE = True
-        print("Successfully imported 'fls_chart' from root directory (fallback).")
-    except Exception as _e2:
-        # If both fail, record the errors
-        error_msg = f"FLS Charts Error: Failed to import 'fls_chart' from 'charts' package ({_e1}) AND from root directory ({_e2})"
-        if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
-             CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
-        else:
-            CHARTS_IMPORT_ERROR = error_msg
-        print(CHARTS_IMPORT_ERROR) # Print error to console
-except Exception as _e:
-    # Catch any other unexpected import errors
-    error_msg = f"FLS Charts Error: {str(_e)}"
-    if CHARTS_IMPORT_ERROR and error_msg not in CHARTS_IMPORT_ERROR:
-         CHARTS_IMPORT_ERROR = f"{CHARTS_IMPORT_ERROR} | {error_msg}"
-    else:
-        CHARTS_IMPORT_ERROR = error_msg
-    print(CHARTS_IMPORT_ERROR) # Print error to console
+        print("SUCCESS: Imported 'fls_chart' locally.")
+    except ImportError:
+        from charts import fls_chart as fls_charts_mod
+        print("SUCCESS: Imported 'fls_chart' from charts package.")
+
+    FLS_CHARTS_AVAILABLE = True
+
+except ImportError as e:
+    FLS_CHARTS_AVAILABLE = False
+    error_msg = f"Missing Dependency for FLS Charts (Altair or fls_chart): {e}"
+    print(f"CRITICAL ERROR: {error_msg}")
+    if CHARTS_IMPORT_ERROR: CHARTS_IMPORT_ERROR += f" | {error_msg}"
+    else: CHARTS_IMPORT_ERROR = error_msg
+
+except Exception as e:
+    FLS_CHARTS_AVAILABLE = False
+    error_msg = f"Error loading FLS Charts module: {e}"
+    print(f"CRITICAL ERROR: {error_msg}")
+    traceback.print_exc() 
+    if CHARTS_IMPORT_ERROR: CHARTS_IMPORT_ERROR += f" | {error_msg}"
+    else: CHARTS_IMPORT_ERROR = error_msg
+
 
 # ------------------ Flask app Configuration ------------------
-## NEW ## -> Load environment variables from the central .env file
 load_dotenv('/home/developer/.env')
 
 app = Flask(__name__)
 
-## NEW ## -> Configure the app using variables from the .env file for security and SSO
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SESSION_COOKIE_DOMAIN'] = os.getenv('SESSION_COOKIE_DOMAIN')
 
-## NEW ## -> Connect the extensions (db, bcrypt, login_manager) to this specific app
 db.init_app(app)
 bcrypt.init_app(app)
 login_manager.init_app(app)
@@ -147,7 +153,7 @@ LOG_DIR.mkdir(exist_ok=True)
 ## --- Path to the SQLite DB --- ##
 DB_PATH = r"/home/developer/asset_capture_app_dev/data/QR_codes.db"
 
-# ------------------ Runner helpers ------------------
+# ------------------ Runner helpers (RESTORED FULLY) ------------------
 def _windows_detached_flags() -> int:
     if sys.platform.startswith("win"):
         return 0x00000200 | 0x00000008
@@ -247,6 +253,52 @@ def _get_building_options() -> List[str]:
     try: return approval_mod.building_options()
     except Exception: return ["All"]
 
+# ------------------ Log UI Helpers ------------------
+def _title_from_logname(name: str) -> str:
+    base = Path(name).stem.rsplit(".", 1)[0]
+    is_interpreter = "API_interface" in base
+    is_data_task = "updating_process_database" in base
+
+    if is_data_task:
+        return "Data Processing Task"
+    
+    kind = "API Interpreter" if is_interpreter else "Task"
+    
+    suffix = ""
+    base_upper = base.upper()
+    if "ME" in base_upper: suffix = " – ME"
+    elif "BF" in base_upper: suffix = " – BF"
+    elif "EL" in base_upper: suffix = " – EL"
+    return f"{kind}{suffix}"
+
+def _when_from_ts(ts: Optional[str]) -> str:
+    try:
+        if ts and ts.isdigit(): return datetime.fromtimestamp(int(ts)).strftime("%Y-%m-%d %H:%M:%S")
+    except Exception: pass
+    return "—"
+
+def _summarize_log(text: str = None, path: Path = None) -> str:
+    """Efficiently summarizes a log file by reading line-by-line from a path."""
+    if not path:
+        lines = text.splitlines() if text else []
+    else:
+        lines = path.open("r", encoding="utf-8", errors="replace")
+
+    keep = []
+    try:
+        for raw in lines:
+            line = raw.strip()
+            if re.search(r"Successfully processed and saved", line, flags=re.IGNORECASE) or \
+               re.search(r"^--- SUMMARY ---", line, flags=re.IGNORECASE) or \
+               re.search(r"^Total assets processed:", line, flags=re.IGNORECASE) or \
+               re.search(r"^Successfully saved:", line, flags=re.IGNORECASE):
+                keep.append(line)
+    finally:
+        if hasattr(lines, 'close'):
+            lines.close()
+            
+    return "\n".join(keep) if keep else "No summary items found."
+
 
 ##-------------------------------------------------------------##
 ## Authentication Routes Blueprint                             ##
@@ -341,7 +393,6 @@ def index():
         username=current_user.username
     )
 
-# ----------------- [START OF UPDATED CODE] -----------------
 @main_bp.get("/data/fls_assets")
 @login_required
 def get_fls_asset_data():
@@ -349,62 +400,74 @@ def get_fls_asset_data():
     Provides all necessary data for the FLS Assets table view.
     ALL data is now sourced from QR_codes.db using sqlite3.
     """
+    print("--- [START] get_fls_asset_data ---")
     
     # 1. Initialize empty lists
-    all_properties = [] # <-- [NEW] Renamed from 'properties'
-    filter_properties = [] # <-- [NEW] List for the filter
+    all_properties = [] 
+    filter_properties = [] 
     spaces_by_prop = {}
     device_map = {}
     asset_group_options = []
+    asset_group_lookup_map = {}
+    asset_group_name_to_option_map = {}  # Maps simple name to full option
     existing_assets = []
     property_asset_tag_map = {}
     property_name_to_code_map = {}
     conn = None
 
     try:
+        print("Connecting to database...")
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row  # This allows accessing columns by name
         cursor = conn.cursor()
+        print("Database connection successful.")
 
         # --- 1a. Get Property List for MODAL (from Buildings table) ---
         try:
+            print("Executing query for 'Buildings' table...")
             # Fetch both Name and Code to build the name->code map
             cursor.execute('SELECT "Name", "Code" FROM Buildings ORDER BY "Name"')
+            print("Query for 'Buildings' executed. Fetching rows...")
             for row in cursor.fetchall():
-                all_properties.append(row['Name']) # <-- [NEW] Populate all_properties
+                all_properties.append(row['Name']) 
                 property_name_to_code_map[row['Name']] = row['Code']
+            print(f"Successfully fetched {len(all_properties)} properties from 'Buildings'.")
         except sqlite3.Error as e:
             print(f"WARNING: Could not query 'Buildings' table from QR_codes.db: {e}")
             all_properties = []
 
         # --- 1b. Get Property List for FILTER (from new_device table) ---
         try:
+            print("Executing query for distinct 'Property' from 'new_device'...")
             cursor.execute('''
                 SELECT DISTINCT "Property" FROM new_device 
                 WHERE "Property" IS NOT NULL AND TRIM("Property") != '' 
                 ORDER BY "Property"
             ''')
+            print("Query for distinct 'Property' executed. Fetching rows...")
             for row in cursor.fetchall():
                 filter_properties.append(row['Property'])
             print(f"Found {len(filter_properties)} distinct properties in new_device for filtering.")
         except sqlite3.Error as e:
             print(f"WARNING: Could not query 'new_device' for distinct properties: {e}")
-            filter_properties = [] # Default to empty on error
-
+            filter_properties = [] 
 
         # --- 2. Get Spaces by Property (from Buildings_with_SpaceUID view) ---
         spaces_by_prop = {}
         try:
+            print("Executing query for 'Buildings_with_SpaceUID' view...")
             cursor.execute('''
                 SELECT "Name", "Location" FROM Buildings_with_SpaceUID 
                 WHERE "Location" IS NOT NULL AND TRIM("Location") != ''
             ''')
+            print("Query for 'Buildings_with_SpaceUID' executed. Fetching rows...")
             for row in cursor.fetchall():
                 property_name = row['Name']
                 space_location = row['Location']
                 if property_name not in spaces_by_prop:
                     spaces_by_prop[property_name] = []
                 spaces_by_prop[property_name].append(space_location)
+            print(f"Successfully fetched spaces for {len(spaces_by_prop)} properties.")
         except sqlite3.Error as e:
             print(f"WARNING: Could not query 'Buildings_with_SpaceUID' view from QR_codes.db: {e}")
             spaces_by_prop = {}
@@ -412,11 +475,16 @@ def get_fls_asset_data():
         # --- 3. Get Asset Group Options AND Device Type Map from 'fls_asset_group' ---
         device_map = {}
         asset_group_options = []
+        asset_group_lookup_map = {}
         try:
+            print("Executing query for 'fls_asset_group' table...")
             cursor.execute("""
                 SELECT
                     "Full Classification",
                     "Device Type",
+                    "Attribute Set",
+                    "Device Address",
+                    "Description",
                     CASE
                         WHEN Name IS NOT NULL AND "Full Classification" IS NOT NULL
                             THEN Name || ' | ' || "Full Classification"
@@ -427,29 +495,66 @@ def get_fls_asset_data():
                 FROM "fls_asset_group"
                 ORDER BY "AssetGroupOption"
             """)
+            print("Query for 'fls_asset_group' executed. Fetching rows...")
             for row in cursor.fetchall():
-                asset_group_options.append(row['AssetGroupOption'])
-                if row['Full Classification'] and row['Device Type']:
-                    device_map[row['Full Classification']] = row['Device Type']
-                    
+                row_dict = dict(row)
+                asset_group_option = row_dict.get('AssetGroupOption')
+                if not asset_group_option:
+                    continue
+                
+                asset_group_option = asset_group_option.strip()
+                asset_group_options.append(asset_group_option)
+
+                full_classification = row_dict.get('Full Classification')
+                device_type = row_dict.get('Device Type')
+
+                if full_classification and device_type:
+                    device_map[full_classification] = device_type
+
+                asset_group_lookup_map[asset_group_option] = {
+                    'description': row_dict.get('Description'),
+                    'attribute_set': row_dict.get('Attribute Set'),
+                    'device_address': row_dict.get('Device Address'),
+                    'device_type': device_type
+                }
+                
+                # Build reverse mapping: simple name -> full option
+                # Extract the Name part (before the |) to map it to the full option
+                if ' | ' in asset_group_option:
+                    simple_name = asset_group_option.split(' | ')[0].strip()
+                    asset_group_name_to_option_map[simple_name] = asset_group_option
+                else:
+                    asset_group_name_to_option_map[asset_group_option] = asset_group_option
+            print(f"Successfully built asset group lookup map with {len(asset_group_lookup_map)} entries.")
+            print(f"DEBUG: asset_group_name_to_option_map contains {len(asset_group_name_to_option_map)} entries")
+            if len(asset_group_name_to_option_map) > 0:
+                first_few = list(asset_group_name_to_option_map.items())[:3]
+                print(f"DEBUG: First few mappings: {first_few}")
+
         except sqlite3.Error as e:
             print(f"WARNING: Could not query 'fls_asset_group' table from QR_codes.db: {e}")
             device_map = {}
             asset_group_options = []
+            asset_group_lookup_map = {}
 
         # --- 4. Get Property to Asset Tag mapping from 'Asset_System_info' ---
         try:
+            print("Executing query for 'Asset_System_info' view...")
             cursor.execute('SELECT "Property code", "Asset Tag" FROM Asset_System_info')
+            print("Query for 'Asset_System_info' executed. Fetching rows...")
             for row in cursor.fetchall():
                 if row['Property code'] and row['Asset Tag']:
                     property_asset_tag_map[row['Property code']] = row['Asset Tag']
+            print(f"Successfully built property-to-asset-tag map with {len(property_asset_tag_map)} entries.")
         except sqlite3.Error as e:
             print(f"WARNING: Could not query 'Asset_System_info' view from QR_codes.db: {e}")
             property_asset_tag_map = {}
         
         
         # --- 5. Get existing assets from 'new_device' table ---
+        print("Executing query for 'new_device' table...")
         cursor.execute("SELECT * FROM new_device ORDER BY [Creation Date] DESC")
+        print("Query for 'new_device' executed. Fetching rows...")
         rows = cursor.fetchall()
         
         if not rows:
@@ -466,11 +571,18 @@ def get_fls_asset_data():
             else:
                 status_val = str(status_val)
             
+            # Get the asset group from the database
+            db_asset_group = row_dict.get('Asset Group')
+            # Look up the full AssetGroupOption using the name-to-option mapping
+            asset_group_option = asset_group_name_to_option_map.get(db_asset_group, db_asset_group)
+            
+            print(f"DEBUG: Processing asset {row_dict.get('Asset Tag')}: db_asset_group='{db_asset_group}', mapping result='{asset_group_option}'")
+            
             asset = {
                 "index": row_dict.get('index'),
                 "work_order": row_dict.get('Work Order'),
                 "asset_tag": row_dict.get('Asset Tag'),
-                "asset_group": row_dict.get('Asset Group'),
+                "asset_group": asset_group_option,  # Use the full option for dropdown matching
                 "description": row_dict.get('Description'),
                 "property": row_dict.get('Property'),
                 "space": row_dict.get('Space'),
@@ -496,20 +608,21 @@ def get_fls_asset_data():
     finally:
         if conn:
             conn.close()
+            print("Database connection closed.")
+        print("--- [END] get_fls_asset_data ---")
 
     # 3. Return all data
     return jsonify({
         "existing_assets": existing_assets,
-        "property_list": all_properties, # <-- [NEW] Full list for modal
-        "filter_property_list": filter_properties, # <-- [NEW] Filtered list for filter
+        "property_list": all_properties, 
+        "filter_property_list": filter_properties, 
         "spaces_by_property": spaces_by_prop,
         "device_type_map": device_map,
         "asset_group_options": asset_group_options,
-        "asset_group_lookup_map": {},
+        "asset_group_lookup_map": asset_group_lookup_map,
         "property_asset_tag_map": property_asset_tag_map,
         "property_name_to_code_map": property_name_to_code_map
     })
-# ----------------- [END OF UPDATED CODE] -----------------
 
 
 @main_bp.route('/change-password', methods=['GET', 'POST'])
@@ -597,27 +710,28 @@ def operational_cost_chart():
         print(f"Operational cost chart error for type '{chart_type}': {e}")
         return Response(f"Chart error: {e}", status=500, mimetype="text/plain")
 
+# --- [FIXED FLS CHART ROUTE FOR ORIGINAL SCRIPT] ---
 @main_bp.get("/chart/fls_charts.html")
 @login_required
 def fls_charts():
     if not FLS_CHARTS_AVAILABLE:
-        return Response("FLS charts module not available.", status=503, mimetype="text/plain")
+        error_msg = f"FLS charts module unavailable. Details: {CHARTS_IMPORT_ERROR}"
+        return Response(error_msg, 503, mimetype="text/plain")
+
+    # The original script fetches its own data via its fls_df() function.
+    # It takes no arguments.
     try:
-        # This will generate the charts into the static directory
         fls_charts_mod.generate_charts()
-        
-        # --- THIS IS THE CACHE-BUSTING FIX ---
-        # Get a timestamp to use for cache-busting
-        ts = int(time.time())
-        
-        # Pass the timestamp to the template
-        return render_template("fls_charts_container.html", ts=ts)
     except Exception as e:
-        print(f"FLS charts generation error: {e}")
-        return Response(f"Chart generation error: {e}", status=500, mimetype="text/plain")
+        print(f"Error generating FLS charts: {e}")
+        traceback.print_exc()
+        return Response(f"Error generating charts: {e}", 500, mimetype="text/plain")
+
+    # Render the container. has_data=True triggers the iframes.
+    ts = int(time.time())
+    return render_template("fls_charts_container.html", ts=ts, has_data=True)
 
 # ------------------ FLS Asset CRUD Routes ------------------
-
 @main_bp.post("/fls/add_assets")
 @login_required
 def add_fls_assets():
@@ -890,53 +1004,6 @@ def log_status(name: str):
         return jsonify({"status": "error"}), 404
 
 # ------------------ Log UI Routes ------------------
-def _title_from_logname(name: str) -> str:
-    base = Path(name).stem.rsplit(".", 1)[0]
-    is_interpreter = "API_interface" in base
-    is_data_task = "updating_process_database" in base
-
-    if is_data_task:
-        return "Data Processing Task"
-    
-    kind = "API Interpreter" if is_interpreter else "Task"
-    
-    suffix = ""
-    base_upper = base.upper()
-    if "ME" in base_upper: suffix = " – ME"
-    elif "BF" in base_upper: suffix = " – BF"
-    elif "EL" in base_upper: suffix = " – EL"
-    return f"{kind}{suffix}"
-
-def _when_from_ts(ts: Optional[str]) -> str:
-    try:
-        if ts and ts.isdigit(): return datetime.fromtimestamp(int(ts)).strftime("%Y-%m-%d %H:%M:%S")
-    except Exception: pass
-    return "—"
-
-# CORRECTED: Single, correct version of the function
-def _summarize_log(text: str = None, path: Path = None) -> str:
-    """Efficiently summarizes a log file by reading line-by-line from a path."""
-    if not path:
-        lines = text.splitlines() if text else []
-    else:
-        lines = path.open("r", encoding="utf-8", errors="replace")
-
-    keep = []
-    try:
-        for raw in lines:
-            line = raw.strip()
-            # This 'if' block now correctly captures all relevant summary lines
-            if re.search(r"Successfully processed and saved", line, flags=re.IGNORECASE) or \
-               re.search(r"^--- SUMMARY ---", line, flags=re.IGNORECASE) or \
-               re.search(r"^Total assets processed:", line, flags=re.IGNORECASE) or \
-               re.search(r"^Successfully saved:", line, flags=re.IGNORECASE):
-                keep.append(line)
-    finally:
-        if hasattr(lines, 'close'):
-            lines.close()
-            
-    return "\n".join(keep) if keep else "No summary items found."
-
 @main_bp.get("/logs")
 @login_required
 def list_logs():
