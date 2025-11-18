@@ -592,10 +592,12 @@ def get_fls_asset_data():
                 "device_type": row_dict.get('Device Type'),
                 "un_account_number": row_dict.get('UN Account Number'),
                 "planon_code": row_dict.get('Planon Code'),
-                "creation_date": row_dict.get('Creation Date'),
+                "creation_date": str(row_dict.get('Creation Date') or ''),
                 "status": status_val,
                 "workflow": row_dict.get('Workflow')
             }
+            # DEBUG: Log the exact asset being appended
+            print(f"DEBUG: About to append asset: {asset}")
             existing_assets.append(asset)
         
         print(f"FLS get_fls_asset_data: Successfully loaded {len(existing_assets)} assets from QR_codes.db.")
@@ -603,6 +605,8 @@ def get_fls_asset_data():
         print("DEBUG: Assets being returned to frontend:")
         for asset in existing_assets:
             print(f"  - {asset.get('asset_tag')}: asset_group='{asset.get('asset_group')}'")
+        import sys
+        sys.stdout.flush()
 
     except Exception as e:
         print(f"CRITICAL ERROR fetching FLS data from QR_codes.db: {e}")
