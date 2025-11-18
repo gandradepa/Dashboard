@@ -599,6 +599,10 @@ def get_fls_asset_data():
             existing_assets.append(asset)
         
         print(f"FLS get_fls_asset_data: Successfully loaded {len(existing_assets)} assets from QR_codes.db.")
+        # DEBUG: Show what we're returning to the frontend
+        print("DEBUG: Assets being returned to frontend:")
+        for asset in existing_assets:
+            print(f"  - {asset.get('asset_tag')}: asset_group='{asset.get('asset_group')}'")
 
     except Exception as e:
         print(f"CRITICAL ERROR fetching FLS data from QR_codes.db: {e}")
