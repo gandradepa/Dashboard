@@ -303,7 +303,10 @@
       }
 
       #fls-assets-view {
-          min-width: 1400px;
+          width: 100%;
+          min-width: 0;
+          background-color: #f4f6fb;
+          padding-bottom: 2.5rem;
       }
       
       tr.disabled {
@@ -330,31 +333,36 @@
           display: flex;
           flex-wrap: wrap;
           gap: 0.75rem;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1rem;
+          width: 100%;
       }
       
       #fls-assets-view .action-buttons .btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          font-weight: 500;
+          gap: 0.45rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          font-size: 0.85rem;
       }
 
       #fls-assets-view .filter-container {
           display: flex;
-          flex-wrap: nowrap;
+          flex-wrap: wrap;
           gap: 1rem;
           align-items: center;
-          padding: 1rem;
-          background-color: white;
+          padding: 0.85rem 1rem;
+          background-color: #e8edf7;
           border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-          margin-bottom: 1.5rem;
+          border: 1px solid #cfd5e4;
+          margin-bottom: 1rem;
+          width: 100%;
       }
       
       #fls-assets-view .filter-container .search-wrapper {
-          flex-grow: 0.5; 
-          min-width: 150px;
+          flex: 0 0 28%;
+          min-width: 160px;
       }
       
       #fls-assets-view .filter-container .input-group {
@@ -371,6 +379,9 @@
       #fls-assets-view .filter-container label {
           margin-bottom: 0;
           white-space: nowrap;
+          font-weight: 600;
+          color: var(--ubc-blue);
+          font-size: 1.5rem;
       }
       
       #fls-assets-view .filter-container .form-select,
@@ -386,17 +397,20 @@
           background: none;
           border: none;
           color: var(--ubc-blue);
+          font-weight: 600;
+          padding: 0.35rem 0.75rem;
       }
       #fls-assets-view .filter-container #reset-filters-btn:hover {
-          background-color: var(--light-grey);
+          background-color: rgba(0,0,0,0.05);
       }
       
       #fls-assets-view .table-container {
-          background-color: var(--card-bg);
-          border-radius: 16px;
-          padding: 1.5rem;
-          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-          overflow-x: auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          padding: 0;
+          border: 1px solid #d7dce6;
+          overflow: hidden;
+          width: 100%;
       }
       
       #fls-assets-view #asset-table {
@@ -406,19 +420,47 @@
 
       #fls-assets-view #asset-table th,
       #fls-assets-view #asset-table td {
-          padding: 0.75rem 1rem;
+          padding: 0.65rem 0.9rem;
           text-align: left;
-          border-bottom: 1px solid var(--border-color);
+          border-bottom: 1px solid #e1e5ed;
           white-space: nowrap;
-          font-size: 0.875rem;
+      }
+      #fls-assets-view #asset-table td {
+          font-size: 1.08rem;
       }
       
       #fls-assets-view #asset-table th {
           font-weight: 600;
-          color: var(--ubc-blue);
-          font-size: 0.9rem;
+          color: #ffffff;
+          font-size: 0.98rem;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.4px;
+          background-color: #1d2430;
+          border-bottom: 2px solid #121722;
+      }
+
+      #fls-assets-view #asset-table th.action-col,
+      #fls-assets-view #asset-table th.duplicate-col,
+      #fls-assets-view #asset-table th.delete-col {
+          text-align: center;
+          width: 70px;
+      }
+
+      #fls-assets-view #asset-table td.action-col,
+      #fls-assets-view #asset-table td.duplicate-col,
+      #fls-assets-view #asset-table td.delete-col {
+          width: 70px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+
+      #fls-assets-view #asset-table tbody tr:nth-child(odd) {
+          background-color: #f7f8fb;
+      }
+
+      #fls-assets-view #asset-table tbody tr:nth-child(even) {
+          background-color: #ffffff;
       }
       
       #fls-assets-view #asset-table tbody tr:last-child td {
@@ -426,22 +468,45 @@
       }
       
       #fls-assets-view #asset-table tbody tr:hover {
-          background-color: #f8f9fa;
+          background-color: #e9f0ff;
       }
       
-      #fls-assets-view #asset-table .edit-row,
-      #fls-assets-view #asset-table .delete-row {
+      #fls-assets-view #asset-table td.action-col a,
+      #fls-assets-view #asset-table td.duplicate-col a,
+      #fls-assets-view #asset-table td.delete-col a {
           cursor: pointer;
-          color: var(--ubc-blue-light);
+          color: #1f4ed8;
+          background-color: #eef2ff;
+          border: 1px solid #cdd5ff;
+          border-radius: 4px;
+          width: 34px;
+          height: 32px;
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          transition: background-color 0.2s ease, border-color 0.2s ease;
       }
-      #fls-assets-view #asset-table .delete-row {
-          color: var(--error-red);
+      #fls-assets-view #asset-table td.action-col a:hover,
+      #fls-assets-view #asset-table td.duplicate-col a:hover,
+      #fls-assets-view #asset-table td.delete-col a:hover {
+          background-color: #dfe7ff;
+          border-color: #b5c2ff;
       }
-      #fls-assets-view #asset-table .delete-row.disabled {
+      #fls-assets-view #asset-table td.duplicate-col a {
+          color: #6a5acd;
+          background-color: #f3edff;
+          border-color: #daccff;
+      }
+      #fls-assets-view #asset-table td.delete-col a {
+          color: #c1121f;
+          background-color: #fff1f3;
+          border-color: #f3c0c6;
+      }
+      #fls-assets-view #asset-table td.delete-col .disabled {
           color: #6c757d;
           cursor: not-allowed;
       }
-      #fls-assets-view #asset-table .edit-row.disabled {
+      #fls-assets-view #asset-table td.action-col .disabled {
           color: #6c757d;
           cursor: not-allowed;
       }
@@ -972,9 +1037,9 @@
                         <th>Creation Date</th> 
                         <th>Status</th>
                         <th>Workflow</th>
-                        <th>Actions</th>
-                        <th>Duplicate</th>
-                        <th>Delete</th>
+                        <th class="action-col">Actions</th>
+                        <th class="duplicate-col"><span class="visually-hidden">Duplicate</span></th>
+                        <th class="delete-col"><span class="visually-hidden">Delete</span></th>
                     </tr>
                  </thead>
                 <tbody id="table-body">
@@ -1542,6 +1607,7 @@
             const modalStatus = document.getElementById('modal-status');
             const modalWorkflow = document.getElementById('modal-workflow');
             const modalSaveBtn = document.getElementById('modal-save-btn');
+            let assetGroupNameToOptionMap = {};
             
             function updateFieldsFromAssetGroup(forceOverride = false) {
                 const selectedAssetGroup = modalAssetGroup.value;
@@ -1558,23 +1624,15 @@
                     isNewAssetMode
                 });
 
-                // Description, Attribute Set, Device Address, and Device Type are READ-ONLY lookup fields
-                // They should ALWAYS be populated from the assetGroupLookupMap based on the selected asset group
-                // regardless of whether we're in new or edit mode
                 if (lookupData) {
-                    // Populate from lookup data
-                    modalDescription.value = lookupData.description || '';
-                    modalAttributeSet.value = lookupData.attribute_set || '';
-                    modalDeviceAddress.value = lookupData.device_address || '';
-                    modalDeviceType.value = lookupData.device_type || '';
+                    if (lookupData.attribute_set) {
+                        modalAttributeSet.value = lookupData.attribute_set;
+                    }
                     console.log("Fields populated from lookup data");
                 } else if (!selectedAssetGroup) {
                     // If no asset group selected (e.g., "Select..."), clear the fields
-                    modalDescription.value = '';
                     modalAttributeSet.value = '';
-                    modalDeviceAddress.value = '';
-                    modalDeviceType.value = '';
-                    console.log("No asset group selected, fields cleared");
+                    console.log("No asset group selected, attribute set cleared");
                 } else {
                     // Asset group selected but no lookup data found - leave fields as is
                     console.warn(`Asset group '${selectedAssetGroup}' selected but NOT FOUND in assetGroupLookupMap`);
@@ -1644,16 +1702,21 @@
                     <td>${planonCodeValue}</td>
                     <td>${getValue(asset.creation_date)}</td>
                     <td>${statusText}</td>
-                    <td>${workflowToDisplay}</td> <td>
+                    <td>${workflowToDisplay}</td>
+                    <td class="action-col">
                         <a href="#" class="edit-row ${editDisabledClass}" title="${editDisabledClass ? 'Cannot edit - Planon Code exists' : 'Edit Asset'}">
                             <i data-lucide="edit" class="lucide"></i>
                         </a>
-                        <a href="#" class="duplicate-row" title="Duplicate Asset" style="margin-left: 8px;">
+                    </td>
+                    <td class="duplicate-col">
+                        <a href="#" class="duplicate-row" title="Duplicate Asset">
                             <i data-lucide="copy" class="lucide"></i>
                         </a>
                     </td>
-                    <td class="delete-row ${deleteDisabledClass}" title="${planonCodeValue ? 'Cannot delete - Planon Code exists' : 'Delete Row'}">
-                        <i data-lucide="trash-2" class="lucide"></i>
+                    <td class="delete-col">
+                        <a href="#" class="delete-row ${deleteDisabledClass}" title="${planonCodeValue ? 'Cannot delete - Planon Code exists' : 'Delete Row'}">
+                            <i data-lucide="trash-2" class="lucide"></i>
+                        </a>
                     </td>
                 `;
                 
@@ -1730,28 +1793,42 @@
                 modalAssetTag.value = asset.asset_tag || '';
                 
                 const assetGroupName = asset.asset_group || '';
-                console.log("Asset group from database:", assetGroupName);
-                let matchingOptionValue = '';
-                if (assetGroupName) {
-                    for (let option of modalAssetGroup.options) {
-                        if (option.value.startsWith(assetGroupName + ' | ') || option.value === assetGroupName) {
-                            matchingOptionValue = option.value;
-                            console.log("Found matching dropdown option:", matchingOptionValue);
-                            break;
-                        }
-                    }
-                    if (!matchingOptionValue) {
-                        console.warn(`No matching dropdown option found for asset group: '${assetGroupName}'`);
+                console.log("Attempting to set asset group to:", assetGroupName);
+                const normalizedAssetGroupName = assetGroupName.trim().toLowerCase();
+
+                // Find the full option value (e.g., "Bells | EL.24.395.4099.5072") 
+                // that corresponds to the short asset group name (e.g., "Bells").
+                let matchingOptionValue = normalizedAssetGroupName ? (assetGroupNameToOptionMap[normalizedAssetGroupName] || '') : '';
+                if (!matchingOptionValue && assetGroupName) {
+                    const matchingOption = Array.from(modalAssetGroup.options).find(opt => {
+                        const optionValue = (opt.value || '').trim().toLowerCase();
+                        return optionValue === normalizedAssetGroupName || optionValue.startsWith(`${normalizedAssetGroupName} |`);
+                    });
+                    if (matchingOption) {
+                        matchingOptionValue = matchingOption.value;
                     }
                 }
                 modalAssetGroup.value = matchingOptionValue;
-                console.log("Set modalAssetGroup.value to:", matchingOptionValue);
+
+                // Verify if the value was set correctly.
+                if (modalAssetGroup.value) {
+                    console.log("Successfully set asset group dropdown to:", modalAssetGroup.value);
+                } else if (assetGroupName) {
+                    // Only warn if we expected to find a value but didn't.
+                    console.warn(`Could not find a matching option for asset group: '${assetGroupName}'`);
+                }
 
                 modalSpaceDetails.value = asset.space_details || '';
                 
                 modalProperty.value = asset.property || '';
+                
+                // These fields are populated by updateFieldsFromAssetGroup, but we should load the saved value first
+                // in case there's no asset group match.
+                modalDescription.value = asset.description || '';
+                modalAttributeSet.value = asset.attribute_set || '';
                 modalDeviceAddress.value = asset.device_address || '';
                 modalDeviceType.value = asset.device_type || '';
+
                 modalUnAccount.value = asset.un_account_number || '';
                 modalPlanonCode.value = asset.planon_code || '';
                 modalCreationDate.value = asset.creation_date || '';
@@ -1763,8 +1840,10 @@
                 populateSpaceDropdown(asset.property, asset.space); 
                 
                 // Call updateFieldsFromAssetGroup to populate Description and Attribute Set from the lookup map
-                console.log("About to call updateFieldsFromAssetGroup");
-                updateFieldsFromAssetGroup(); 
+                if (modalAssetGroup.value) {
+                    console.log("About to call updateFieldsFromAssetGroup");
+                    updateFieldsFromAssetGroup(); 
+                }
                 
                 assetModal.show();
  
@@ -1974,7 +2053,18 @@
 
             // [START OF CHANGE]
             function initializeModalDropdowns() {
-                modalAssetGroup.innerHTML = '<option value="">Select...</option>' + assetGroupOptions.map(g => `<option value="${g}">${g}</option>`).join('');
+                assetGroupNameToOptionMap = {};
+                const assetGroupOptionsHtml = assetGroupOptions.map(g => {
+                    const trimmed = (g || '').trim();
+                    if (trimmed) {
+                        const baseKey = trimmed.toLowerCase();
+                        assetGroupNameToOptionMap[baseKey] = trimmed;
+                        const simpleName = trimmed.split(' | ')[0].trim().toLowerCase();
+                        assetGroupNameToOptionMap[simpleName] = trimmed;
+                    }
+                    return `<option value="${g}">${g}</option>`;
+                }).join('');
+                modalAssetGroup.innerHTML = '<option value="">Select...</option>' + assetGroupOptionsHtml;
                 
                 // Use the FULL list (propertyList) for the MODAL
                 modalProperty.innerHTML = '<option value="">Select...</option>' + propertyList.sort().map(p => `<option value="${p}">${p}</option>`).join('');
@@ -2194,7 +2284,7 @@
             
             // [START] MODIFIED TABLE CLICK LISTENER
             tableBody.addEventListener('click', (event) => {
-                const target = event.target.closest('a.edit-row, a.duplicate-row, td.delete-row');
+                const target = event.target.closest('a.edit-row, a.duplicate-row, a.delete-row');
                 if (!target) return;
 
                 const row = target.closest('tr');
@@ -2228,10 +2318,7 @@
             
             modalProperty.addEventListener('change', (e) => {
                 populateSpaceDropdown(e.target.value);
-                
-                if (isNewAssetMode) {
-                   modalAttributeSet.value = '';
-                }
+                modalAttributeSet.value = '';
 
                 // --- [NEW LOGIC] ---
                 // Set UN Account Number based on the selected property
@@ -2264,29 +2351,20 @@
                 }
                 
                 console.log("Asset Group change - isNewAssetMode:", isNewAssetMode, "selectedOptionText:", selectedOptionText);
-                
-                if (isNewAssetMode) {
-                    console.log("New Asset Mode: Generating description");
-                    if (assetTagValue) {
-                        modalDescription.value = `${assetGroupName} - ${assetTagValue}`;
-                    } else {
-                        modalDescription.value = assetGroupName;
-                    }
-
-                    if (fullClassification && deviceTypeMapData[fullClassification]) {
-                        modalDeviceType.value = deviceTypeMapData[fullClassification];
-                    } else {
-                        modalDeviceType.value = '';
-                    }
+                if (assetGroupName) {
+                    const baseDescription = assetTagValue ? `${assetGroupName} - ${assetTagValue}` : assetGroupName;
+                    modalDescription.value = baseDescription;
                 } else {
-                    // In edit mode, update ALL lookup fields from the asset group lookup map
-                    console.log("Edit Mode: Calling updateFieldsFromAssetGroup");
-                    updateFieldsFromAssetGroup();
-                    
-                    if (fullClassification && deviceTypeMapData[fullClassification]) {
-                        modalDeviceType.value = deviceTypeMapData[fullClassification];
-                    }
+                    modalDescription.value = '';
                 }
+
+                if (fullClassification && deviceTypeMapData[fullClassification]) {
+                    modalDeviceType.value = deviceTypeMapData[fullClassification];
+                } else {
+                    modalDeviceType.value = '';
+                }
+                
+                updateFieldsFromAssetGroup();
                 
                 togglePlanonCodeEditability();
                 updateWorkflowStatus();
@@ -2296,10 +2374,6 @@
                 const assetTagValue = e.target.value.trim();
                 
                 modalDeviceAddress.value = assetTagValue;
-
-                if (!isNewAssetMode) {
-                    return;
-                }
 
                 const selectedOptionText = modalAssetGroup.value;
                 
@@ -2320,12 +2394,10 @@
                 togglePlanonCodeEditability();
                 updateWorkflowStatus();
 
-                if (isNewAssetMode) {
-                    if (modalSpace.value) {
-                        modalAttributeSet.value = 'FireAlarmDevice';
-                    } else {
-                        modalAttributeSet.value = '';
-                    }
+                if (modalSpace.value) {
+                    modalAttributeSet.value = 'FireAlarmDevice';
+                } else {
+                    modalAttributeSet.value = '';
                 }
             });
             

@@ -729,6 +729,11 @@ def fls_charts():
     # The original script fetches its own data via its fls_df() function.
     # It takes no arguments.
     try:
+        df = fls_charts_mod.fls_df()
+        if df.empty:
+            ts = int(time.time())
+            return render_template("fls_charts_container.html", ts=ts, has_data=False)
+
         fls_charts_mod.generate_charts()
     except Exception as e:
         print(f"Error generating FLS charts: {e}")
