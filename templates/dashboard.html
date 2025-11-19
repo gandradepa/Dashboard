@@ -2275,8 +2275,9 @@
                         modalDeviceType.value = '';
                     }
                 } else {
-                    // In edit mode, only update device type from classification lookup
-                    // Description, Device Address, and Attribute Set should stay as-is
+                    // In edit mode, update ALL lookup fields from the asset group lookup map
+                    updateFieldsFromAssetGroup();
+                    
                     if (fullClassification && deviceTypeMapData[fullClassification]) {
                         modalDeviceType.value = deviceTypeMapData[fullClassification];
                     }
