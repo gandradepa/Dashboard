@@ -2249,6 +2249,7 @@
             });
 
             modalAssetGroup.addEventListener('change', (e) => {
+                console.log("Asset Group change event fired");
                 
                 const selectedOptionText = e.target.value;
                 const assetTagValue = modalAssetTag.value.trim();
@@ -2262,7 +2263,10 @@
                     fullClassification = parts[1] ? parts[1].trim() : null;
                 }
                 
+                console.log("Asset Group change - isNewAssetMode:", isNewAssetMode, "selectedOptionText:", selectedOptionText);
+                
                 if (isNewAssetMode) {
+                    console.log("New Asset Mode: Generating description");
                     if (assetTagValue) {
                         modalDescription.value = `${assetGroupName} - ${assetTagValue}`;
                     } else {
@@ -2276,6 +2280,7 @@
                     }
                 } else {
                     // In edit mode, update ALL lookup fields from the asset group lookup map
+                    console.log("Edit Mode: Calling updateFieldsFromAssetGroup");
                     updateFieldsFromAssetGroup();
                     
                     if (fullClassification && deviceTypeMapData[fullClassification]) {
