@@ -1815,9 +1815,10 @@
                 const workOrder = modalWorkOrder.value.trim();
                 const assetTag = modalAssetTag.value.trim();
                 const property = modalProperty.value;
+                const assetGroup = modalAssetGroup.value;
 
                 let isValid = true;
-                [modalWorkOrder, modalAssetTag, modalProperty, modalSpaceDetails].forEach(el => {
+                [modalWorkOrder, modalAssetTag, modalProperty, modalSpaceDetails, modalAssetGroup].forEach(el => {
                     el.classList.remove('is-invalid', 'is-valid');
                 });
                 
@@ -1839,6 +1840,15 @@
                 } else {
                     modalProperty.classList.add('is-valid');
                 }
+                
+                // --- [NEW] REQUIRE ASSET GROUP SELECTION ---
+                if (!assetGroup) {
+                    modalAssetGroup.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    modalAssetGroup.classList.add('is-valid');
+                }
+                // --- [END NEW] ---
                 
                 // --- [NEW VALIDATION CHECK] ---
                 const workflow = modalWorkflow.value;
