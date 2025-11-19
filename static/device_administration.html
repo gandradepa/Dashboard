@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-cceaacbc669ea18e5c88d8b64587799f"}, "mark": {"type": "bar", "size": 15}, "encoding": {"color": {"field": "Workflow", "title": "Current Workflow", "type": "nominal"}, "tooltip": [{"field": "Property", "type": "nominal"}, {"field": "Status", "type": "nominal"}, {"field": "Workflow", "type": "nominal"}, {"field": "Creation Date", "title": "Start Date", "type": "temporal"}, {"field": "QTY of Days", "title": "Days Active", "type": "quantitative"}], "x": {"field": "Creation Date", "title": "Timeline", "type": "temporal"}, "x2": {"field": "End Date"}, "y": {"field": "Device Label", "sort": {"field": "Creation Date", "order": "ascending"}, "title": "Device", "type": "nominal"}}, "height": 400, "title": "Device Administration (Active Timelines)", "width": "container", "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json", "datasets": {"data-cceaacbc669ea18e5c88d8b64587799f": [{"Asset Tag": "M1-20", "Asset Group": "Addressable Modules", "Description": "", "Property": "Lower Mall Header House (024-5)", "Space": "01 Mechanical Room Floor: B1", "Attribute Set": "", "Device Address": "M1-20", "Device Type": "AM", "UN Account Number": "UN-4045", "Status": 0, "index": 17634919000925, "Work Order": 339998, "Creation Date": "2025-11-18T00:00:00", "Planon Code": "", "Workflow": "Asset Management", "Space Details": "Mech Room", "Workflow_Normalized": "asset management", "End Date": "2025-11-18T11:56:33.889618", "Device Label": "Lower Mall Header House (024-5) (N/A)"}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
