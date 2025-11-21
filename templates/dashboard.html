@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="utf-8" />
     <title>Dashboard Management for New Assets</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,1261 +11,1462 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-      :root {
-        --ubc-blue: #002145;
-        --ubc-blue-light: #0055b7;
-        --light-grey: #f4f7fb;
-        --dark-grey: #2d2d2d;
-        --border-color: #e5e7eb;
-        --card-bg: #ffffff;
-        --success-green: #28a745;
-        --error-red: #dc3545;
-      }
-
-      body {
-        background-color: var(--light-grey);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        color: var(--dark-grey);
-      }
-      
-      #main-view, #analytics-view, #qr-pending-view, #operational-cost-view, #fls-assets-view {
-        display: none;
-      }
-
-      .ubc-navbar {
-        background-color: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--border-color);
-      }
-
-      .ubc-brand {
-        color: var(--ubc-blue) !important;
-        font-weight: 600;
-        font-size: 1.1rem;
-      }
-      
-      .ubc-logo, .ubc-facilities-logo {
-        height: 79px;
-        transition: height 0.3s ease;
-      }
-
-      .page-title {
-        color: var(--ubc-blue);
-        font-weight: 700;
-        transition: font-size 0.3s ease;
-      }
-
-      .page-subtitle {
-        color: #5a6e82;
-        font-size: 1.1rem;
-        transition: font-size 0.3s ease;
-      }
-
-      .section-title {
-        color: var(--ubc-blue);
-        font-weight: 600;
-        padding-bottom: 0.5rem;
-        display: inline-block;
-      }
-      
-      .card.tile {
-        background-color: var(--card-bg);
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        overflow: hidden;
-      }
-
-      .card.tile:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-      }
-      
-      .capture-card-highlight {
-          background-color: #B1D6FA !important;
-      }
-      
-      .sdi-card-highlight {
-          background-color: #D5E0E0 !important;
-      }
-      
-      .card-title {
-        color: var(--ubc-blue);
-        font-weight: 600;
-      }
-      
-      .ubc-btn {
-        background-color: var(--ubc-blue);
-        border: none;
-        color: white;
-        font-weight: 500;
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
-        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-      }
-
-      .ubc-btn:hover {
-        background-color: var(--ubc-blue-light);
-        color: white;
-        transform: translateY(-2px);
-      }
-      
-      .ubc-btn-secondary {
-        background-color: transparent;
-        border: 1px solid var(--ubc-blue);
-        color: var(--ubc-blue);
-      }
-      .ubc-btn-secondary:hover {
-        background-color: var(--ubc-blue);
-        color: white;
-      }
-
-      .ubc-footer {
-        background-color: var(--ubc-blue);
-        color: rgba(255, 255, 255, 0.8);
-      }
-      
-      .task-runner-wrapper {
-        min-height: 38px;
-        flex-grow: 1;
-      }
-      .progress-bar-container {
-        display: none;
-        align-items: center;
-        width: 100%;
-      }
-      .progress-track {
-        flex-grow: 1;
-        height: 8px;
-        background-color: var(--border-color);
-        border-radius: 4px;
-        overflow: hidden;
-        position: relative;
-      }
-      .progress-bar-fill {
-        width: 100%;
-        height: 100%;
-        border-radius: 4px;
-        background-color: var(--ubc-blue-light);
-        background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
-        background-size: 20px 20px;
-        animation: progress-bar-stripes 1s linear infinite;
-      }
-      .status-indicator {
-        display: flex;
-        align-items: center;
-        margin-left: 12px;
-        min-width: 80px;
-      }
-      .status-icon {
-        display: none;
-        margin-right: 4px;
-      }
-      .status-text {
-        font-size: 0.9rem;
-        font-weight: 500;
-      }
-      
-      .progress-bar-container.success .progress-track { background-color: #d4edda; }
-      .progress-bar-container.success .progress-bar-fill { background-image: none; background-color: var(--success-green); }
-      .progress-bar-container.success .icon-success { display: inline-block; color: var(--success-green); }
-      .progress-bar-container.success .status-text { color: var(--success-green); }
-
-      .progress-bar-container.error .progress-track { background-color: #f8d7da; }
-      .progress-bar-container.error .progress-bar-fill { background-image: none; background-color: var(--error-red); }
-      .progress-bar-container.error .icon-error { display: inline-block; color: var(--error-red); }
-      .progress-bar-container.error .status-text { color: var(--error-red); }
-
-      @keyframes progress-bar-stripes {
-        from { background-position: 20px 0; }
-        to { background-position: 0 0; }
-      }
-
-      .application-card-grid {
-        display: grid;
-        gap: 1.5rem;
-        grid-template-columns: repeat(3, 1fr);
-      }
-      @media (max-width: 991.98px) {
-        .application-card-grid {
-          grid-template-columns: repeat(2, 1fr);
+        :root {
+            --ubc-blue: #002145;
+            --ubc-blue-light: #0055b7;
+            --light-grey: #f4f7fb;
+            --dark-grey: #2d2d2d;
+            --border-color: #e5e7eb;
+            --card-bg: #ffffff;
+            --success-green: #28a745;
+            --error-red: #dc3545;
         }
-      }
-      @media (max-width: 767.98px) {
-        .application-card-grid {
-          grid-template-columns: 1fr;
-        }
-      }
 
-      .analytics-card-grid {
-        display: grid;
-        grid-template-columns: repeat(1, 1fr);
-        gap: 1.5rem;
-      }
-      @media (min-width: 992px) {
+        body {
+            background-color: var(--light-grey);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--dark-grey);
+        }
+
+        #main-view,
+        #analytics-view,
+        #qr-pending-view,
+        #operational-cost-view,
+        #fls-assets-view {
+            display: none;
+        }
+
+        .ubc-navbar {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ubc-brand {
+            color: var(--ubc-blue) !important;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .ubc-logo,
+        .ubc-facilities-logo {
+            height: 79px;
+            transition: height 0.3s ease;
+        }
+
+        .page-title {
+            color: var(--ubc-blue);
+            font-weight: 700;
+            transition: font-size 0.3s ease;
+        }
+
+        .page-subtitle {
+            color: #5a6e82;
+            font-size: 1.1rem;
+            transition: font-size 0.3s ease;
+        }
+
+        .section-title {
+            color: var(--ubc-blue);
+            font-weight: 600;
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .card.tile {
+            background-color: var(--card-bg);
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+        }
+
+        .card.tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        .capture-card-highlight {
+            background-color: #B1D6FA !important;
+        }
+
+        .sdi-card-highlight {
+            background-color: #D5E0E0 !important;
+        }
+
+        .card-title {
+            color: var(--ubc-blue);
+            font-weight: 600;
+        }
+
+        .ubc-btn {
+            background-color: var(--ubc-blue);
+            border: none;
+            color: white;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .ubc-btn:hover {
+            background-color: var(--ubc-blue-light);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .ubc-btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--ubc-blue);
+            color: var(--ubc-blue);
+        }
+
+        .ubc-btn-secondary:hover {
+            background-color: var(--ubc-blue);
+            color: white;
+        }
+
+        .ubc-footer {
+            background-color: var(--ubc-blue);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .task-runner-wrapper {
+            min-height: 38px;
+            flex-grow: 1;
+        }
+
+        .progress-bar-container {
+            display: none;
+            align-items: center;
+            width: 100%;
+        }
+
+        .progress-track {
+            flex-grow: 1;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            background-color: var(--ubc-blue-light);
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            margin-left: 12px;
+            min-width: 80px;
+        }
+
+        .status-icon {
+            display: none;
+            margin-right: 4px;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .progress-bar-container.success .progress-track {
+            background-color: #d4edda;
+        }
+
+        .progress-bar-container.success .progress-bar-fill {
+            background-image: none;
+            background-color: var(--success-green);
+        }
+
+        .progress-bar-container.success .icon-success {
+            display: inline-block;
+            color: var(--success-green);
+        }
+
+        .progress-bar-container.success .status-text {
+            color: var(--success-green);
+        }
+
+        .progress-bar-container.error .progress-track {
+            background-color: #f8d7da;
+        }
+
+        .progress-bar-container.error .progress-bar-fill {
+            background-image: none;
+            background-color: var(--error-red);
+        }
+
+        .progress-bar-container.error .icon-error {
+            display: inline-block;
+            color: var(--error-red);
+        }
+
+        .progress-bar-container.error .status-text {
+            color: var(--error-red);
+        }
+
+        @keyframes progress-bar-stripes {
+            from {
+                background-position: 20px 0;
+            }
+
+            to {
+                background-position: 0 0;
+            }
+        }
+
+        .application-card-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 991.98px) {
+            .application-card-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .application-card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .analytics-card-grid {
-          grid-template-columns: repeat(2, 1fr);
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 1.5rem;
         }
-      }
-      
-      .analytics-card {
-        background-color: var(--card-bg);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
 
-      @media (min-width: 992px) {
-        .bar-chart-card {
-           grid-column: span 1;
-           grid-row: span 2;
+        @media (min-width: 992px) {
+            .analytics-card-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
-        .kpi-pie-wrapper {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          grid-column: span 1;
-          grid-row: span 2;
+
+        .analytics-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-      }
 
-      .form-select-wrapper .form-select {
-        border-radius: 8px;
-      }
+        @media (min-width: 992px) {
+            .bar-chart-card {
+                grid-column: span 1;
+                grid-row: span 2;
+            }
 
-      .asset-table-container {
-        background-color: var(--card-bg);
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      }
-      .asset-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      
-      .asset-table th, .asset-table td {
-        padding: 0.75rem 3.0rem;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-      }
-      
-      .asset-table th {
-        font-weight: 600;
-        color: var(--ubc-blue);
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .asset-table tbody tr:last-child td {
-        border-bottom: none;
-      }
-      .asset-table tbody tr:hover {
-        background-color: #f8f9fa;
-      }
-      
-      #detailed-view .asset-table th,
-      #detailed-view .asset-table td {
-        white-space: nowrap;
-        font-size: 0.875rem;
-        padding: 0.6rem 0.8rem;
-      }
+            .kpi-pie-wrapper {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+                grid-column: span 1;
+                grid-row: span 2;
+            }
+        }
 
-      .col-shrink-center {
-        width: 1%;
-        white-space: nowrap !important;
-        text-align: center !important;
-      }
-      
-      @media (max-width: 768px) {
-        .page-title { font-size: 2.2rem; }
-        .page-subtitle { font-size: 1rem; }
-        .ubc-logo, .ubc-facilities-logo { height: 63px; }
-        .ubc-brand { font-size: 0.9rem; }
-        main.container { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
-      }
-      
-      .container-fluid-fls {
-          max-width: 100% !important;
-          padding-left: 2rem;
-          padding-right: 2rem;
-      }
+        .form-select-wrapper .form-select {
+            border-radius: 8px;
+        }
 
-      #fls-assets-view {
-          width: 100%;
-          min-width: 0;
-          background-color: #f4f6fb;
-          padding-bottom: 2.5rem;
-      }
-      
-      tr.disabled {
-          color: #6c757d; 
-          background-color: #f8f9fa; 
-      }
-      tr.disabled .delete-row {
-          cursor: not-allowed;
-      }
+        .asset-table-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
 
-      .btn-excel { background-color: #28a745; color: white; }
-      .btn-excel:hover { background-color: #218838; color: white; }
-      .btn-pdf { background-color: #dc3545; color: white; }
-      .btn-pdf:hover { background-color: #c82333; color: white; }
-      .btn-email { background-color: #007bff; color: white; }
-      .btn-email:hover { background-color: #0069d9; color: white; }
-      .btn-teams { background-color: #464775; color: white; }
-      .btn-teams:hover { background-color: #313252; color: white; }
-      
-      #delete-selected-btn { background-color: #dc3545; border-color: #dc3545; }
-      #delete-selected-btn:hover { background-color: #c82333; border-color: #bd2130; }
-      
-      #fls-assets-view .action-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-          width: 100%;
-      }
-      
-      #fls-assets-view .action-buttons .btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-          font-size: 0.85rem;
-      }
+        .asset-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-      #fls-assets-view .filter-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-          align-items: center;
-          padding: 0.85rem 1rem;
-          background-color: #e8edf7;
-          border-radius: 8px;
-          border: 1px solid #cfd5e4;
-          margin-bottom: 1rem;
-          width: 100%;
-      }
-      
-      #fls-assets-view .filter-container .search-wrapper {
-          flex: 0 0 28%;
-          min-width: 160px;
-      }
-      
-      #fls-assets-view .filter-container .input-group {
-          width: 100%;
-      }
-      
-      #fls-assets-view .filter-container > div {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          flex-shrink: 0;
-      }
-      
-      #fls-assets-view .filter-container label {
-          margin-bottom: 0;
-          white-space: nowrap;
-          font-weight: 600;
-          color: var(--ubc-blue);
-          font-size: 1.5rem;
-      }
-      
-      #fls-assets-view .filter-container .form-select,
-      #fls-assets-view .filter-container .form-control {
-          min-width: 150px;
-      }
-      
-      #fls-assets-view .filter-container #property-filter {
-          min-width: 105px; 
-      }
+        .asset-table th,
+        .asset-table td {
+            padding: 0.75rem 3.0rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-      #fls-assets-view .filter-container #reset-filters-btn {
-          background: none;
-          border: none;
-          color: var(--ubc-blue);
-          font-weight: 600;
-          padding: 0.35rem 0.75rem;
-      }
-      #fls-assets-view .filter-container #reset-filters-btn:hover {
-          background-color: rgba(0,0,0,0.05);
-      }
-      
-      #fls-assets-view .table-container {
-          background-color: #ffffff;
-          border-radius: 8px;
-          padding: 0;
-          border: 1px solid #d7dce6;
-          overflow: hidden;
-          width: 100%;
-      }
-      
-      #fls-assets-view #asset-table {
-          width: 100%;
-          border-collapse: collapse;
-      }
+        .asset-table th {
+            font-weight: 600;
+            color: var(--ubc-blue);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-      #fls-assets-view #asset-table th,
-      #fls-assets-view #asset-table td {
-          padding: 0.65rem 0.9rem;
-          text-align: left;
-          border-bottom: 1px solid #e1e5ed;
-          white-space: nowrap;
-      }
-      #fls-assets-view #asset-table td {
-          font-size: 1.08rem;
-      }
-      
-      #fls-assets-view #asset-table th {
-          font-weight: 600;
-          color: #ffffff;
-          font-size: 0.98rem;
-          text-transform: uppercase;
-          letter-spacing: 0.4px;
-          background-color: #1d2430;
-          border-bottom: 2px solid #121722;
-      }
+        .asset-table tbody tr:last-child td {
+            border-bottom: none;
+        }
 
-      #fls-assets-view #asset-table th.action-col,
-      #fls-assets-view #asset-table th.duplicate-col,
-      #fls-assets-view #asset-table th.delete-col {
-          text-align: center;
-          width: 70px;
-      }
+        .asset-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
 
-      #fls-assets-view #asset-table td.action-col,
-      #fls-assets-view #asset-table td.duplicate-col,
-      #fls-assets-view #asset-table td.delete-col {
-          width: 70px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-      }
+        #detailed-view .asset-table th,
+        #detailed-view .asset-table td {
+            white-space: nowrap;
+            font-size: 0.875rem;
+            padding: 0.6rem 0.8rem;
+        }
 
-      #fls-assets-view #asset-table tbody tr:nth-child(odd) {
-          background-color: #f7f8fb;
-      }
+        .col-shrink-center {
+            width: 1%;
+            white-space: nowrap !important;
+            text-align: center !important;
+        }
 
-      #fls-assets-view #asset-table tbody tr:nth-child(even) {
-          background-color: #ffffff;
-      }
-      
-      #fls-assets-view #asset-table tbody tr:last-child td {
-          border-bottom: none;
-      }
-      
-      #fls-assets-view #asset-table tbody tr:hover {
-          background-color: #e9f0ff;
-      }
-      
-      #fls-assets-view #asset-table td.action-col a,
-      #fls-assets-view #asset-table td.duplicate-col a,
-      #fls-assets-view #asset-table td.delete-col a {
-          cursor: pointer;
-          color: #1f4ed8;
-          background-color: #eef2ff;
-          border: 1px solid #cdd5ff;
-          border-radius: 4px;
-          width: 34px;
-          height: 32px;
-          display: inline-flex;
-          justify-content: center;
-          align-items: center;
-          transition: background-color 0.2s ease, border-color 0.2s ease;
-      }
-      #fls-assets-view #asset-table td.action-col a:hover,
-      #fls-assets-view #asset-table td.duplicate-col a:hover,
-      #fls-assets-view #asset-table td.delete-col a:hover {
-          background-color: #dfe7ff;
-          border-color: #b5c2ff;
-      }
-      #fls-assets-view #asset-table td.duplicate-col a {
-          color: #6a5acd;
-          background-color: #f3edff;
-          border-color: #daccff;
-      }
-      #fls-assets-view #asset-table td.delete-col a {
-          color: #c1121f;
-          background-color: #fff1f3;
-          border-color: #f3c0c6;
-      }
-      #fls-assets-view #asset-table td.delete-col .disabled {
-          color: #6c757d;
-          cursor: not-allowed;
-      }
-      #fls-assets-view #asset-table td.action-col .disabled {
-          color: #6c757d;
-          cursor: not-allowed;
-      }
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2.2rem;
+            }
 
-      #asset-modal-bootstrap .modal-header {
-          background-color: var(--ubc-blue);
-          color: white;
-      }
-      #asset-modal-bootstrap .modal-title {
-          color: white;
-      }
-      #asset-modal-bootstrap .modal-header .btn-close {
-          filter: invert(1) grayscale(100%) brightness(200%);
-      }
-      
-      #asset-form {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem 1.5rem;
-      }
-      #asset-form .form-group {
-          margin-bottom: 0;
-      }
-      #asset-form .full-width {
-          grid-column: span 2;
-      }
-      
-      #asset-form input[readonly],
-      #asset-form select[disabled] {
-          background-color: #e9ecef;
-          opacity: 1;
-      }
+            .page-subtitle {
+                font-size: 1rem;
+            }
 
-      #asset-modal-bootstrap .modal-footer {
-          justify-content: space-between;
-      }
-      
-      #asset-modal-bootstrap .modal-footer #modal-cancel-btn {
-          background-color: #6c757d;
-          color: white;
-          border: none;
-      }
-      #asset-modal-bootstrap .modal-footer #modal-cancel-btn:hover {
-          background-color: #5a6268;
-      }
-      #asset-modal-bootstrap .modal-footer #modal-save-btn {
-          background-color: #28a745;
-          color: white;
-          border: none;
-      }
-      #asset-modal-bootstrap .modal-footer #modal-save-btn:hover {
-          background-color: #218838;
-      }
+            .ubc-logo,
+            .ubc-facilities-logo {
+                height: 63px;
+            }
+
+            .ubc-brand {
+                font-size: 0.9rem;
+            }
+
+            main.container {
+                padding-top: 1.5rem !important;
+                padding-bottom: 1.5rem !important;
+            }
+        }
+
+        .container-fluid-fls {
+            max-width: 100% !important;
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+
+        #fls-assets-view {
+            width: 100%;
+            min-width: 0;
+            background-color: #f4f6fb;
+            padding-bottom: 2.5rem;
+        }
+
+        tr.disabled {
+            color: #6c757d;
+            background-color: #f8f9fa;
+        }
+
+        tr.disabled .delete-row {
+            cursor: not-allowed;
+        }
+
+        .btn-excel {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-excel:hover {
+            background-color: #218838;
+            color: white;
+        }
+
+        .btn-pdf {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-pdf:hover {
+            background-color: #c82333;
+            color: white;
+        }
+
+        .btn-email {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-email:hover {
+            background-color: #0069d9;
+            color: white;
+        }
+
+        .btn-teams {
+            background-color: #464775;
+            color: white;
+        }
+
+        .btn-teams:hover {
+            background-color: #313252;
+            color: white;
+        }
+
+        #delete-selected-btn {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        #delete-selected-btn:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        #fls-assets-view .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        #fls-assets-view .action-buttons .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-size: 0.85rem;
+        }
+
+        #fls-assets-view .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.85rem 1rem;
+            background-color: #e8edf7;
+            border-radius: 8px;
+            border: 1px solid #cfd5e4;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        #fls-assets-view .filter-container .search-wrapper {
+            flex: 0 0 28%;
+            min-width: 160px;
+        }
+
+        #fls-assets-view .filter-container .input-group {
+            width: 100%;
+        }
+
+        #fls-assets-view .filter-container>div {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        #fls-assets-view .filter-container label {
+            margin-bottom: 0;
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--ubc-blue);
+            font-size: 1.5rem;
+        }
+
+        #fls-assets-view .filter-container .form-select,
+        #fls-assets-view .filter-container .form-control {
+            min-width: 150px;
+        }
+
+        #fls-assets-view .filter-container #property-filter {
+            min-width: 105px;
+        }
+
+        #fls-assets-view .filter-container #reset-filters-btn {
+            background: none;
+            border: none;
+            color: var(--ubc-blue);
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+        }
+
+        #fls-assets-view .filter-container #reset-filters-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        #fls-assets-view .table-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 0;
+            border: 1px solid #d7dce6;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        #fls-assets-view #asset-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #fls-assets-view #asset-table th,
+        #fls-assets-view #asset-table td {
+            padding: 0.65rem 0.9rem;
+            text-align: left;
+            border-bottom: 1px solid #e1e5ed;
+            white-space: nowrap;
+        }
+
+        #fls-assets-view #asset-table td {
+            font-size: 1.08rem;
+        }
+
+        #fls-assets-view #asset-table th {
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 0.98rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background-color: #1d2430;
+            border-bottom: 2px solid #121722;
+        }
+
+        #fls-assets-view #asset-table th.action-col,
+        #fls-assets-view #asset-table th.duplicate-col,
+        #fls-assets-view #asset-table th.delete-col {
+            text-align: center;
+            width: 70px;
+        }
+
+        #fls-assets-view #asset-table td.action-col,
+        #fls-assets-view #asset-table td.duplicate-col,
+        #fls-assets-view #asset-table td.delete-col {
+            width: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #fls-assets-view #asset-table tbody tr:nth-child(odd) {
+            background-color: #f7f8fb;
+        }
+
+        #fls-assets-view #asset-table tbody tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        #fls-assets-view #asset-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        #fls-assets-view #asset-table tbody tr:hover {
+            background-color: #e9f0ff;
+        }
+
+        #fls-assets-view #asset-table td.action-col a,
+        #fls-assets-view #asset-table td.duplicate-col a,
+        #fls-assets-view #asset-table td.delete-col a {
+            cursor: pointer;
+            color: #1f4ed8;
+            background-color: #eef2ff;
+            border: 1px solid #cdd5ff;
+            border-radius: 4px;
+            width: 34px;
+            height: 32px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        #fls-assets-view #asset-table td.action-col a:hover,
+        #fls-assets-view #asset-table td.duplicate-col a:hover,
+        #fls-assets-view #asset-table td.delete-col a:hover {
+            background-color: #dfe7ff;
+            border-color: #b5c2ff;
+        }
+
+        #fls-assets-view #asset-table td.duplicate-col a {
+            color: #6a5acd;
+            background-color: #f3edff;
+            border-color: #daccff;
+        }
+
+        #fls-assets-view #asset-table td.delete-col a {
+            color: #c1121f;
+            background-color: #fff1f3;
+            border-color: #f3c0c6;
+        }
+
+        #fls-assets-view #asset-table td.delete-col .disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        #fls-assets-view #asset-table td.action-col .disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        #asset-modal-bootstrap .modal-header {
+            background-color: var(--ubc-blue);
+            color: white;
+        }
+
+        #asset-modal-bootstrap .modal-title {
+            color: white;
+        }
+
+        #asset-modal-bootstrap .modal-header .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        #asset-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem 1.5rem;
+        }
+
+        #asset-form .form-group {
+            margin-bottom: 0;
+        }
+
+        #asset-form .full-width {
+            grid-column: span 2;
+        }
+
+        #asset-form input[readonly],
+        #asset-form select[disabled] {
+            background-color: #e9ecef;
+            opacity: 1;
+        }
+
+        #asset-modal-bootstrap .modal-footer {
+            justify-content: space-between;
+        }
+
+        #asset-modal-bootstrap .modal-footer #modal-cancel-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+        }
+
+        #asset-modal-bootstrap .modal-footer #modal-cancel-btn:hover {
+            background-color: #5a6268;
+        }
+
+        #asset-modal-bootstrap .modal-footer #modal-save-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+
+        #asset-modal-bootstrap .modal-footer #modal-save-btn:hover {
+            background-color: #218838;
+        }
     </style>
-  </head>
-  <body class="ubc-body">
+</head>
+
+<body class="ubc-body">
     <header>
-      <nav class="navbar navbar-expand-lg ubc-navbar sticky-top" aria-label="Primary">
-        <div class="container d-flex justify-content-between align-items-center">
-          <a class="navbar-brand d-flex align-items-center gap-md-3 gap-2" href="{{ url_for('main.index') }}">
-            <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
-            <span class="ubc-brand d-none d-md-inline">Dashboard Management for New Assets</span>
-          </a>
-          <div class="d-flex align-items: center gap-md-3 gap-2">
-             <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}" alt="UBC Facilities Logo" class="ubc-facilities-logo" />
-             <i data-lucide="circle-user-round" style="color: var(--ubc-blue);"></i>
-             <a href="{{ url_for('main.change_password') }}" class="btn btn-sm btn-outline-secondary" title="Change Password">
-                <i data-lucide="key-round" class="align-middle"></i>
-             </a>
-             <a href="{{ url_for('auth.logout') }}" class="btn btn-sm ubc-btn-secondary ms-2">Logout</a>
-          </div>
-        </div>
-      </nav>
+        <nav class="navbar navbar-expand-lg ubc-navbar sticky-top" aria-label="Primary">
+            <div class="container d-flex justify-content-between align-items-center">
+                <a class="navbar-brand d-flex align-items-center gap-md-3 gap-2" href="{{ url_for('main.index') }}">
+                    <img src="{{ url_for('static', filename='logos/ubc_logo.jpg') }}" alt="UBC Logo" class="ubc-logo" />
+                    <span class="ubc-brand d-none d-md-inline">Dashboard Management for New Assets</span>
+                </a>
+                <div class="d-flex align-items: center gap-md-3 gap-2">
+                    <img src="{{ url_for('static', filename='logos/ubc-facilities_logo.jpg') }}"
+                        alt="UBC Facilities Logo" class="ubc-facilities-logo" />
+                    <i data-lucide="circle-user-round" style="color: var(--ubc-blue);"></i>
+                    <a href="{{ url_for('main.change_password') }}" class="btn btn-sm btn-outline-secondary"
+                        title="Change Password">
+                        <i data-lucide="key-round" class="align-middle"></i>
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-sm ubc-btn-secondary ms-2">Logout</a>
+                </div>
+            </div>
+        </nav>
     </header>
 
     <main id="main" class="container py-5">
-      
-      <div id="main-view">
-        <div class="mb-5">
-          <h1 class="display-5 page-title">Dashboard</h1>
-          <p class="lead page-subtitle">Welcome, <strong>{{ username }}</strong>! Overview of applications and monitoring tools.</p>
-        </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="mb-4">
-              {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3" role="alert">
-                  {{ message|safe }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-              {% endfor %}
+        <div id="main-view">
+            <div class="mb-5">
+                <h1 class="display-5 page-title">Dashboard</h1>
+                <p class="lead page-subtitle">Welcome, <strong>{{ username }}</strong>! Overview of applications and
+                    monitoring tools.</p>
             </div>
-          {% endif %}
-        {% endwith %}
-        
-        <section class="mb-5">
-          <h2 class="h4 section-title mb-4">Applications</h2>
-          <div class="application-card-grid">
-            {% for a in apps %}
-            <div class="d-flex">
-              <div class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% elif a.key == 'sdi_process' %}sdi-card-highlight{% endif %}">
-                <div class="card-body d-flex flex-column p-4">
-                   <div class="mb-3"> <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32" height="32"></i> </div>
-                  <h3 class="h5 card-title mb-2">{{ a.name }}</h3>
-                  <p class="card-text text-muted small mb-4"><code>{{ a.url | replace('https://', '') }}</code></p>
-                  <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
-                    <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
-                    {% if a.key in ["review_bf", "review_me", "review_el"] %}
-                      <div class="task-runner-wrapper">
-                        <div class="task-runner-container">
-                            <div class="d-grid">
-                                <button class="btn btn-outline-secondary btn-sm run-task-btn" type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}"> Run AI Interpreter </button>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-track"><div class="progress-bar-fill"></div></div>
-                                <div class="status-indicator">
-                                    <i data-lucide="check-circle" class="status-icon icon-success"></i>
-                                    <i data-lucide="x-circle" class="status-icon icon-error"></i>
-                                    <span class="status-text"></span>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-4">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3" role="alert">
+                    {{ message|safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <section class="mb-5">
+                <h2 class="h4 section-title mb-4">Applications</h2>
+                <div class="application-card-grid">
+                    {% for a in apps %}
+                    <div class="d-flex">
+                        <div
+                            class="card tile h-100 w-100 {% if a.key == 'capture' %}capture-card-highlight{% elif a.key == 'sdi_process' %}sdi-card-highlight{% endif %}">
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="mb-3"> <i data-lucide="box" style="color: var(--ubc-blue-light);" width="32"
+                                        height="32"></i> </div>
+                                <h3 class="h5 card-title mb-2">{{ a.name }}</h3>
+                                <p class="card-text text-muted small mb-4">
+                                    <code>{{ a.url | replace('https://', '') }}</code>
+                                </p>
+                                <div class="mt-auto d-flex gap-2 flex-wrap align-items-center">
+                                    <a class="btn ubc-btn" target="_blank" href="{{ a.url }}">Open</a>
+                                    {% if a.key in ["review_bf", "review_me", "review_el"] %}
+                                    <div class="task-runner-wrapper">
+                                        <div class="task-runner-container">
+                                            <div class="d-grid">
+                                                <button class="btn btn-outline-secondary btn-sm run-task-btn"
+                                                    type="button" data-task-key="qr_api_{{ a.key.split('_')[1] }}"> Run
+                                                    AI Interpreter </button>
+                                            </div>
+                                            <div class="progress-bar-container">
+                                                <div class="progress-track">
+                                                    <div class="progress-bar-fill"></div>
+                                                </div>
+                                                <div class="status-indicator">
+                                                    <i data-lucide="check-circle" class="status-icon icon-success"></i>
+                                                    <i data-lucide="x-circle" class="status-icon icon-error"></i>
+                                                    <span class="status-text"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
+                    </div>
+                    {% endfor %}
 
-            <div class="d-flex">
-              <div class="card tile h-100 w-100">
-                <div class="card-body d-flex flex-column p-4">
-                  <div class="mb-3">
-                    <i data-lucide="link" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
-                  </div>
-                  <h3 class="h5 card-title mb-3">Useful Links</h3>
-                  <div class="d-flex flex-column gap-2">
-                    <div>
-                      <a href="https://ubc-prod.planoncloud.com" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
-                        <i data-lucide="external-link" width="16" height="16"></i>
-                        <span class="fw-medium">Planon</span>
-                      </a>
-                    </div>
-                    <div>
-                      <a href="https://online-services.technicalsafetybc.ca" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
-                        <i data-lucide="external-link" width="16" height="16"></i>
-                        <span class="fw-medium">TSBC Website</span>
-                      </a>
-                    </div>
-                    <div>
-                      <a href="https://shareit.it.ubc.ca/teams/Teams/EMMS/Documents/Forms/AllItems.aspx" target="_blank" class="text-decoration-none d-flex align-items-center gap-2">
-                        <i data-lucide="external-link" width="16" height="16"></i>
-                        <span class="fw-medium">SDI Templates</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-        </section>
-
-        <section class="mb-5">
-          <h2 class="h4 section-title mb-4">Tasks & Monitoring</h2>
-          <div class="row g-4 align-items-stretch">
-        
-            <div class="col-12 col-lg-4 d-flex">
-              <div class="card tile h-100 w-100">
-                <div class="card-body d-flex flex-column p-4">
-                   <div class="mb-3">
-                     <i data-lucide="database-zap" style="color: var(--ubc-blue-light);" width="32" height="32"></i>
-                   </div>
-                  <h3 class="h5 card-title mb-2">Database Sync</h3>
-                  <p class="card-text text-muted small mb-4">Process new photos & JSON files to update the asset database.</p>
-                  <div class="mt-auto task-runner-wrapper">
-                    <div class="task-runner-container">
-                        <div class="d-grid">
-                            <button class="btn ubc-btn-secondary run-task-btn" type="button" data-task-key="update_db">
-                              {{ task_labels.update_db or 'Run Database Update' }}
-                            </button>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-track"><div class="progress-bar-fill"></div></div>
-                            <div class="status-indicator">
-                                <i data-lucide="check-circle" class="status-icon icon-success"></i>
-                                <i data-lucide="x-circle" class="status-icon icon-error"></i>
-                                <span class="status-text"></span>
+                    <div class="d-flex">
+                        <div class="card tile h-100 w-100">
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="mb-3">
+                                    <i data-lucide="link" style="color: var(--ubc-blue-light);" width="32"
+                                        height="32"></i>
+                                </div>
+                                <h3 class="h5 card-title mb-3">Useful Links</h3>
+                                <div class="d-flex flex-column gap-2">
+                                    <div>
+                                        <a href="https://ubc-prod.planoncloud.com" target="_blank"
+                                            class="text-decoration-none d-flex align-items-center gap-2">
+                                            <i data-lucide="external-link" width="16" height="16"></i>
+                                            <span class="fw-medium">Planon</span>
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a href="https://online-services.technicalsafetybc.ca" target="_blank"
+                                            class="text-decoration-none d-flex align-items-center gap-2">
+                                            <i data-lucide="external-link" width="16" height="16"></i>
+                                            <span class="fw-medium">TSBC Website</span>
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a href="https://shareit.it.ubc.ca/teams/Teams/EMMS/Documents/Forms/AllItems.aspx"
+                                            target="_blank"
+                                            class="text-decoration-none d-flex align-items-center gap-2">
+                                            <i data-lucide="external-link" width="16" height="16"></i>
+                                            <span class="fw-medium">SDI Templates</span>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                  </div>
+
                 </div>
-              </div>
-            </div>
-        
-            <div class="col-12 col-lg-8 d-flex">
-              <div class="card tile h-100 w-100 p-4">
-                  <h3 class="h5 card-title mb-4">Monitoring</h3>
-                   <div class="d-flex flex-wrap align-items-center justify-content-start gap-4">
-                      <div>
-                        <a id="show-qr-pending-btn" role="button" title="Open QR Pending List" style="cursor: pointer;">
-                          <img src="{{ url_for('static', filename='System Process Logs.png') }}" alt="Open QR Pending" width="200" height="200" style="max-width: 100%; height: auto; border-radius: 8px;">
-                        </a>
-                      </div>
-                      <div>
-                        <a id="show-analytics-btn" role="button" title="Open charts" style="cursor: pointer;">
-                          <img src="{{ url_for('static', filename='Asset Reviewer Management.png') }}" alt="Open Analytics" width="200" height="200" style="max-width: 100%; height: auto; border-radius: 8px;">
-                        </a>
-                      </div>
-                      <div>
-                        <a id="show-operational-cost-btn" role="button" title="Open Operational Cost" style="cursor: pointer;">
-                          <img src="{{ url_for('static', filename='QR Code Asset Management.png') }}" alt="Open Operational Cost" width="200" height="200" style="max-width: 100%; height: auto; border-radius: 8px;">
-                        </a>
-                      </div>
-                      <div>
-                        <div class="card h-100 position-relative" style="width: 200px; height: 200px; border-radius: 8px; background-color: #e9ecef;">
-                            <a id="show-fls-assets-btn" role="button" title="Open FLS Assets" class="text-decoration-none d-flex flex-column justify-content-center align-items-center h-100 position-relative">
-                                <i data-lucide="clipboard-list" style="color: var(--ubc-blue); width: 64px; height: 64px;"></i>
-                                <span class="mt-2 fw-bold" style="color: var(--ubc-blue);">FLS Assets</span>
-                                 <span id="fls-assets-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 1rem; margin-top: 1rem; margin-left: -1rem;">
-                                    <span class="visually-hidden">incomplete items</span>
-                                 </span>
-                            </a>
+            </section>
+
+            <section class="mb-5">
+                <h2 class="h4 section-title mb-4">Tasks & Monitoring</h2>
+                <div class="row g-4 align-items-stretch">
+
+                    <div class="col-12 col-lg-4 d-flex">
+                        <div class="card tile h-100 w-100">
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="mb-3">
+                                    <i data-lucide="database-zap" style="color: var(--ubc-blue-light);" width="32"
+                                        height="32"></i>
+                                </div>
+                                <h3 class="h5 card-title mb-2">Database Sync</h3>
+                                <p class="card-text text-muted small mb-4">Process new photos & JSON files to update the
+                                    asset database.</p>
+                                <div class="mt-auto task-runner-wrapper">
+                                    <div class="task-runner-container">
+                                        <div class="d-grid">
+                                            <button class="btn ubc-btn-secondary run-task-btn" type="button"
+                                                data-task-key="update_db">
+                                                {{ task_labels.update_db or 'Run Database Update' }}
+                                            </button>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-track">
+                                                <div class="progress-bar-fill"></div>
+                                            </div>
+                                            <div class="status-indicator">
+                                                <i data-lucide="check-circle" class="status-icon icon-success"></i>
+                                                <i data-lucide="x-circle" class="status-icon icon-error"></i>
+                                                <span class="status-text"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                      </div>
-                   </div>
-              </div>
-            </div>
-        
-          </div>
-        </section>
-        
-      </div>
+                    </div>
 
-      <div id="analytics-view">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="display-5 page-title">Asset Reviewer Analysis</h1>
-            <button id="back-to-main-btn" class="btn ubc-btn-secondary">Back to Dashboard</button>
+                    <div class="col-12 col-lg-8 d-flex">
+                        <div class="card tile h-100 w-100 p-4">
+                            <h3 class="h5 card-title mb-4">Monitoring</h3>
+                            <div class="d-flex flex-wrap align-items-center justify-content-start gap-4">
+                                <div>
+                                    <a id="show-qr-pending-btn" role="button" title="Open QR Pending List"
+                                        style="cursor: pointer;">
+                                        <img src="{{ url_for('static', filename='System Process Logs.png') }}"
+                                            alt="Open QR Pending" width="200" height="200"
+                                            style="max-width: 100%; height: auto; border-radius: 8px;">
+                                    </a>
+                                </div>
+                                <div>
+                                    <a id="show-analytics-btn" role="button" title="Open charts"
+                                        style="cursor: pointer;">
+                                        <img src="{{ url_for('static', filename='Asset Reviewer Management.png') }}"
+                                            alt="Open Analytics" width="200" height="200"
+                                            style="max-width: 100%; height: auto; border-radius: 8px;">
+                                    </a>
+                                </div>
+                                <div>
+                                    <a id="show-operational-cost-btn" role="button" title="Open Operational Cost"
+                                        style="cursor: pointer;">
+                                        <img src="{{ url_for('static', filename='QR Code Asset Management.png') }}"
+                                            alt="Open Operational Cost" width="200" height="200"
+                                            style="max-width: 100%; height: auto; border-radius: 8px;">
+                                    </a>
+                                </div>
+                                <div>
+                                    <div class="card h-100 position-relative"
+                                        style="width: 200px; height: 200px; border-radius: 8px; background-color: #e9ecef;">
+                                        <a id="show-fls-assets-btn" role="button" title="Open FLS Assets"
+                                            class="text-decoration-none d-flex flex-column justify-content-center align-items-center h-100 position-relative">
+                                            <i data-lucide="clipboard-list"
+                                                style="color: var(--ubc-blue); width: 64px; height: 64px;"></i>
+                                            <span class="mt-2 fw-bold" style="color: var(--ubc-blue);">FLS Assets</span>
+                                            <span id="fls-assets-badge"
+                                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                                style="display: none; font-size: 1rem; margin-top: 1rem; margin-left: -1rem;">
+                                                <span class="visually-hidden">incomplete items</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
         </div>
 
-        <div class="d-flex flex-wrap align-items-center justify-content-end mb-4 gap-3">
-            <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
-              <select id="building" name="building" class="form-select">
-                {% for opt in building_options %} <option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option> {% endfor %}
-              </select>
+        <div id="analytics-view">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 page-title">Asset Reviewer Analysis</h1>
+                <button id="back-to-main-btn" class="btn ubc-btn-secondary">Back to Dashboard</button>
             </div>
+
+            <div class="d-flex flex-wrap align-items-center justify-content-end mb-4 gap-3">
+                <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
+                    <select id="building" name="building" class="form-select">
+                        {% for opt in building_options %} <option value="{{ opt }}" {% if opt==selected_building
+                            %}selected{% endif %}>{{ opt }}</option> {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if chart_enabled %}
+            <div class="analytics-card-grid">
+                <div class="analytics-card bar-chart-card">
+                    <img class="img-fluid" alt="Bar Chart"
+                        src="{{ url_for('main.approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}"
+                        style="width: 100%; height: 100%; object-fit: fill;">
+                </div>
+                <div class="kpi-pie-wrapper">
+                    <div class="analytics-card kpi-card"> <img class="img-fluid" alt="Gauge Chart"
+                            src="{{ url_for('main.approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}">
+                    </div>
+                    <div class="analytics-card pie-chart-card"> <img class="img-fluid" alt="Donut Chart"
+                            src="{{ url_for('main.approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}">
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning rounded-3"> Chart unavailable{% if charts_error %}: {{ charts_error }}{%
+                endif %}. </div>
+            {% endif %}
         </div>
-        
-        {% if chart_enabled %}
-          <div class="analytics-card-grid">
-              <div class="analytics-card bar-chart-card">
-                  <img class="img-fluid" alt="Bar Chart" src="{{ url_for('main.approval_chart', building=selected_building, chart_type='bar') }}&ts={{ ts }}" style="width: 100%; height: 100%; object-fit: fill;">
-              </div>
-              <div class="kpi-pie-wrapper">
-                  <div class="analytics-card kpi-card"> <img class="img-fluid" alt="Gauge Chart" src="{{ url_for('main.approval_chart', building=selected_building, chart_type='gauge') }}&ts={{ ts }}"> </div>
-                  <div class="analytics-card pie-chart-card"> <img class="img-fluid" alt="Donut Chart" src="{{ url_for('main.approval_chart', building=selected_building, chart_type='pie') }}&ts={{ ts }}"> </div>
-              </div>
-          </div>
-        {% else %}
-          <div class="alert alert-warning rounded-3"> Chart unavailable{% if charts_error %}: {{ charts_error }}{% endif %}. </div>
-        {% endif %}
-      </div>
 
-      <div id="qr-pending-view">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="display-5 page-title">QR Pending to AI Process</h1>
-            <button id="back-to-main-btn-qr" class="btn ubc-btn-secondary">Back to Dashboard</button>
+        <div id="qr-pending-view">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 page-title">QR Pending to AI Process</h1>
+                <button id="back-to-main-btn-qr" class="btn ubc-btn-secondary">Back to Dashboard</button>
+            </div>
+
+            <section class="mb-5">
+                <div id="summary-view">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h2 class="h4 section-title mb-0">Pending Summary</h2>
+                        <button id="toggle-to-detailed-btn" class="btn ubc-btn-secondary btn-sm">View Detailed
+                            List</button>
+                    </div>
+                    <div class="asset-table-container">
+                        {% if ai_status_summary %}
+                        <table class="asset-table">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th class="col-shrink-center">Pending Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in ai_status_summary %}
+                                <tr>
+                                    <td>{{ row.Property or 'N/A' }}</td>
+                                    <td class="col-shrink-center">{{ row['Pendency QTY'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="text-center p-4">
+                            <p class="text-muted mb-0">No pending asset data to display.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="detailed-view" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h2 class="h4 section-title mb-0">Detailed Pending Assets</h2>
+                        <button id="toggle-to-summary-btn" class="btn ubc-btn-secondary btn-sm">Back to Summary</button>
+                    </div>
+                    <div class="asset-table-container table-responsive">
+                        {% if ai_asset_details %}
+                        <table class="asset-table">
+                            <thead>
+                                <tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr>
+                            </thead>
+                            <tbody>
+                                {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or
+                                        'N/A' }}</td>{% endfor %}</tr>{% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="text-center p-4">
+                            <p class="text-muted mb-0">No detailed asset data to display.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-5">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h2 class="h4 section-title mb-0">Recent Logs</h2>
+                </div>
+                <div class="asset-table-container">
+                    {% if recent_logs %}
+                    <table class="asset-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>When</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td>{{ log.title }}</td>
+                                <td>{{ log.when }}</td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('main.read_log', name=log.name) }}"
+                                        class="btn ubc-btn-secondary btn-sm">View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('main.list_logs', from='monitoring') }}" class="btn ubc-btn">View All
+                            Logs</a>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <p class="text-muted mb-0">No recent logs found.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
         </div>
-        
-        <section class="mb-5">
-          <div id="summary-view">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-              <h2 class="h4 section-title mb-0">Pending Summary</h2>
-              <button id="toggle-to-detailed-btn" class="btn ubc-btn-secondary btn-sm">View Detailed List</button>
-            </div>
-            <div class="asset-table-container">
-              {% if ai_status_summary %}
-                <table class="asset-table">
-                  <thead>
-                    <tr>
-                      <th>Property</th>
-                      <th class="col-shrink-center">Pending Quantity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for row in ai_status_summary %}
-                      <tr>
-                        <td>{{ row.Property or 'N/A' }}</td>
-                        <td class="col-shrink-center">{{ row['Pendency QTY'] }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              {% else %}
-                <div class="text-center p-4"><p class="text-muted mb-0">No pending asset data to display.</p></div>
-              {% endif %}
-            </div>
-          </div>
 
-          <div id="detailed-view" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-              <h2 class="h4 section-title mb-0">Detailed Pending Assets</h2>
-              <button id="toggle-to-summary-btn" class="btn ubc-btn-secondary btn-sm">Back to Summary</button>
+        <div id="operational-cost-view">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 page-title">QR Code Asset Management</h1>
+                <button id="back-to-main-btn-op" class="btn ubc-btn-secondary">Back to Dashboard</button>
             </div>
-            <div class="asset-table-container table-responsive">
-              {% if ai_asset_details %}
-                <table class="asset-table">
-                  <thead><tr>{% for key in ai_asset_details[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
-                  <tbody>
-                    {% for asset in ai_asset_details %}<tr>{% for value in asset.values() %}<td>{{ value or 'N/A' }}</td>{% endfor %}</tr>{% endfor %}
-                  </tbody>
-                </table>
-              {% else %}
-                <div class="text-center p-4"><p class="text-muted mb-0">No detailed asset data to display.</p></div>
-              {% endif %}
-            </div>
-          </div>
-        </section>
 
-        <section class="mb-5">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h2 class="h4 section-title mb-0">Recent Logs</h2>
+            <div class="d-flex flex-wrap align-items-center justify-content-end mb-4 gap-3">
+                <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
+                    <select id="building-operational-cost-slicer" name="building" class="form-select">
+                        {% for opt in building_options %}
+                        <option value="{{ opt }}" {% if opt==selected_building %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="asset-table-container">
-                {% if recent_logs %}
-                <table class="asset-table">
-                    <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>When</th>
-                        <th class="text-end">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for log in recent_logs %}
-                        <tr>
-                        <td>{{ log.title }}</td>
-                        <td>{{ log.when }}</td>
-                        <td class="text-end">
-                            <a href="{{ url_for('main.read_log', name=log.name) }}" class="btn ubc-btn-secondary btn-sm">View</a>
-                        </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                <div class="text-center mt-4">
-                    <a href="{{ url_for('main.list_logs', from='monitoring') }}" class="btn ubc-btn">View All Logs</a>
+
+            {% if operational_cost_chart_enabled %}
+            <div class="row g-4">
+                <div class="col-12 col-md-6">
+                    <div class="analytics-card">
+                        <img id="op-chart-weighted-avg" class="img-fluid" alt="Weighted Average Time"
+                            src="{{ url_for('main.operational_cost_chart', type='weighted_avg_time', building=selected_building) }}&ts={{ ts }}">
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="analytics-card">
+                        <img id="op-chart-ai-cost" class="img-fluid" alt="AI Estimated Cost"
+                            src="{{ url_for('main.operational_cost_chart', type='ai_cost', building=selected_building) }}&ts={{ ts }}">
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="analytics-card">
+                        <img id="op-chart-combo" class="img-fluid" alt="Daily Operational Chart"
+                            src="{{ url_for('main.operational_cost_chart', type='combo', building=selected_building) }}&ts={{ ts }}">
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning rounded-3">Operational cost charts are unavailable.</div>
+            {% endif %}
+
+            <section class="mt-5 mb-5">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h2 class="h4 section-title mb-0">AI Data Completeness Score</h2>
+                </div>
+                {% if completeness_chart_enabled %}
+                <div class="d-flex flex-wrap align-items-center justify-content-start mb-4 gap-3">
+                    <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
+                        <label for="building-completeness-slicer" class="form-label fw-bold">Select a Building to see
+                            the score:</label>
+                        <select id="building-completeness-slicer" class="form-select">
+                            {% for opt in building_options %}
+                            <option value="{{ opt }}" {% if opt=='All' %}selected{% endif %}>{{ opt }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div id="completeness-chart-container" class="analytics-card" style="display: flex;">
+                    <img id="completeness-chart-img" class="img-fluid" alt="Completeness Score Chart"
+                        src="{{ url_for('main.completeness_chart', building='All') }}&ts={{ ts }}">
                 </div>
                 {% else %}
-                <div class="text-center p-4">
-                    <p class="text-muted mb-0">No recent logs found.</p>
+                <div class="alert alert-warning rounded-3">
+                    Completeness Score chart is unavailable.
                 </div>
                 {% endif %}
-            </div>
-        </section>
-      </div>
-      
-      <div id="operational-cost-view">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="display-5 page-title">QR Code Asset Management</h1>
-            <button id="back-to-main-btn-op" class="btn ubc-btn-secondary">Back to Dashboard</button>
-        </div>
-        
-        <div class="d-flex flex-wrap align-items-center justify-content-end mb-4 gap-3">
-            <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
-              <select id="building-operational-cost-slicer" name="building" class="form-select">
-                {% for opt in building_options %}
-                  <option value="{{ opt }}" {% if opt == selected_building %}selected{% endif %}>{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
+            </section>
         </div>
 
-        {% if operational_cost_chart_enabled %}
-          <div class="row g-4">
-            <div class="col-12 col-md-6">
-              <div class="analytics-card">
-                <img id="op-chart-weighted-avg" class="img-fluid" alt="Weighted Average Time" src="{{ url_for('main.operational_cost_chart', type='weighted_avg_time', building=selected_building) }}&ts={{ ts }}">
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="analytics-card">
-                <img id="op-chart-ai-cost" class="img-fluid" alt="AI Estimated Cost" src="{{ url_for('main.operational_cost_chart', type='ai_cost', building=selected_building) }}&ts={{ ts }}">
-              </div>
-            </div>
-            <div class="col-12">
-              <div class="analytics-card">
-                <img id="op-chart-combo" class="img-fluid" alt="Daily Operational Chart" src="{{ url_for('main.operational_cost_chart', type='combo', building=selected_building) }}&ts={{ ts }}">
-              </div>
-            </div>
-          </div>
-        {% else %}
-          <div class="alert alert-warning rounded-3">Operational cost charts are unavailable.</div>
-        {% endif %}
-
-        <section class="mt-5 mb-5">
-          <div class="d-flex align-items-center justify-content-between mb-4">
-            <h2 class="h4 section-title mb-0">AI Data Completeness Score</h2>
-          </div>
-          {% if completeness_chart_enabled %}
-            <div class="d-flex flex-wrap align-items-center justify-content-start mb-4 gap-3">
-              <div class="col-12 col-md-5 col-lg-4 form-select-wrapper">
-                <label for="building-completeness-slicer" class="form-label fw-bold">Select a Building to see the score:</label>
-                <select id="building-completeness-slicer" class="form-select">
-                  {% for opt in building_options %}
-                    <option value="{{ opt }}" {% if opt == 'All' %}selected{% endif %}>{{ opt }}</option>
-                  {% endfor %}
-                </select>
-              </div>
+        <div id="fls-assets-view">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-5 page-title">FLS New Device Entry</h1>
+                <button id="back-to-main-btn-fls" class="btn ubc-btn-secondary">Back to Dashboard</button>
             </div>
 
-            <div id="completeness-chart-container" class="analytics-card" style="display: flex;">
-              <img id="completeness-chart-img" class="img-fluid" alt="Completeness Score Chart" src="{{ url_for('main.completeness_chart', building='All') }}&ts={{ ts }}">
+            <div class="mb-5">
+                <h2 class="section-title d-flex align-items-center gap-2 mb-3">
+                    <i data-lucide="bar-chart-3"></i>
+                    Devices in Process - Monitor
+                </h2>
+                <div class="card">
+                    <div class="card-body p-0">
+                        <iframe id="charts-iframe" src="{{ url_for('main.fls_charts') }}"
+                            style="width: 100%; height: 650px; border: none;" title="FLS Charts"></iframe>
+                    </div>
+                </div>
             </div>
-          {% else %}
-            <div class="alert alert-warning rounded-3">
-              Completeness Score chart is unavailable.
-            </div>
-          {% endif %}
-        </section>
-      </div>
 
-      <div id="fls-assets-view">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="display-5 page-title">FLS New Device Entry</h1>
-            <button id="back-to-main-btn-fls" class="btn ubc-btn-secondary">Back to Dashboard</button>
-        </div>
-
-        <div class="mb-5">
             <h2 class="section-title d-flex align-items-center gap-2 mb-3">
-                <i data-lucide="bar-chart-3"></i>
-                Devices in Process - Monitor
+                <i data-lucide="table"></i>
+                Device Administration
             </h2>
-            <div class="card">
-                <div class="card-body p-0">
-                    <iframe id="charts-iframe" src="{{ url_for('main.fls_charts') }}" style="width: 100%; height: 650px; border: none;" title="FLS Charts"></iframe>
+
+            <div class="action-buttons">
+                <button id="add-row-btn" class="btn ubc-btn">
+                    <i data-lucide="plus-circle"></i> Add New Asset
+                </button>
+                <button id="delete-selected-btn" class="btn btn-danger text-white">
+                    <i data-lucide="trash-2"></i> Delete Flagged Rows
+                </button>
+                <button id="export-btn" class="btn btn-excel" title="Export to Excel">
+                    <i data-lucide="file-spreadsheet"></i> Excel
+                </button>
+                <button id="pdf-btn" class="btn btn-pdf" title="Download as PDF">
+                    <i data-lucide="file-text"></i> PDF
+                </button>
+                <button id="email-pdf-btn" class="btn btn-email" title="Email as PDF">
+                    <i data-lucide="mail"></i> Email PDF
+                </button>
+                <button id="teams-btn" class="btn btn-teams" title="Post to Teams">
+                    <i data-lucide="send"></i> Post to Teams
+                </button>
+            </div>
+
+            <div class="filter-container">
+                <div class="search-wrapper">
+                    <div class="input-group">
+                        <span class="input-group-text"><i data-lucide="search"></i></span>
+                        <input type="text" id="global-search-input" class="form-control"
+                            placeholder="Search across all fields...">
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <h2 class="section-title d-flex align-items-center gap-2 mb-3">
-            <i data-lucide="table"></i>
-            Device Administration
-        </h2>
-        
-        <div class="action-buttons">
-            <button id="add-row-btn" class="btn ubc-btn">
-                <i data-lucide="plus-circle"></i> Add New Asset
-            </button>
-            <button id="delete-selected-btn" class="btn btn-danger text-white">
-                <i data-lucide="trash-2"></i> Delete Flagged Rows
-            </button>
-            <button id="export-btn" class="btn btn-excel" title="Export to Excel">
-                <i data-lucide="file-spreadsheet"></i> Excel
-            </button>
-            <button id="pdf-btn" class="btn btn-pdf" title="Download as PDF">
-                <i data-lucide="file-text"></i> PDF
-            </button>
-            <button id="email-pdf-btn" class="btn btn-email" title="Email as PDF">
-                 <i data-lucide="mail"></i> Email PDF
-            </button> 
-            <button id="teams-btn" class="btn btn-teams" title="Post to Teams">
-                <i data-lucide="send"></i> Post to Teams
-            </button>
-        </div>
-        
-        <div class="filter-container">
-            <div class="search-wrapper">
-                <div class="input-group">
-                    <span class="input-group-text"><i data-lucide="search"></i></span>
-                    <input type="text" id="global-search-input" class="form-control" placeholder="Search across all fields...">
-                </div>
-            </div>
-            <div>
-                <label for="status-filter">Status:</label>
-                <select id="status-filter" class="form-select">
-                    <option value="" selected>All</option>
-                    <option value="0">Ongoing</option> 
-                    <option value="1">Approved</option>
-                </select>
-            </div>
-            <div>
-                <label for="workflow-filter">Workflow:</label>
-                <select id="workflow-filter" class="form-select">
-                    <option value="" selected>All</option>
-                </select>
-            </div>
-            <div>
-                <label for="property-filter">Property:</label>
-                <select id="property-filter" class="form-select">
-                    <option value="">All</option>
+                <div>
+                    <label for="status-filter">Status:</label>
+                    <select id="status-filter" class="form-select">
+                        <option value="" selected>All</option>
+                        <option value="0">Ongoing</option>
+                        <option value="1">Approved</option>
                     </select>
+                </div>
+                <div>
+                    <label for="workflow-filter">Workflow:</label>
+                    <select id="workflow-filter" class="form-select">
+                        <option value="" selected>All</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="property-filter">Property:</label>
+                    <select id="property-filter" class="form-select">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="start-date-filter">Date From:</label>
+                    <input type="date" id="start-date-filter" class="form-control">
+                </div>
+                <div>
+                    <label for="end-date-filter">Date To:</label>
+                    <input type="date" id="end-date-filter" class="form-control">
+                </div>
+                <button id="reset-filters-btn" class="btn" title="Reset Filters">
+                    <i data-lucide="rotate-ccw"></i> Reset
+                </button>
             </div>
-            <div>
-                <label for="start-date-filter">Date From:</label>
-                <input type="date" id="start-date-filter" class="form-control">
-            </div>
-            <div>
-                <label for="end-date-filter">Date To:</label>
-                <input type="date" id="end-date-filter" class="form-control">
-            </div>
-            <button id="reset-filters-btn" class="btn" title="Reset Filters">
-                <i data-lucide="rotate-ccw"></i> Reset
-            </button>
-        </div>
-        
-        <div id="message-container"></div>
-    
-        <div class="table-container">
-            <table id="asset-table">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="select-all-checkbox" class="form-check-input" title="Select All Visible"></th>
-                        <th>Work Order</th>
-                        <th>Asset Tag</th>
-                        <th>Asset Group</th>
-                        <th>Description</th>
-                        <th>Property</th>
-                        <th>Space</th>
-                        <th>Space Details</th>
-                        <th>Attribute Set</th>
-                        <th>Device Address</th>
-                        <th>Device Type</th>
-                        <th>UN Account Number</th>
-                        <th>Planon Code</th>
-                        <th>Creation Date</th> 
-                        <th>Status</th>
-                        <th>Workflow</th>
-                        <th class="action-col">Actions</th>
-                        <th class="duplicate-col"><span class="visually-hidden">Duplicate</span></th>
-                        <th class="delete-col"><span class="visually-hidden">Delete</span></th>
-                    </tr>
-                 </thead>
-                <tbody id="table-body">
+
+            <div id="message-container"></div>
+
+            <div class="table-container">
+                <table id="asset-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all-checkbox" class="form-check-input"
+                                    title="Select All Visible"></th>
+                            <th>Work Order</th>
+                            <th>Asset Tag</th>
+                            <th>Asset Group</th>
+                            <th>Description</th>
+                            <th>Property</th>
+                            <th>Space</th>
+                            <th>Space Details</th>
+                            <th>Attribute Set</th>
+                            <th>Device Address</th>
+                            <th>Device Type</th>
+                            <th>UN Account Number</th>
+                            <th>Planon Code</th>
+                            <th>Creation Date</th>
+                            <th>Status</th>
+                            <th>Workflow</th>
+                            <th class="action-col">Actions</th>
+                            <th class="duplicate-col"><span class="visually-hidden">Duplicate</span></th>
+                            <th class="delete-col"><span class="visually-hidden">Delete</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
                     </tbody>
-            </table>
-        </div>
-
-        <div class="modal fade" id="delete-confirm-modal-bootstrap" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel"><i data-lucide="alert-triangle" class="me-2"></i> Confirm Deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                 <p id="delete-confirm-message" class="mb-0">Are you sure you want to delete this row?</p>
-              </div>
-              <div class="modal-footer justify-content-center">
-                <button type="button" class="btn ubc-btn-secondary" data-bs-dismiss="modal" id="cancel-delete-btn">Cancel</button>
-                <button type="button" class="btn ubc-btn-danger" id="confirm-delete-btn">Delete</button>
-              </div>
+                </table>
             </div>
-          </div>
-        </div>
-        
-        <div class="modal fade" id="asset-modal-bootstrap" tabindex="-1" aria-labelledby="assetModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered"> <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modal-title">Edit Asset</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="asset-form" onsubmit="return false;" novalidate>
-                            <input type="hidden" id="modal-asset-index">
-                            
-                            <div class="form-group">
-                                <label for="modal-work-order">Work Order *</label>
-                                <input type="text" id="modal-work-order" class="form-control">
-                                <div class="invalid-feedback">Work Order is required.</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-asset-tag">Asset Tag *</label>
-                                <input type="text" id="modal-asset-tag" class="form-control">
-                                <div class="invalid-feedback">Asset Tag is required.</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-property">Property *</label>
-                                <select id="modal-property" class="form-select"></select>
-                                <div class="invalid-feedback">Property is required.</div>
-                            </div>
-    
-                            <div class="form-group">
-                                <label for="modal-space">Space</label>
-                                <select id="modal-space" class="form-select" disabled>
-                                    <option value="">Select property first...</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-space-details">Space Details</label>
-                                <input type="text" id="modal-space-details" class="form-control">
-                                <div class="invalid-feedback">Space Details is required for this workflow.</div>
-                            </div>
-                            <div class="form-group">
-                                <label for="modal-asset-group">Asset Group</label>
-                                <select id="modal-asset-group" class="form-select"></select>
-                            </div>
-    
-                            <div class="form-group">
-                                <label for="modal-un-account">UN Account Number</label>
-                                <input type="text" id="modal-un-account" class="form-control">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-planon-code">Planon Code</label>
-                                <input type="text" id="modal-planon-code" class="form-control">
-                            </div>
-                            
-                            <div class="form-group full-width">
-                                <label for="modal-description">Description</label>
-                                <input type="text" id="modal-description" class="form-control" readonly>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-device-address">Device Address</label>
-                                <input type="text" id="modal-device-address" class="form-control" readonly>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-device-type">Device Type</label>
-                                <input type="text" id="modal-device-type" class="form-control" readonly>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-attribute-set">Attribute Set</label>
-                                <input type="text" id="modal-attribute-set" class="form-control" readonly>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-status">Status</label>
-                                <select id="modal-status" class="form-select">
-                                    <option value="">Select...</option>
-                                    <option value="0">Ongoing</option> 
-                                    <option value="1">Approved</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-creation-date">Creation Date</label>
-                                <input type="text" id="modal-creation-date" class="form-control" readonly>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="modal-workflow">Workflow</label>
-                                <select id="modal-workflow" class="form-select">
-                                </select>
-                            </div>
-    
-                        </form>
+
+            <div class="modal fade" id="delete-confirm-modal-bootstrap" tabindex="-1" aria-labelledby="deleteModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel"><i data-lucide="alert-triangle"
+                                    class="me-2"></i> Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                    <div class="modal-footer">
-                        <span class="me-auto text-muted fst-italic"><small>* Mandatory Information.</small></span>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="modal-cancel-btn">Cancel</button>
-                        <button type="button" class="btn btn-success" id="modal-save-btn">Save Asset</button>
+                        <div class="modal-body">
+                            <p id="delete-confirm-message" class="mb-0">Are you sure you want to delete this row?</p>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn ubc-btn-secondary" data-bs-dismiss="modal"
+                                id="cancel-delete-btn">Cancel</button>
+                            <button type="button" class="btn ubc-btn-danger" id="confirm-delete-btn">Delete</button>
+                        </div>
                     </div>
-                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="modal fade" id="bulk-edit-modal-bootstrap" tabindex="-1" aria-labelledby="bulkEditModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bulk-edit-modal-title">Bulk Edit Assets</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal fade" id="asset-modal-bootstrap" tabindex="-1" aria-labelledby="assetModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modal-title">Edit Asset</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="asset-form" onsubmit="return false;" novalidate>
+                                <input type="hidden" id="modal-asset-index">
+
+                                <div class="form-group">
+                                    <label for="modal-work-order">Work Order *</label>
+                                    <input type="text" id="modal-work-order" class="form-control">
+                                    <div class="invalid-feedback">Work Order is required.</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-asset-tag">Asset Tag *</label>
+                                    <input type="text" id="modal-asset-tag" class="form-control">
+                                    <div class="invalid-feedback">Asset Tag is required.</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-property">Property *</label>
+                                    <select id="modal-property" class="form-select"></select>
+                                    <div class="invalid-feedback">Property is required.</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-space">Space</label>
+                                    <select id="modal-space" class="form-select" disabled>
+                                        <option value="">Select property first...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-space-details">Space Details</label>
+                                    <input type="text" id="modal-space-details" class="form-control">
+                                    <div class="invalid-feedback">Space Details is required for this workflow.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modal-asset-group">Asset Group</label>
+                                    <select id="modal-asset-group" class="form-select"></select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-un-account">UN Account Number</label>
+                                    <input type="text" id="modal-un-account" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-planon-code">Planon Code</label>
+                                    <input type="text" id="modal-planon-code" class="form-control">
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label for="modal-description">Description</label>
+                                    <input type="text" id="modal-description" class="form-control" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-device-address">Device Address</label>
+                                    <input type="text" id="modal-device-address" class="form-control" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-device-type">Device Type</label>
+                                    <input type="text" id="modal-device-type" class="form-control" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-attribute-set">Attribute Set</label>
+                                    <input type="text" id="modal-attribute-set" class="form-control" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-status">Status</label>
+                                    <select id="modal-status" class="form-select">
+                                        <option value="">Select...</option>
+                                        <option value="0">Ongoing</option>
+                                        <option value="1">Approved</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-creation-date">Creation Date</label>
+                                    <input type="text" id="modal-creation-date" class="form-control" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="modal-workflow">Workflow</label>
+                                    <select id="modal-workflow" class="form-select">
+                                    </select>
+                                </div>
+
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <span class="me-auto text-muted fst-italic"><small>* Mandatory Information.</small></span>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                id="modal-cancel-btn">Cancel</button>
+                            <button type="button" class="btn btn-success" id="modal-save-btn">Save Asset</button>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <p>Apply changes to <strong id="bulk-edit-count">0</strong> selected assets. Only checked fields will be updated.</p>
-                        <form id="bulk-edit-form" onsubmit="return false;">
-                            <div class="input-group mb-3">
-                                <div class="input-group-text">
-                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-property" aria-label="Checkbox for enabling property edit">
+                </div>
+            </div>
+
+            <div class="modal fade" id="bulk-edit-modal-bootstrap" tabindex="-1" aria-labelledby="bulkEditModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="bulk-edit-modal-title">Bulk Edit Assets</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Apply changes to <strong id="bulk-edit-count">0</strong> selected assets. Only checked
+                                fields will be updated.</p>
+                            <form id="bulk-edit-form" onsubmit="return false;">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input mt-0" type="checkbox"
+                                            data-target="bulk-modal-property"
+                                            aria-label="Checkbox for enabling property edit">
+                                    </div>
+                                    <select id="bulk-modal-property" class="form-select" disabled></select>
                                 </div>
-                                <select id="bulk-modal-property" class="form-select" disabled></select>
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-text">
-                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-space" aria-label="Checkbox for enabling space edit">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input mt-0" type="checkbox"
+                                            data-target="bulk-modal-space"
+                                            aria-label="Checkbox for enabling space edit">
+                                    </div>
+                                    <select id="bulk-modal-space" class="form-select" disabled>
+                                        <option value="">Select property first...</option>
+                                    </select>
                                 </div>
-                                <select id="bulk-modal-space" class="form-select" disabled>
-                                    <option value="">Select property first...</option>
-                                </select>
-                            </div>
-                            <div class="input-group mb-3">
-                                <div class="input-group-text">
-                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-status" aria-label="Checkbox for enabling status edit">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input mt-0" type="checkbox"
+                                            data-target="bulk-modal-status"
+                                            aria-label="Checkbox for enabling status edit">
+                                    </div>
+                                    <select id="bulk-modal-status" class="form-select" disabled>
+                                        <option value="">Select Status...</option>
+                                        <option value="0">Ongoing</option>
+                                        <option value="1">Approved</option>
+                                    </select>
                                 </div>
-                                <select id="bulk-modal-status" class="form-select" disabled>
-                                    <option value="">Select Status...</option>
-                                    <option value="0">Ongoing</option>
-                                    <option value="1">Approved</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <div class="input-group-text">
-                                    <input class="form-check-input mt-0" type="checkbox" data-target="bulk-modal-workflow" aria-label="Checkbox for enabling workflow edit">
+                                <div class="input-group">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input mt-0" type="checkbox"
+                                            data-target="bulk-modal-workflow"
+                                            aria-label="Checkbox for enabling workflow edit">
+                                    </div>
+                                    <select id="bulk-modal-workflow" class="form-select" disabled>
                                 </div>
-                                <select id="bulk-modal-workflow" class="form-select" disabled>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
+
+                        <div class="modal-footer"><button type="button" class="btn ubc-btn-secondary"
+                                data-bs-dismiss="modal">Cancel</button><button type="button" class="btn ubc-btn-success"
+                                id="bulk-modal-save-btn">Apply Changes</button></div>
                     </div>
-    
-                    <div class="modal-footer"><button type="button" class="btn ubc-btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn ubc-btn-success" id="bulk-modal-save-btn">Apply Changes</button></div>
                 </div>
             </div>
         </div>
-      </div>
 
     </main>
 
     <footer class="ubc-footer text-center py-4 mt-5">
-      <div class="container">
-        <small class="footer-text"> &copy; 2025 University of British Columbia - Maintenance Planning Department. All rights reserved. </small>
-      </div>
+        <div class="container">
+            <small class="footer-text"> &copy; 2025 University of British Columbia - Maintenance Planning Department.
+                All rights reserved. </small>
+        </div>
     </footer>
-    
+
     <script>
         lucide.createIcons();
 
-        document.getElementById('building').addEventListener('change', function() {
+        document.getElementById('building').addEventListener('change', function () {
             window.location.href = `{{ url_for('main.index') }}?building=${this.value}#analytics-view`;
         });
-        
+
         const summaryView = document.getElementById('summary-view');
         const detailedView = document.getElementById('detailed-view');
         const toDetailedBtn = document.getElementById('toggle-to-detailed-btn');
         const toSummaryBtn = document.getElementById('toggle-to-summary-btn');
 
         if (toDetailedBtn) {
-          toDetailedBtn.addEventListener('click', () => {
-              summaryView.style.display = 'none';
-              detailedView.style.display = 'block';
-          });
+            toDetailedBtn.addEventListener('click', () => {
+                summaryView.style.display = 'none';
+                detailedView.style.display = 'block';
+            });
         }
 
         if (toSummaryBtn) {
-          toSummaryBtn.addEventListener('click', () => {
-              detailedView.style.display = 'none';
-              summaryView.style.display = 'block';
-          });
+            toSummaryBtn.addEventListener('click', () => {
+                detailedView.style.display = 'none';
+                summaryView.style.display = 'block';
+            });
         }
 
         document.querySelectorAll('.run-task-btn').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const taskKey = this.dataset.taskKey;
                 const runnerContainer = this.closest('.task-runner-container');
                 const progressBarContainer = runnerContainer.querySelector('.progress-bar-container');
-                
+
                 this.parentElement.style.display = 'none';
                 progressBarContainer.style.display = 'flex';
                 progressBarContainer.querySelector('.status-text').textContent = 'Running...';
-                
+
                 fetch(`/run/${taskKey}`, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
@@ -1331,9 +1533,9 @@
         const qrPendingView = document.getElementById('qr-pending-view');
         const operationalCostView = document.getElementById('operational-cost-view');
         const flsAssetsView = document.getElementById('fls-assets-view');
-        
+
         // Get a reference to the <main> element
-        const mainElement = document.getElementById('main'); 
+        const mainElement = document.getElementById('main');
 
         const showAnalyticsBtn = document.getElementById('show-analytics-btn');
         const showQrPendingBtn = document.getElementById('show-qr-pending-btn');
@@ -1351,9 +1553,9 @@
             qrPendingView.style.display = 'none';
             operationalCostView.style.display = 'none';
             flsAssetsView.style.display = 'none';
-            
+
             // Remove the wide-view class by default
-            mainElement.classList.remove('container-fluid-fls'); 
+            mainElement.classList.remove('container-fluid-fls');
 
             if (hash === '#qr-pending-view') {
                 qrPendingView.style.display = 'block';
@@ -1363,10 +1565,10 @@
                 operationalCostView.style.display = 'block';
             } else if (hash === '#fls-assets-view') {
                 flsAssetsView.style.display = 'block';
-                
+
                 // Add the wide-view class ONLY for the FLS view
-                mainElement.classList.add('container-fluid-fls'); 
-                
+                mainElement.classList.add('container-fluid-fls');
+
             } else {
                 mainView.style.display = 'block';
             }
@@ -1421,7 +1623,7 @@
         const completenessChartImg = document.getElementById('completeness-chart-img');
 
         if (buildingCompletenessSlicer) {
-            buildingCompletenessSlicer.addEventListener('change', function() {
+            buildingCompletenessSlicer.addEventListener('change', function () {
                 const selectedBuilding = this.value;
                 if (selectedBuilding) {
                     completenessChartImg.style.opacity = '0.5';
@@ -1429,9 +1631,9 @@
 
                     const timestamp = new Date().getTime();
                     const chartUrl = `{{ url_for('main.completeness_chart') }}?building=${encodeURIComponent(selectedBuilding)}&ts=${timestamp}`;
-                    
+
                     completenessChartImg.src = chartUrl;
-                    
+
                     completenessChartImg.onload = () => {
                         completenessChartImg.style.opacity = '1';
                     };
@@ -1444,7 +1646,7 @@
                 }
             });
         }
-        
+
         // --- Operational Cost Chart Logic ---
         const opCostBuildingSlicer = document.getElementById('building-operational-cost-slicer');
         const opCharts = [
@@ -1454,7 +1656,7 @@
         ];
 
         if (opCostBuildingSlicer) {
-            opCostBuildingSlicer.addEventListener('change', function() {
+            opCostBuildingSlicer.addEventListener('change', function () {
                 const selectedBuilding = this.value;
 
                 opCharts.forEach(chartImg => {
@@ -1464,7 +1666,7 @@
                         url.searchParams.set('building', selectedBuilding);
                         url.searchParams.set('ts', new Date().getTime());
                         chartImg.src = url.toString();
-                        
+
                         chartImg.onload = () => {
                             chartImg.style.opacity = '1';
                         };
@@ -1499,7 +1701,7 @@
                     throw new Error(`Failed to load FLS data: ${response.statusText}`);
                 }
                 const data = await response.json();
-                
+
                 // DEBUG: Log what we received from backend
                 console.log("FLS Data from Backend:", {
                     asset_group_lookup_map_size: Object.keys(data.asset_group_lookup_map || {}).length,
@@ -1508,7 +1710,7 @@
                     first_asset: (data.existing_assets || [])[0],
                     first_few_lookup_keys: Object.keys(data.asset_group_lookup_map || {}).slice(0, 3)
                 });
-                
+
                 // --- [NEW] Calculate and display the FLS assets badge count ---
                 const incompleteCount = (data.existing_assets || []).filter(asset => {
                     const planonCode = asset.planon_code || '';
@@ -1522,7 +1724,7 @@
                 } else if (badge) {
                     badge.style.display = 'none';
                 }
-                
+
                 // [START OF CHANGE] - Pass the new 'filter_property_list'
                 runFlsScript(
                     data.property_list || [],
@@ -1530,7 +1732,7 @@
                     data.spaces_by_property || {},
                     data.device_type_map || {},
                     data.existing_assets || [],
-                    data.asset_group_options || [], 
+                    data.asset_group_options || [],
                     data.asset_group_lookup_map || {},
                     data.property_asset_tag_map || {},
                     data.property_name_to_code_map || {}
@@ -1540,7 +1742,7 @@
             } catch (error) {
                 console.error("Error initializing FLS Assets:", error);
                 const tableBody = document.getElementById('table-body');
-                if(tableBody) {
+                if (tableBody) {
                     tableBody.innerHTML = `<tr><td colspan="18" class="text-center text-danger p-4">Error: Could not load asset data. ${error.message}</td></tr>`;
                 }
             }
@@ -1550,16 +1752,16 @@
         function runFlsScript(
             propertyList,       // This is the FULL list for the modal
             filterPropertyList, // This is the DISTINCT list from new_device for the filter
-            spacesByPropertyData, 
-            deviceTypeMapData, 
+            spacesByPropertyData,
+            deviceTypeMapData,
             existingAssets,
-            assetGroupOptions,      
+            assetGroupOptions,
             assetGroupLookupMap,
             propertyAssetTagMap,
             propertyNameCodeMap
         ) {
-        // [END OF CHANGE]
-            
+            // [END OF CHANGE]
+
             lucide.createIcons();
 
             let currentAssets = {};
@@ -1570,9 +1772,9 @@
             const tableBody = document.getElementById('table-body');
             const messageContainer = document.getElementById('message-container');
             const statusFilter = document.getElementById('status-filter');
-            
+
             const workflowFilter = document.getElementById('workflow-filter');
-            
+
             const propertyFilter = document.getElementById('property-filter');
             const startDateFilter = document.getElementById('start-date-filter');
             const endDateFilter = document.getElementById('end-date-filter');
@@ -1596,9 +1798,9 @@
             const modalDescription = document.getElementById('modal-description');
             const modalProperty = document.getElementById('modal-property');
             const modalSpace = document.getElementById('modal-space');
-            
+
             const modalSpaceDetails = document.getElementById('modal-space-details');
-            
+
             const modalAttributeSet = document.getElementById('modal-attribute-set');
             const modalDeviceAddress = document.getElementById('modal-device-address');
             const modalDeviceType = document.getElementById('modal-device-type');
@@ -1609,11 +1811,11 @@
             const modalWorkflow = document.getElementById('modal-workflow');
             const modalSaveBtn = document.getElementById('modal-save-btn');
             let assetGroupNameToOptionMap = {};
-            
+
             function updateFieldsFromAssetGroup(forceOverride = false) {
                 const selectedAssetGroup = modalAssetGroup.value;
                 const lookupData = assetGroupLookupMap[selectedAssetGroup];
-                
+
                 // DEBUG: Detailed logging
                 console.log("updateFieldsFromAssetGroup called:", {
                     selectedAssetGroup,
@@ -1638,7 +1840,7 @@
                     // Asset group selected but no lookup data found - leave fields as is
                     console.warn(`Asset group '${selectedAssetGroup}' selected but NOT FOUND in assetGroupLookupMap`);
                 }
-                
+
                 updateWorkflowStatus();
             }
 
@@ -1647,7 +1849,7 @@
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
             let pendingDeleteIndices = [];
             let pendingSingleDeleteIndex = null;
-            
+
             // --- Bulk Edit Modal Elements ---
             const bulkEditModal = new bootstrap.Modal(document.getElementById('bulk-edit-modal-bootstrap'));
             const bulkModalSaveBtn = document.getElementById('bulk-modal-save-btn');
@@ -1662,11 +1864,11 @@
             function createReadOnlyRow(asset) {
                 const row = document.createElement('tr'); row.dataset.index = asset.index;
                 const getValue = (val) => val ?? '';
-                const statusMap = {'0': 'Ongoing', '1': 'Approved'};
+                const statusMap = { '0': 'Ongoing', '1': 'Approved' };
                 const statusText = statusMap[String(asset.status)] || 'N/A';
-                
+
                 const planonCodeValue = getValue(asset.planon_code);
-                
+
                 // --- UPDATE: Full workflow logic now applied to table row ---
                 let dynamicWorkflowText = '';
                 if (planonCodeValue) {
@@ -1676,18 +1878,18 @@
                 } else {
                     dynamicWorkflowText = "Asset Management";
                 }
-                
+
                 // Use the asset's stored workflow value if it exists, otherwise use the dynamic one
                 const workflowToDisplay = getValue(asset.workflow) || dynamicWorkflowText;
 
 
                 const deleteDisabledClass = planonCodeValue ? 'disabled' : '';
                 const editDisabledClass = planonCodeValue ? 'disabled' : '';
-                
+
                 if (deleteDisabledClass) {
                     row.classList.add(deleteDisabledClass);
                 }
-                
+
                 row.innerHTML = `
                     <td><input type="checkbox" class="row-checkbox form-check-input" ${planonCodeValue ? 'disabled' : ''}></td>
                     <td>${getValue(asset.work_order)}</td>
@@ -1720,14 +1922,14 @@
                         </a>
                     </td>
                 `;
-                
+
                 row.dataset.planonCode = planonCodeValue;
                 return row;
             }
 
             function renderTable() {
                 tableBody.innerHTML = '';
-                const sortedIndices = Object.keys(currentAssets).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                const sortedIndices = Object.keys(currentAssets).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
                 sortedIndices.forEach(index => {
                     tableBody.appendChild(createReadOnlyRow(currentAssets[index]));
                 });
@@ -1739,7 +1941,7 @@
 
             function updateWorkflowStatus() {
                 const planonCode = modalPlanonCode.value.trim();
-                const assetGroup = modalAssetGroup.value; 
+                const assetGroup = modalAssetGroup.value;
                 const space = modalSpace.value;
 
                 if (planonCode) {
@@ -1750,7 +1952,7 @@
                     modalWorkflow.value = "Asset Management";
                 }
             }
-            
+
             function togglePlanonCodeEditability() {
                 if (modalWorkflow.value === "Asset Management") {
                     modalPlanonCode.readOnly = false;
@@ -1774,9 +1976,9 @@
                 modalSpace.disabled = true;
                 modalCreationDate.value = '(Will be set on save)';
                 assetModal.show();
-                
+
                 updateWorkflowStatus();
-                togglePlanonCodeEditability(); 
+                togglePlanonCodeEditability();
             }
 
             function openModalForEdit(index) {
@@ -1792,7 +1994,7 @@
                 modalIndex.value = asset.index;
                 modalWorkOrder.value = asset.work_order || '';
                 modalAssetTag.value = asset.asset_tag || '';
-                
+
                 const assetGroupName = asset.asset_group || '';
                 console.log("Attempting to set asset group to:", assetGroupName);
                 const normalizedAssetGroupName = assetGroupName.trim().toLowerCase();
@@ -1820,9 +2022,9 @@
                 }
 
                 modalSpaceDetails.value = asset.space_details || '';
-                
+
                 modalProperty.value = asset.property || '';
-                
+
                 // These fields are populated by updateFieldsFromAssetGroup, but we should load the saved value first
                 // in case there's no asset group match.
                 modalDescription.value = asset.description || '';
@@ -1834,50 +2036,50 @@
                 modalPlanonCode.value = asset.planon_code || '';
                 modalCreationDate.value = asset.creation_date || '';
                 modalStatus.value = String(asset.status ?? "");
-                
+
                 // Load the saved workflow value
                 modalWorkflow.value = asset.workflow || '';
-                
-                populateSpaceDropdown(asset.property, asset.space); 
-                
+
+                populateSpaceDropdown(asset.property, asset.space);
+
                 // Call updateFieldsFromAssetGroup to populate Description and Attribute Set from the lookup map
                 if (modalAssetGroup.value) {
                     console.log("About to call updateFieldsFromAssetGroup");
-                    updateFieldsFromAssetGroup(); 
+                    updateFieldsFromAssetGroup();
                 }
-                
+
                 assetModal.show();
- 
+
                 // Update workflow status *after* loading, in case it needs to be overridden
                 // (e.g., if it was 'Electrical Team' but is now 'Complete')
                 updateWorkflowStatus();
-                
+
                 togglePlanonCodeEditability();
             }
-            
+
             function openModalForDuplicate(index) {
                 const asset = currentAssets[index];
                 if (!asset) return;
-                
+
                 openModalForEdit(index); // First, load all data just like an edit
-                
+
                 // Now, override fields for duplication
                 isNewAssetMode = true; // It's a "new" asset
                 modalTitle.innerText = 'Duplicate Asset';
-                
+
                 // Get a new unique index
                 modalIndex.value = Date.now().toString() + Math.floor(Math.random() * 100);
-                
+
                 // Clear fields that should not be copied
                 modalPlanonCode.value = '';
                 modalCreationDate.value = '(Will be set on save)';
-                
+
                 // Set default status for a new asset
                 modalStatus.value = '0'; // Ongoing
-                
+
                 // Re-run the status/workflow logic
                 updateWorkflowStatus();
-                togglePlanonCodeEditability(); 
+                togglePlanonCodeEditability();
             }
 
             function populateSpaceDropdown(selectedProperty, selectedSpace = null) {
@@ -1900,7 +2102,7 @@
                 [modalWorkOrder, modalAssetTag, modalProperty, modalSpaceDetails].forEach(el => {
                     el.classList.remove('is-invalid', 'is-valid');
                 });
-                
+
                 if (!workOrder) {
                     modalWorkOrder.classList.add('is-invalid');
                     isValid = false;
@@ -1919,47 +2121,47 @@
                 } else {
                     modalProperty.classList.add('is-valid');
                 }
-                
+
                 // --- [NEW VALIDATION CHECK] ---
                 const workflow = modalWorkflow.value;
                 const spaceDetails = modalSpaceDetails.value.trim();
-                
+
                 if (workflow === "Asset Management" && !spaceDetails) {
-                    alert("Please set the Space Details value before saving asset"); 
+                    alert("Please set the Space Details value before saving asset");
                     modalSpaceDetails.classList.add('is-invalid');
-                    isValid = false; 
+                    isValid = false;
                 }
                 // --- [END NEW VALIDATION CHECK] ---
 
                 if (!isValid) {
-                    return; 
+                    return;
                 }
 
                 const assetGroupSelectedOption = modalAssetGroup.value;
                 const assetGroupName = assetGroupSelectedOption ? assetGroupSelectedOption.split(' | ')[0] : '';
 
                 const asset = {
-                    'index': modalIndex.value, 
-                    'work_order': workOrder, 
+                    'index': modalIndex.value,
+                    'work_order': workOrder,
                     'asset_tag': assetTag,
-                    'asset_group': assetGroupName, 
-                    'description': modalDescription.value.trim(), 
+                    'asset_group': assetGroupName,
+                    'description': modalDescription.value.trim(),
                     'property': property,
-                    'space': modalSpace.value, 
+                    'space': modalSpace.value,
                     'space_details': modalSpaceDetails.value.trim(), // Send the editable value
-                    'attribute_set': modalAttributeSet.value.trim(), 
+                    'attribute_set': modalAttributeSet.value.trim(),
                     'device_address': modalDeviceAddress.value.trim(),
                     'device_type': modalDeviceType.value.trim(),
-                    'un_account_number': modalUnAccount.value.trim(), 
+                    'un_account_number': modalUnAccount.value.trim(),
                     'planon_code': modalPlanonCode.value.trim(),
-                    'status': modalStatus.value, 
-                    'workflow': modalWorkflow.value 
+                    'status': modalStatus.value,
+                    'workflow': modalWorkflow.value
                 };
-                
+
                 try {
                     modalSaveBtn.disabled = true;
                     const response = await fetch("{{ url_for('main.add_fls_assets') }}", {
-                        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify([asset])
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([asset])
                     });
                     const result = await response.json();
                     if (response.ok && result.success) {
@@ -1989,11 +2191,11 @@
                 let statusValue = statusFilter.value;
                 if (statusValue === "Ongoing") statusValue = "0";
                 else if (statusValue === "Approved") statusValue = "1";
-                
+
                 const workflowValue = workflowFilter.value; // Get workflow filter value
                 const propertyValue = propertyFilter.value;
                 const searchValue = globalSearchInput.value.toLowerCase();
-                
+
                 const startDateValue = startDateFilter.value;
                 const endDateValue = endDateFilter.value;
 
@@ -2003,15 +2205,15 @@
                 tableBody.querySelectorAll('tr').forEach(row => {
                     const asset = currentAssets[row.dataset.index];
                     let show = true;
-                    
+
                     if (statusValue && String(asset.status) !== statusValue) show = false;
-                    
+
                     // Handle workflow filtering.
                     const assetWorkflow = asset.workflow || ''; // Use empty string if null/undefined
                     if (workflowValue && assetWorkflow !== workflowValue) {
                         // Special case: if user filters for "Complete", "Asset Management", or "Electrical Team",
                         // and the asset's saved workflow is empty, we must check the *calculated* value.
-                        
+
                         let calculatedWorkflow = '';
                         if (asset.planon_code) {
                             calculatedWorkflow = "Complete";
@@ -2020,16 +2222,16 @@
                         } else {
                             calculatedWorkflow = "Asset Management";
                         }
-                        
+
                         // If the asset's *saved* workflow is different from the filter
                         // AND the *calculated* workflow is ALSO different, then hide it.
                         if (assetWorkflow !== workflowValue && calculatedWorkflow !== workflowValue) {
                             show = false;
                         }
                     }
-                    
+
                     if (propertyValue && asset.property !== propertyValue) show = false;
-                    
+
                     if (show && (startDate || endDate) && asset.creation_date) {
                         try {
                             const parts = asset.creation_date.split('/');
@@ -2038,16 +2240,16 @@
                                 if (startDate && assetDate < startDate) show = false;
                                 if (endDate && assetDate > endDate) show = false;
                             } else {
-                                if(startDate || endDate) show = false; 
+                                if (startDate || endDate) show = false;
                             }
                         } catch (e) {
                             console.warn("Invalid date format for asset:", asset.index, asset.creation_date);
-                            if(startDate || endDate) show = false; 
+                            if (startDate || endDate) show = false;
                         }
                     }
-                    
+
                     if (show && searchValue && !Object.values(asset).join(' ').toLowerCase().includes(searchValue)) show = false;
-                    
+
                     row.style.display = show ? '' : 'none';
                 });
             }
@@ -2066,10 +2268,10 @@
                     return `<option value="${g}">${g}</option>`;
                 }).join('');
                 modalAssetGroup.innerHTML = '<option value="">Select...</option>' + assetGroupOptionsHtml;
-                
+
                 // Use the FULL list (propertyList) for the MODAL
                 modalProperty.innerHTML = '<option value="">Select...</option>' + propertyList.sort().map(p => `<option value="${p}">${p}</option>`).join('');
-                
+
                 // Use the NEW FILTER list (filterPropertyList) for the FILTER
                 propertyFilter.innerHTML = '<option value="">All</option>' + filterPropertyList.map(p => `<option value="${p}">${p}</option>`).join('');
 
@@ -2077,12 +2279,12 @@
                     // "New", "Assigned", "In Progress", "Pending", // Removed as per request
                     "Electrical Team", "Asset Management", "Complete" // From new logic
                 ];
-                
+
                 const uniqueWorkflowOptions = [...new Set(workflowOptions)].sort(); // Sorted
-                
+
                 // Populate modal
                 modalWorkflow.innerHTML = '<option value="">Select...</option>' + uniqueWorkflowOptions.map(w => `<option value="${w}">${w}</option>`).join('');
-                
+
                 // Populate filter (workflowFilter is available in this scope)
                 workflowFilter.innerHTML = '<option value="" selected>All</option>' + uniqueWorkflowOptions.map(w => `<option value="${w}">${w}</option>`).join('');
             }
@@ -2093,7 +2295,7 @@
                 if (indices.length === 0) return;
                 try {
                     const response = await fetch("{{ url_for('main.delete_fls_assets') }}", {
-                        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ indices })
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ indices })
                     });
                     const result = await response.json();
                     if (response.ok && result.success) {
@@ -2111,9 +2313,9 @@
                     pendingSingleDeleteIndex = null;
                 }
             }
-            
+
             // --- Bulk Edit Functions ---
-            
+
             function updateActionButtons() {
                 const selectedCount = tableBody.querySelectorAll('.row-checkbox:checked').length;
                 const anyChecked = selectedCount > 0;
@@ -2129,7 +2331,7 @@
             function populateBulkSpaceDropdown(selectedProperty) {
                 bulkModalSpace.disabled = !selectedProperty;
                 bulkModalSpace.innerHTML = selectedProperty ? '<option value="">Select Space...</option>' : '<option value="">Select property first...</option>';
-                
+
                 if (selectedProperty) {
                     const spaces = spacesByPropertyData[selectedProperty] || [];
                     spaces.sort().forEach(space => {
@@ -2140,7 +2342,7 @@
 
             function openBulkEditModal() {
                 const selectedIndices = Array.from(tableBody.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('tr').dataset.index);
-                
+
                 if (selectedIndices.length === 0) {
                     showMessage("No rows selected for bulk edit.", "error");
                     return;
@@ -2152,18 +2354,18 @@
                 bulkModalProperty.innerHTML = modalProperty.innerHTML;
                 bulkModalStatus.innerHTML = modalStatus.innerHTML;
                 bulkModalWorkflow.innerHTML = modalWorkflow.innerHTML;
-                
+
                 // Reset form state
                 bulkEditForm.reset();
                 bulkEditForm.querySelectorAll('select').forEach(sel => sel.disabled = true);
                 bulkModalSpace.innerHTML = '<option value="">Select property first...</option>'; // Special case for space
-                
+
                 bulkEditModal.show();
             }
 
             async function saveBulkEditData() {
                 const updates = {};
-                
+
                 // Map from modal select ID to DB column name
                 const fieldMap = {
                     'bulk-modal-property': 'Property',
@@ -2176,7 +2378,7 @@
                     const targetId = checkbox.dataset.target;
                     const targetSelect = document.getElementById(targetId);
                     const columnName = fieldMap[targetId];
-                    
+
                     if (columnName && targetSelect.value !== "") {
                         updates[columnName] = targetSelect.value;
                     }
@@ -2186,7 +2388,7 @@
                     showMessage("No changes selected to apply.", "error");
                     return;
                 }
-                
+
                 const indices = Array.from(tableBody.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('tr').dataset.index);
 
                 const payload = {
@@ -2198,11 +2400,11 @@
                     bulkModalSaveBtn.disabled = true;
                     const response = await fetch("{{ url_for('main.bulk_update_assets') }}", {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     const result = await response.json();
-                    
+
                     if (response.ok && result.success) {
                         // Update local data store with returned assets
                         result.assets.forEach(asset => {
@@ -2234,8 +2436,8 @@
                     if (targetSelect) {
                         targetSelect.disabled = !e.target.checked;
                         // If checking property, and it's already populated, enable space
-                        if(targetId === 'bulk-modal-property' && e.target.checked) {
-                             populateBulkSpaceDropdown(targetSelect.value);
+                        if (targetId === 'bulk-modal-property' && e.target.checked) {
+                            populateBulkSpaceDropdown(targetSelect.value);
                         }
                     }
                 });
@@ -2250,7 +2452,7 @@
             function updateSelectAllCheckboxState() {
                 const allVisibleCheckboxes = tableBody.querySelectorAll('tr:not([style*="display: none"]) .row-checkbox:not(:disabled)');
                 const checkedVisibleCheckboxes = tableBody.querySelectorAll('tr:not([style*="display: none"]) .row-checkbox:not(:disabled):checked');
-                
+
                 if (allVisibleCheckboxes.length > 0 && allVisibleCheckboxes.length === checkedVisibleCheckboxes.length) {
                     selectAllCheckbox.checked = true;
                     selectAllCheckbox.indeterminate = false;
@@ -2263,12 +2465,122 @@
                 }
             }
 
+            if (addRowBtn) addRowBtn.addEventListener('click', openModalForNew);
 
             // --- Original Event Listeners ---
-            addRowBtn.addEventListener('click', openModalForNew);
-            modalSaveBtn.addEventListener('click', saveModalData);
-            confirmDeleteBtn.addEventListener('click', executeDelete);
-            
+            // --- Export to Excel Listener ---
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    const assetsToExport = Object.values(currentAssets);
+                    if (assetsToExport.length === 0) {
+                        showMessage("No assets to export.", "error");
+                        return;
+                    }
+
+                    // 1. Prepare data with proper headers
+                    const data = assetsToExport.map(asset => ({
+                        "Work Order": asset.work_order,
+                        "Asset Tag": asset.asset_tag,
+                        "Asset Group": asset.asset_group,
+                        "Description": asset.description,
+                        "Property": asset.property,
+                        "Space": asset.space,
+                        "Space Details": asset.space_details,
+                        "Attribute Set": asset.attribute_set,
+                        "Device Address": asset.device_address,
+                        "Device Type": asset.device_type,
+                        "UN Account Number": asset.un_account_number,
+                        "Planon Code": asset.planon_code,
+                        "Creation Date": asset.creation_date,
+                        "Status": asset.status === '1' ? 'Approved' : 'Ongoing',
+                        "Workflow": asset.workflow
+                    }));
+
+                    // 2. Create worksheet
+                    const ws = XLSX.utils.json_to_sheet(data);
+
+                    // 3. Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "FLS Assets");
+
+                    // 4. Download
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    XLSX.writeFile(wb, `FLS_Assets_Export_${dateStr}.xlsx`);
+                });
+            }
+
+            // --- Export to PDF Listener ---
+            if (pdfBtn) {
+                pdfBtn.addEventListener('click', () => {
+                    const assetsToExport = Object.values(currentAssets);
+                    if (assetsToExport.length === 0) {
+                        showMessage("No assets to export.", "error");
+                        return;
+                    }
+
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+
+                    const columns = [
+                        { header: 'Work Order', dataKey: 'work_order' },
+                        { header: 'Asset Tag', dataKey: 'asset_tag' },
+                        { header: 'Asset Group', dataKey: 'asset_group' },
+                        { header: 'Description', dataKey: 'description' },
+                        { header: 'Property', dataKey: 'property' },
+                        { header: 'Space', dataKey: 'space' },
+                        { header: 'Space Details', dataKey: 'space_details' },
+                        { header: 'Attribute Set', dataKey: 'attribute_set' },
+                        { header: 'Device Address', dataKey: 'device_address' },
+                        { header: 'Device Type', dataKey: 'device_type' },
+                        { header: 'UN Account', dataKey: 'un_account_number' },
+                        { header: 'Planon Code', dataKey: 'planon_code' },
+                        { header: 'Creation Date', dataKey: 'creation_date' },
+                        { header: 'Status', dataKey: 'status' },
+                        { header: 'Workflow', dataKey: 'workflow' }
+                    ];
+
+                    const rows = assetsToExport.map(asset => ({
+                        work_order: asset.work_order,
+                        asset_tag: asset.asset_tag,
+                        asset_group: asset.asset_group,
+                        description: asset.description,
+                        property: asset.property,
+                        space: asset.space,
+                        space_details: asset.space_details,
+                        attribute_set: asset.attribute_set,
+                        device_address: asset.device_address,
+                        device_type: asset.device_type,
+                        un_account_number: asset.un_account_number,
+                        planon_code: asset.planon_code,
+                        creation_date: asset.creation_date,
+                        status: asset.status === '1' ? 'Approved' : 'Ongoing',
+                        workflow: asset.workflow
+                    }));
+
+                    doc.autoTable({
+                        columns: columns,
+                        body: rows,
+                        styles: { fontSize: 5, cellPadding: 1, overflow: 'linebreak' },
+                        headStyles: { fillColor: [0, 33, 69], fontSize: 6 }, // UBC Blue
+                        columnStyles: {
+                            description: { cellWidth: 25 },
+                            asset_group: { cellWidth: 20 }
+                        },
+                        margin: { top: 20, left: 5, right: 5 },
+                        didDrawPage: function (data) {
+                            doc.setFontSize(12);
+                            doc.text("FLS Assets Export", 14, 10);
+                            doc.setFontSize(8);
+                            const dateStr = new Date().toISOString().split('T')[0];
+                            doc.text(`Generated: ${dateStr}`, 270, 10);
+                        }
+                    });
+
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    doc.save(`FLS_Assets_Export_${dateStr}.pdf`);
+                });
+            }
+
             tableBody.addEventListener('change', event => {
                 if (event.target.classList.contains('row-checkbox')) {
                     updateActionButtons();
@@ -2277,27 +2589,27 @@
             });
 
             // Add workflowFilter to the list of event listeners
-            [statusFilter, workflowFilter, propertyFilter, globalSearchInput, startDateFilter, endDateFilter].forEach(el => 
+            [statusFilter, workflowFilter, propertyFilter, globalSearchInput, startDateFilter, endDateFilter].forEach(el =>
                 el.addEventListener('input', filterTable)
             );
-            
+
             resetFiltersBtn.addEventListener('click', () => {
-                statusFilter.value = 'Ongoing'; 
+                statusFilter.value = 'Ongoing';
                 workflowFilter.value = ''; // Reset workflow filter
-                propertyFilter.value = ''; 
-                globalSearchInput.value = ''; 
-                startDateFilter.value = ''; 
-                endDateFilter.value = '';   
+                propertyFilter.value = '';
+                globalSearchInput.value = '';
+                startDateFilter.value = '';
+                endDateFilter.value = '';
                 filterTable();
             });
-            
+
             selectAllCheckbox.addEventListener('click', () => {
                 tableBody.querySelectorAll('tr .row-checkbox:not(:disabled)').forEach(cb => {
                     if (cb.closest('tr').style.display !== 'none') cb.checked = selectAllCheckbox.checked;
                 });
-                updateActionButtons(); 
+                updateActionButtons();
             });
-            
+
             deleteSelectedBtn.addEventListener('click', () => {
                 pendingDeleteIndices = Array.from(tableBody.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('tr').dataset.index);
                 if (pendingDeleteIndices.length > 0) {
@@ -2307,7 +2619,7 @@
                     showMessage("No rows selected.", "error");
                 }
             });
-            
+
             // [START] MODIFIED TABLE CLICK LISTENER
             tableBody.addEventListener('click', (event) => {
                 const target = event.target.closest('a.edit-row, a.duplicate-row, a.delete-row');
@@ -2339,7 +2651,7 @@
                 }
             });
             // [END] MODIFIED TABLE CLICK LISTENER
-            
+
             modalProperty.addEventListener('change', (e) => {
                 populateSpaceDropdown(e.target.value);
                 modalAttributeSet.value = '';
@@ -2356,12 +2668,12 @@
                     modalUnAccount.value = '';
                 }
                 togglePlanonCodeEditability();
-                updateWorkflowStatus(); 
+                updateWorkflowStatus();
             });
 
             modalAssetGroup.addEventListener('change', (e) => {
                 console.log("Asset Group change event fired");
-                
+
                 const selectedOptionText = e.target.value;
                 const assetTagValue = modalAssetTag.value.trim();
 
@@ -2373,7 +2685,7 @@
                     assetGroupName = parts[0] ? parts[0].trim() : '';
                     fullClassification = parts[1] ? parts[1].trim() : null;
                 }
-                
+
                 console.log("Asset Group change - isNewAssetMode:", isNewAssetMode, "selectedOptionText:", selectedOptionText);
                 if (assetGroupName) {
                     const baseDescription = assetTagValue ? `${assetGroupName} - ${assetTagValue}` : assetGroupName;
@@ -2387,33 +2699,33 @@
                 } else {
                     modalDeviceType.value = '';
                 }
-                
+
                 updateFieldsFromAssetGroup();
-                
+
                 togglePlanonCodeEditability();
                 updateWorkflowStatus();
             });
-            
+
             modalAssetTag.addEventListener('input', (e) => {
                 const assetTagValue = e.target.value.trim();
-                
+
                 modalDeviceAddress.value = assetTagValue;
 
                 const selectedOptionText = modalAssetGroup.value;
-                
+
                 if (!selectedOptionText) {
                     return;
                 }
 
                 const assetGroupName = selectedOptionText.split(' | ')[0];
-                
+
                 if (assetTagValue) {
                     modalDescription.value = `${assetGroupName} - ${assetTagValue}`;
                 } else {
                     modalDescription.value = assetGroupName;
                 }
             });
-            
+
             modalSpace.addEventListener('change', () => {
                 togglePlanonCodeEditability();
                 updateWorkflowStatus();
@@ -2424,23 +2736,24 @@
                     modalAttributeSet.value = '';
                 }
             });
-            
+
             modalPlanonCode.addEventListener('input', () => {
                 updateWorkflowStatus();
                 togglePlanonCodeEditability();
             });
-            
+
             // [NEW] Add listener to workflow dropdown to toggle editability when it changes.
             // The status change can also affect the workflow, so we listen to both.
-            modalWorkflow.addEventListener('change', togglePlanonCodeEditability); 
+            modalWorkflow.addEventListener('change', togglePlanonCodeEditability);
             modalStatus.addEventListener('change', togglePlanonCodeEditability);
 
             // Initialization
             initializeModalDropdowns();
             existingAssets.forEach(asset => { currentAssets[asset.index] = asset; });
             renderTable();
-            updateActionButtons(); 
+            updateActionButtons();
         }
     </script>
-  </body>
+</body>
+
 </html>
