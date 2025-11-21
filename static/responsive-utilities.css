@@ -1,0 +1,560 @@
+/*
+ * ============================================
+ * RESPONSIVE UTILITIES & HELPERS
+ * ============================================
+ * Utilities for responsive design adjustments
+ */
+
+/* ============================================
+   1. RESPONSIVE TEXT ALIGNMENT
+   ============================================ */
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+@media (max-width: 576px) {
+  .text-sm-center { text-align: center; }
+  .text-sm-left { text-align: left; }
+  .text-sm-right { text-align: right; }
+}
+
+@media (min-width: 577px) and (max-width: 767px) {
+  .text-md-center { text-align: center; }
+  .text-md-left { text-align: left; }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .text-tablet-center { text-align: center; }
+}
+
+@media (min-width: 992px) {
+  .text-lg-center { text-align: center; }
+  .text-lg-right { text-align: right; }
+}
+
+/* ============================================
+   2. RESPONSIVE MARGIN & PADDING
+   ============================================ */
+
+/* Margin top */
+.mt-0 { margin-top: 0 !important; }
+.mt-1 { margin-top: 0.5rem !important; }
+.mt-2 { margin-top: 1rem !important; }
+.mt-3 { margin-top: 1.5rem !important; }
+.mt-4 { margin-top: 2rem !important; }
+.mt-5 { margin-top: 3rem !important; }
+
+/* Margin bottom */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: 0.5rem !important; }
+.mb-2 { margin-bottom: 1rem !important; }
+.mb-3 { margin-bottom: 1.5rem !important; }
+.mb-4 { margin-bottom: 2rem !important; }
+.mb-5 { margin-bottom: 3rem !important; }
+
+/* Margin horizontal */
+.mx-auto { margin-left: auto !important; margin-right: auto !important; }
+
+/* Padding variants */
+.px-1 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+.px-2 { padding-left: 1rem !important; padding-right: 1rem !important; }
+.px-3 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+.px-4 { padding-left: 2rem !important; padding-right: 2rem !important; }
+.px-5 { padding-left: 3rem !important; padding-right: 3rem !important; }
+
+.py-1 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+.py-2 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+.py-3 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+.py-4 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+.py-5 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+
+/* Responsive margin/padding */
+@media (max-width: 576px) {
+  .mt-sm-0 { margin-top: 0 !important; }
+  .mt-sm-1 { margin-top: 0.5rem !important; }
+  .mt-sm-2 { margin-top: 1rem !important; }
+  .mt-sm-3 { margin-top: 1.5rem !important; }
+  
+  .mb-sm-0 { margin-bottom: 0 !important; }
+  .mb-sm-1 { margin-bottom: 0.5rem !important; }
+  .mb-sm-2 { margin-bottom: 1rem !important; }
+  .mb-sm-3 { margin-bottom: 1.5rem !important; }
+}
+
+@media (min-width: 768px) {
+  .mt-md-0 { margin-top: 0 !important; }
+  .mt-md-3 { margin-top: 1.5rem !important; }
+  
+  .mb-md-0 { margin-bottom: 0 !important; }
+  .mb-md-3 { margin-bottom: 1.5rem !important; }
+}
+
+@media (min-width: 992px) {
+  .mt-lg-4 { margin-top: 2rem !important; }
+  .mb-lg-4 { margin-bottom: 2rem !important; }
+}
+
+/* ============================================
+   2. WIDTH & HEIGHT UTILITIES
+   ============================================ */
+
+.w-100 { width: 100% !important; }
+.w-75 { width: 75% !important; }
+.w-50 { width: 50% !important; }
+.w-25 { width: 25% !important; }
+
+.h-100 { height: 100% !important; }
+.h-auto { height: auto !important; }
+
+.mw-100 { max-width: 100% !important; }
+.mh-100 { max-height: 100% !important; }
+
+@media (max-width: 576px) {
+  .w-sm-100 { width: 100% !important; }
+  .h-sm-auto { height: auto !important; }
+}
+
+@media (min-width: 768px) {
+  .w-md-50 { width: 50% !important; }
+}
+
+/* ============================================
+   3. BORDER RADIUS UTILITIES
+   ============================================ */
+
+.rounded-0 { border-radius: 0 !important; }
+.rounded-1 { border-radius: 0.25rem !important; }
+.rounded-2 { border-radius: 0.5rem !important; }
+.rounded-3 { border-radius: 1rem !important; }
+.rounded { border-radius: 0.375rem !important; }
+
+/* ============================================
+   4. SHADOW UTILITIES
+   ============================================ */
+
+.shadow-none { box-shadow: none !important; }
+.shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important; }
+.shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important; }
+
+/* ============================================
+   5. OPACITY UTILITIES
+   ============================================ */
+
+.opacity-0 { opacity: 0; }
+.opacity-25 { opacity: 0.25; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+/* ============================================
+   6. POSITION UTILITIES
+   ============================================ */
+
+.position-static { position: static; }
+.position-relative { position: relative; }
+.position-absolute { position: absolute; }
+.position-fixed { position: fixed; }
+.position-sticky { position: sticky; }
+
+.top-0 { top: 0; }
+.bottom-0 { bottom: 0; }
+.start-0 { left: 0; }
+.end-0 { right: 0; }
+
+/* ============================================
+   7. OVERFLOW UTILITIES
+   ============================================ */
+
+.overflow-auto { overflow: auto; }
+.overflow-hidden { overflow: hidden; }
+.overflow-scroll { overflow: scroll; }
+.overflow-x-auto { overflow-x: auto; }
+.overflow-y-auto { overflow-y: auto; }
+
+/* ============================================
+   8. FLEXBOX RESPONSIVE UTILITIES
+   ============================================ */
+
+.flex-row { flex-direction: row; }
+.flex-column { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.flex-grow-1 { flex-grow: 1; }
+.flex-shrink-1 { flex-shrink: 1; }
+
+.align-content-center { align-content: center; }
+.align-items-start { align-items: flex-start; }
+.align-items-end { align-items: flex-end; }
+.align-items-center { align-items: center; }
+.align-items-baseline { align-items: baseline; }
+.align-items-stretch { align-items: stretch; }
+
+.justify-content-start { justify-content: flex-start; }
+.justify-content-end { justify-content: flex-end; }
+.justify-content-center { justify-content: center; }
+.justify-content-between { justify-content: space-between; }
+.justify-content-around { justify-content: space-around; }
+.justify-content-evenly { justify-content: space-evenly; }
+
+/* Responsive flex utilities */
+@media (max-width: 576px) {
+  .flex-sm-column { flex-direction: column; }
+  .flex-sm-row { flex-direction: row; }
+}
+
+@media (min-width: 768px) {
+  .flex-md-row { flex-direction: row; }
+  .justify-content-md-between { justify-content: space-between; }
+}
+
+@media (min-width: 992px) {
+  .flex-lg-row { flex-direction: row; }
+  .justify-content-lg-center { justify-content: center; }
+}
+
+/* ============================================
+   9. GRID UTILITIES
+   ============================================ */
+
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.gap-0 { gap: 0; }
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+.gap-3 { gap: 1.5rem; }
+.gap-4 { gap: 2rem; }
+.gap-5 { gap: 3rem; }
+
+/* Responsive grid */
+@media (min-width: 576px) {
+  .grid-cols-sm-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 768px) {
+  .grid-cols-md-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-cols-md-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 992px) {
+  .grid-cols-lg-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-cols-lg-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ============================================
+   10. BACKGROUND COLOR UTILITIES
+   ============================================ */
+
+.bg-white { background-color: #ffffff; }
+.bg-light { background-color: #f4f7fb; }
+.bg-dark { background-color: #2d2d2d; }
+.bg-primary { background-color: #002145; }
+.bg-success { background-color: #28a745; }
+.bg-danger { background-color: #dc3545; }
+.bg-warning { background-color: #ffc107; }
+.bg-info { background-color: #17a2b8; }
+
+/* ============================================
+   11. TEXT COLOR UTILITIES
+   ============================================ */
+
+.text-white { color: #ffffff; }
+.text-dark { color: #2d2d2d; }
+.text-muted { color: #6c757d; }
+.text-primary { color: #002145; }
+.text-success { color: #28a745; }
+.text-danger { color: #dc3545; }
+.text-warning { color: #ffc107; }
+.text-info { color: #17a2b8; }
+
+/* ============================================
+   12. TEXT TRANSFORMATION UTILITIES
+   ============================================ */
+
+.text-uppercase { text-transform: uppercase; }
+.text-lowercase { text-transform: lowercase; }
+.text-capitalize { text-transform: capitalize; }
+
+.font-weight-light { font-weight: 300; }
+.font-weight-normal { font-weight: 400; }
+.font-weight-semibold { font-weight: 600; }
+.font-weight-bold { font-weight: 700; }
+.font-italic { font-style: italic; }
+
+/* ============================================
+   13. LINE HEIGHT UTILITIES
+   ============================================ */
+
+.lh-1 { line-height: 1; }
+.lh-sm { line-height: 1.25; }
+.lh-base { line-height: 1.5; }
+.lh-lg { line-height: 2; }
+
+/* ============================================
+   14. WHITE SPACE UTILITIES
+   ============================================ */
+
+.text-nowrap { white-space: nowrap; }
+.text-break { word-break: break-word; }
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Multi-line text truncate */
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   15. BORDER UTILITIES
+   ============================================ */
+
+.border-0 { border: 0 !important; }
+.border-1 { border: 1px solid #dee2e6; }
+.border-top { border-top: 1px solid #dee2e6; }
+.border-bottom { border-bottom: 1px solid #dee2e6; }
+.border-left { border-left: 1px solid #dee2e6; }
+.border-right { border-right: 1px solid #dee2e6; }
+
+/* ============================================
+   16. RESPONSIVE DISPLAY - BREAKPOINT SPECIFIC
+   ============================================ */
+
+/* Hide on extra small screens */
+@media (max-width: 575px) {
+  .d-xs-none { display: none !important; }
+}
+
+/* Hide on small and up */
+@media (min-width: 576px) {
+  .d-sm-none { display: none !important; }
+  .d-sm-inline { display: inline !important; }
+  .d-sm-inline-block { display: inline-block !important; }
+  .d-sm-block { display: block !important; }
+  .d-sm-flex { display: flex !important; }
+  .d-sm-grid { display: grid !important; }
+}
+
+/* Hide on tablet and up */
+@media (min-width: 768px) {
+  .d-md-none { display: none !important; }
+  .d-md-inline { display: inline !important; }
+  .d-md-inline-block { display: inline-block !important; }
+  .d-md-block { display: block !important; }
+  .d-md-flex { display: flex !important; }
+  .d-md-grid { display: grid !important; }
+}
+
+/* Hide on desktop and up */
+@media (min-width: 992px) {
+  .d-lg-none { display: none !important; }
+  .d-lg-inline { display: inline !important; }
+  .d-lg-inline-block { display: inline-block !important; }
+  .d-lg-block { display: block !important; }
+  .d-lg-flex { display: flex !important; }
+  .d-lg-grid { display: grid !important; }
+}
+
+/* Hide on large desktop and up */
+@media (min-width: 1200px) {
+  .d-xl-none { display: none !important; }
+  .d-xl-inline { display: inline !important; }
+  .d-xl-inline-block { display: inline-block !important; }
+  .d-xl-block { display: block !important; }
+  .d-xl-flex { display: flex !important; }
+  .d-xl-grid { display: grid !important; }
+}
+
+/* ============================================
+   17. CONTAINER UTILITIES
+   ============================================ */
+
+.container-xs { max-width: 320px; margin-left: auto; margin-right: auto; }
+.container-sm { max-width: 576px; margin-left: auto; margin-right: auto; }
+.container-md { max-width: 768px; margin-left: auto; margin-right: auto; }
+.container-lg { max-width: 992px; margin-left: auto; margin-right: auto; }
+.container-xl { max-width: 1200px; margin-left: auto; margin-right: auto; }
+.container-2xl { max-width: 1400px; margin-left: auto; margin-right: auto; }
+
+/* ============================================
+   18. ASPECT RATIO UTILITIES
+   ============================================ */
+
+.aspect-auto { aspect-ratio: auto; }
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-video { aspect-ratio: 16 / 9; }
+.aspect-3-2 { aspect-ratio: 3 / 2; }
+.aspect-4-3 { aspect-ratio: 4 / 3; }
+
+/* ============================================
+   19. CURSOR UTILITIES
+   ============================================ */
+
+.cursor-auto { cursor: auto; }
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+.cursor-not-allowed { cursor: not-allowed; }
+.cursor-text { cursor: text; }
+.cursor-move { cursor: move; }
+
+/* ============================================
+   20. USER SELECT UTILITIES
+   ============================================ */
+
+.user-select-auto {
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  user-select: auto;
+}
+
+.user-select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.user-select-all {
+  -webkit-user-select: all;
+  -moz-user-select: all;
+  user-select: all;
+}
+
+.user-select-text {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+/* ============================================
+   21. TRANSFORM UTILITIES
+   ============================================ */
+
+.scale-75 {
+  --transform-scale: 0.75;
+  -webkit-transform: scale(var(--transform-scale));
+  transform: scale(var(--transform-scale));
+}
+
+.scale-100 {
+  --transform-scale: 1;
+  -webkit-transform: scale(var(--transform-scale));
+  transform: scale(var(--transform-scale));
+}
+
+.scale-110 {
+  --transform-scale: 1.1;
+  -webkit-transform: scale(var(--transform-scale));
+  transform: scale(var(--transform-scale));
+}
+
+.translate-x-1 {
+  --transform-translate-x: 0.25rem;
+  -webkit-transform: translateX(var(--transform-translate-x));
+  transform: translateX(var(--transform-translate-x));
+}
+
+/* ============================================
+   22. TRANSITION & ANIMATION UTILITIES
+   ============================================ */
+
+.transition-none {
+  transition: none;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.3s;
+}
+
+.duration-75 { transition-duration: 75ms; }
+.duration-100 { transition-duration: 100ms; }
+.duration-150 { transition-duration: 150ms; }
+.duration-200 { transition-duration: 200ms; }
+.duration-300 { transition-duration: 300ms; }
+.duration-500 { transition-duration: 500ms; }
+
+/* ============================================
+   23. BREAKPOINT INFO (For Debugging)
+   ============================================ */
+
+/* Add breakpoint info in a pseudo-element (for development only) */
+/*
+body::before {
+  content: 'XS';
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 9999;
+  padding: 5px 10px;
+  background-color: #000;
+  color: #fff;
+  font-size: 12px;
+}
+
+@media (min-width: 576px) {
+  body::before { content: 'SM'; }
+}
+
+@media (min-width: 768px) {
+  body::before { content: 'MD'; }
+}
+
+@media (min-width: 992px) {
+  body::before { content: 'LG'; }
+}
+
+@media (min-width: 1200px) {
+  body::before { content: 'XL'; }
+}
+
+@media (min-width: 1400px) {
+  body::before { content: '2XL'; }
+}
+
+@media (min-width: 1920px) {
+  body::before { content: '4K'; }
+}
+*/
+
+/* ============================================
+   24. PRINT UTILITIES
+   ============================================ */
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  .card {
+    page-break-inside: avoid;
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+}

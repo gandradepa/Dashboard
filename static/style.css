@@ -52,3 +52,628 @@
 
 .ubc-footer{ background-color:var(--ubc-blue); color:white; font-size:0.85rem; }
 .footer-text{ color:#dcdcdc; font-size:0.85rem; }
+:root {
+        --ubc-blue: #002145;
+        --ubc-blue-light: #0055b7;
+        --light-grey: #f4f7fb;
+        --dark-grey: #2d2d2d;
+        --border-color: #e5e7eb;
+        --card-bg: #ffffff;
+        --success-green: #28a745;
+        --error-red: #dc3545;
+      }
+
+      body {
+        background-color: var(--light-grey);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--dark-grey);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .ubc-body {
+        min-width: 320px;
+      }
+
+      .chart-img {
+        width: 100%;
+        height: auto;
+        max-height: 70vh;
+        object-fit: contain;
+      }
+
+      .responsive-iframe {
+        width: 100%;
+        height: clamp(340px, 70vh, 780px);
+        border: none;
+      }
+      
+      #main-view, #analytics-view, #qr-pending-view, #operational-cost-view, #fls-assets-view {
+        display: none;
+      }
+
+      .ubc-navbar {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .ubc-brand {
+        color: var(--ubc-blue) !important;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      
+      .ubc-logo, .ubc-facilities-logo {
+        height: 79px;
+        transition: height 0.3s ease;
+      }
+
+      .page-title {
+        color: var(--ubc-blue);
+        font-weight: 700;
+        transition: font-size 0.3s ease;
+      }
+
+      .page-subtitle {
+        color: #5a6e82;
+        font-size: 1.1rem;
+        transition: font-size 0.3s ease;
+      }
+
+      .section-title {
+        color: var(--ubc-blue);
+        font-weight: 600;
+        padding-bottom: 0.5rem;
+        display: inline-block;
+      }
+      
+      .card.tile {
+        background-color: var(--card-bg);
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+      }
+
+      .card.tile:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      }
+      
+      .capture-card-highlight {
+          background-color: #B1D6FA !important;
+      }
+      
+      .sdi-card-highlight {
+          background-color: #D5E0E0 !important;
+      }
+      
+      .card-title {
+        color: var(--ubc-blue);
+        font-weight: 600;
+      }
+      
+      .ubc-btn {
+        background-color: var(--ubc-blue);
+        border: none;
+        color: white;
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      }
+
+      .ubc-btn:hover {
+        background-color: var(--ubc-blue-light);
+        color: white;
+        transform: translateY(-2px);
+      }
+      
+      .ubc-btn-secondary {
+        background-color: transparent;
+        border: 1px solid var(--ubc-blue);
+        color: var(--ubc-blue);
+      }
+      .ubc-btn-secondary:hover {
+        background-color: var(--ubc-blue);
+        color: white;
+      }
+
+      .ubc-footer {
+        background-color: var(--ubc-blue);
+        color: rgba(255, 255, 255, 0.8);
+      }
+      
+      .task-runner-wrapper {
+        min-height: 38px;
+        flex-grow: 1;
+      }
+      .progress-bar-container {
+        display: none;
+        align-items: center;
+        width: 100%;
+      }
+      .progress-track {
+        flex-grow: 1;
+        height: 8px;
+        background-color: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .progress-bar-fill {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        background-color: var(--ubc-blue-light);
+        background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+        background-size: 20px 20px;
+        animation: progress-bar-stripes 1s linear infinite;
+      }
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        margin-left: 12px;
+        min-width: 80px;
+      }
+      .status-icon {
+        display: none;
+        margin-right: 4px;
+      }
+      .status-text {
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      
+      .progress-bar-container.success .progress-track { background-color: #d4edda; }
+      .progress-bar-container.success .progress-bar-fill { background-image: none; background-color: var(--success-green); }
+      .progress-bar-container.success .icon-success { display: inline-block; color: var(--success-green); }
+      .progress-bar-container.success .status-text { color: var(--success-green); }
+
+      .progress-bar-container.error .progress-track { background-color: #f8d7da; }
+      .progress-bar-container.error .progress-bar-fill { background-image: none; background-color: var(--error-red); }
+      .progress-bar-container.error .icon-error { display: inline-block; color: var(--error-red); }
+      .progress-bar-container.error .status-text { color: var(--error-red); }
+
+      @keyframes progress-bar-stripes {
+        from { background-position: 20px 0; }
+        to { background-position: 0 0; }
+      }
+
+      .application-card-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .analytics-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+      }
+      
+      .analytics-card {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      @media (min-width: 992px) {
+        .bar-chart-card {
+           grid-column: span 1;
+           grid-row: span 2;
+        }
+        .kpi-pie-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          grid-column: span 1;
+          grid-row: span 2;
+        }
+      }
+
+      .form-select-wrapper .form-select {
+        border-radius: 8px;
+      }
+
+      .asset-table-container {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .asset-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 640px;
+      }
+      
+      .asset-table th, .asset-table td {
+        padding: 0.75rem 3.0rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      
+      .asset-table th {
+        font-weight: 600;
+        color: var(--ubc-blue);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .asset-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .asset-table tbody tr:hover {
+        background-color: #f8f9fa;
+      }
+      
+      #detailed-view .asset-table th,
+      #detailed-view .asset-table td {
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.6rem 0.8rem;
+      }
+
+      .col-shrink-center {
+        width: 1%;
+        white-space: nowrap !important;
+        text-align: center !important;
+      }
+      
+      @media (max-width: 1199.98px) {
+        .asset-table th, .asset-table td {
+          padding: 0.65rem 1.6rem;
+        }
+      }
+
+      @media (max-width: 991.98px) {
+        .asset-table th, .asset-table td {
+          padding: 0.6rem 1.25rem;
+        }
+        #fls-assets-view #asset-table th,
+        #fls-assets-view #asset-table td {
+          padding: 0.55rem 0.8rem;
+          font-size: 0.95rem;
+        }
+        #fls-assets-view .filter-container > div {
+          flex: 1 1 45%;
+        }
+        #fls-assets-view .filter-container .search-wrapper {
+          flex: 1 1 100%;
+        }
+        #fls-assets-view .filter-container label {
+          font-size: 1rem;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        .page-title { font-size: 2.2rem; }
+        .page-subtitle { font-size: 1rem; }
+        .ubc-logo, .ubc-facilities-logo { height: 63px; }
+        .ubc-brand { font-size: 0.9rem; }
+        main.container { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+        #asset-form { grid-template-columns: 1fr; }
+        #asset-form .full-width { grid-column: span 1; }
+        #fls-assets-view .filter-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        #fls-assets-view .filter-container > div,
+        #fls-assets-view .filter-container .search-wrapper {
+            flex: 1 1 100%;
+            width: 100%;
+        }
+        #fls-assets-view .filter-container .form-select,
+        #fls-assets-view .filter-container .form-control {
+            width: 100%;
+        }
+        .container-fluid-fls {
+            padding-left: 1.25rem;
+            padding-right: 1.25rem;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .page-title { font-size: 1.9rem; }
+        .page-subtitle { font-size: 0.95rem; }
+        .ubc-logo, .ubc-facilities-logo { height: 54px; }
+        .asset-table th, .asset-table td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        #fls-assets-view .filter-container { gap: 0.75rem; }
+        #fls-assets-view .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .container-fluid-fls {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+      }
+      
+      .container-fluid-fls {
+          max-width: 100% !important;
+          padding-left: 2rem;
+          padding-right: 2rem;
+      }
+
+      #fls-assets-view {
+          width: 100%;
+          min-width: 0;
+          background-color: #f4f6fb;
+          padding-bottom: 2.5rem;
+      }
+      
+      tr.disabled {
+          color: #6c757d; 
+          background-color: #f8f9fa; 
+      }
+      tr.disabled .delete-row {
+          cursor: not-allowed;
+      }
+
+      .btn-excel { background-color: #28a745; color: white; }
+      .btn-excel:hover { background-color: #218838; color: white; }
+      .btn-pdf { background-color: #dc3545; color: white; }
+      .btn-pdf:hover { background-color: #c82333; color: white; }
+      .btn-email { background-color: #007bff; color: white; }
+      .btn-email:hover { background-color: #0069d9; color: white; }
+      .btn-teams { background-color: #464775; color: white; }
+      .btn-teams:hover { background-color: #313252; color: white; }
+      
+      #delete-selected-btn { background-color: #dc3545; border-color: #dc3545; }
+      #delete-selected-btn:hover { background-color: #c82333; border-color: #bd2130; }
+      
+      #fls-assets-view .action-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+          width: 100%;
+      }
+      
+      #fls-assets-view .action-buttons .btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          font-size: 0.85rem;
+      }
+
+      #fls-assets-view .filter-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+          align-items: center;
+          padding: 0.85rem 1rem;
+          background-color: #e8edf7;
+          border-radius: 8px;
+          border: 1px solid #cfd5e4;
+          margin-bottom: 1rem;
+          width: 100%;
+      }
+      
+      #fls-assets-view .filter-container .search-wrapper {
+          flex: 0 0 28%;
+          min-width: 160px;
+      }
+      
+      #fls-assets-view .filter-container .input-group {
+          width: 100%;
+      }
+      
+      #fls-assets-view .filter-container > div {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-shrink: 0;
+      }
+      
+      #fls-assets-view .filter-container label {
+          margin-bottom: 0;
+          white-space: nowrap;
+          font-weight: 600;
+          color: var(--ubc-blue);
+          font-size: 1.5rem;
+      }
+      
+      #fls-assets-view .filter-container .form-select,
+      #fls-assets-view .filter-container .form-control {
+          min-width: 150px;
+      }
+      
+      #fls-assets-view .filter-container #property-filter {
+          min-width: 105px; 
+      }
+
+      #fls-assets-view .filter-container #reset-filters-btn {
+          background: none;
+          border: none;
+          color: var(--ubc-blue);
+          font-weight: 600;
+          padding: 0.35rem 0.75rem;
+      }
+      #fls-assets-view .filter-container #reset-filters-btn:hover {
+          background-color: rgba(0,0,0,0.05);
+      }
+      
+      #fls-assets-view .table-container {
+          background-color: #ffffff;
+          border-radius: 8px;
+          padding: 0;
+          border: 1px solid #d7dce6;
+          overflow: hidden;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          width: 100%;
+      }
+      
+      #fls-assets-view #asset-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 1100px;
+      }
+
+      #fls-assets-view #asset-table th,
+      #fls-assets-view #asset-table td {
+          padding: 0.65rem 0.9rem;
+          text-align: left;
+          border-bottom: 1px solid #e1e5ed;
+          white-space: nowrap;
+      }
+      #fls-assets-view #asset-table td {
+          font-size: 1.08rem;
+      }
+      
+      #fls-assets-view #asset-table th {
+          font-weight: 600;
+          color: #ffffff;
+          font-size: 0.98rem;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+          background-color: #1d2430;
+          border-bottom: 2px solid #121722;
+      }
+
+      #fls-assets-view #asset-table th.action-col,
+      #fls-assets-view #asset-table th.duplicate-col,
+      #fls-assets-view #asset-table th.delete-col {
+          text-align: center;
+          width: 70px;
+      }
+
+      #fls-assets-view #asset-table td.action-col,
+      #fls-assets-view #asset-table td.duplicate-col,
+      #fls-assets-view #asset-table td.delete-col {
+          width: 70px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+
+      #fls-assets-view #asset-table tbody tr:nth-child(odd) {
+          background-color: #f7f8fb;
+      }
+
+      #fls-assets-view #asset-table tbody tr:nth-child(even) {
+          background-color: #ffffff;
+      }
+      
+      #fls-assets-view #asset-table tbody tr:last-child td {
+          border-bottom: none;
+      }
+      
+      #fls-assets-view #asset-table tbody tr:hover {
+          background-color: #e9f0ff;
+      }
+      
+      #fls-assets-view #asset-table td.action-col a,
+      #fls-assets-view #asset-table td.duplicate-col a,
+      #fls-assets-view #asset-table td.delete-col a {
+          cursor: pointer;
+          color: #1f4ed8;
+          background-color: #eef2ff;
+          border: 1px solid #cdd5ff;
+          border-radius: 4px;
+          width: 34px;
+          height: 32px;
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          transition: background-color 0.2s ease, border-color 0.2s ease;
+      }
+      #fls-assets-view #asset-table td.action-col a:hover,
+      #fls-assets-view #asset-table td.duplicate-col a:hover,
+      #fls-assets-view #asset-table td.delete-col a:hover {
+          background-color: #dfe7ff;
+          border-color: #b5c2ff;
+      }
+      #fls-assets-view #asset-table td.duplicate-col a {
+          color: #6a5acd;
+          background-color: #f3edff;
+          border-color: #daccff;
+      }
+      #fls-assets-view #asset-table td.delete-col a {
+          color: #c1121f;
+          background-color: #fff1f3;
+          border-color: #f3c0c6;
+      }
+      #fls-assets-view #asset-table td.delete-col .disabled {
+          color: #6c757d;
+          cursor: not-allowed;
+      }
+      #fls-assets-view #asset-table td.action-col .disabled {
+          color: #6c757d;
+          cursor: not-allowed;
+      }
+
+      #asset-modal-bootstrap .modal-header {
+          background-color: var(--ubc-blue);
+          color: white;
+      }
+      #asset-modal-bootstrap .modal-title {
+          color: white;
+      }
+      #asset-modal-bootstrap .modal-header .btn-close {
+          filter: invert(1) grayscale(100%) brightness(200%);
+      }
+      
+      #asset-form {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem 1.5rem;
+      }
+      #asset-form .form-group {
+          margin-bottom: 0;
+      }
+      #asset-form .full-width {
+          grid-column: span 2;
+      }
+      
+      #asset-form input[readonly],
+      #asset-form select[disabled] {
+          background-color: #e9ecef;
+          opacity: 1;
+      }
+
+      #asset-modal-bootstrap .modal-footer {
+          justify-content: space-between;
+      }
+      
+      #asset-modal-bootstrap .modal-footer #modal-cancel-btn {
+          background-color: #6c757d;
+          color: white;
+          border: none;
+      }
+      #asset-modal-bootstrap .modal-footer #modal-cancel-btn:hover {
+          background-color: #5a6268;
+      }
+      #asset-modal-bootstrap .modal-footer #modal-save-btn {
+          background-color: #28a745;
+          color: white;
+          border: none;
+      }
+      #asset-modal-bootstrap .modal-footer #modal-save-btn:hover {
+          background-color: #218838;
+      }

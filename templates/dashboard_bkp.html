@@ -959,8 +959,7 @@
             <button id="add-row-btn" class="btn ubc-btn">
                 <i data-lucide="plus-circle"></i> Add New Asset
             </button>
-            <button id="delete-selected-btn" class="btn btn-danger text-white">
-                <i data-lucide="trash-2"></i> Delete Flagged Rows
+            <button id="delete-selected-btn" class="btn" style="display: none;"> <i data-lucide="trash-2"></i> Delete Selected
             </button>
             <button id="export-btn" class="btn btn-excel" title="Export to Excel">
                 <i data-lucide="file-spreadsheet"></i> Excel
@@ -2116,13 +2115,12 @@
             
             function updateActionButtons() {
                 const selectedCount = tableBody.querySelectorAll('.row-checkbox:checked').length;
-                const anyChecked = selectedCount > 0;
-
-                if (deleteSelectedBtn) {
-                    deleteSelectedBtn.disabled = !anyChecked;
-                }
-                if (bulkEditBtn) {
-                    bulkEditBtn.style.display = anyChecked ? 'inline-block' : 'none';
+                if (selectedCount > 0) {
+                    deleteSelectedBtn.style.display = 'inline-block';
+                    if (bulkEditBtn) bulkEditBtn.style.display = 'inline-block'; // Keep check for safety
+                } else {
+                    deleteSelectedBtn.style.display = 'none';
+                    if (bulkEditBtn) bulkEditBtn.style.display = 'none';
                 }
             }
 
@@ -2247,35 +2245,11 @@
             });
 
 
-            function updateSelectAllCheckboxState() {
-                const allVisibleCheckboxes = tableBody.querySelectorAll('tr:not([style*="display: none"]) .row-checkbox:not(:disabled)');
-                const checkedVisibleCheckboxes = tableBody.querySelectorAll('tr:not([style*="display: none"]) .row-checkbox:not(:disabled):checked');
-                
-                if (allVisibleCheckboxes.length > 0 && allVisibleCheckboxes.length === checkedVisibleCheckboxes.length) {
-                    selectAllCheckbox.checked = true;
-                    selectAllCheckbox.indeterminate = false;
-                } else if (checkedVisibleCheckboxes.length > 0) {
-                    selectAllCheckbox.checked = false;
-                    selectAllCheckbox.indeterminate = true;
-                } else {
-                    selectAllCheckbox.checked = false;
-                    selectAllCheckbox.indeterminate = false;
-                }
-            }
-
-
             // --- Original Event Listeners ---
             addRowBtn.addEventListener('click', openModalForNew);
             modalSaveBtn.addEventListener('click', saveModalData);
             confirmDeleteBtn.addEventListener('click', executeDelete);
             
-            tableBody.addEventListener('change', event => {
-                if (event.target.classList.contains('row-checkbox')) {
-                    updateActionButtons();
-                    updateSelectAllCheckboxState();
-                }
-            });
-
             // Add workflowFilter to the list of event listeners
             [statusFilter, workflowFilter, propertyFilter, globalSearchInput, startDateFilter, endDateFilter].forEach(el => 
                 el.addEventListener('input', filterTable)
@@ -2313,8 +2287,6 @@
                 const target = event.target.closest('a.edit-row, a.duplicate-row, a.delete-row');
                 if (!target) return;
 
-                event.preventDefault(); // Prevent default anchor behavior for all matched links
-
                 const row = target.closest('tr');
                 if (!row) return;
 
@@ -2322,14 +2294,18 @@
 
                 if (target.matches('.edit-row')) {
                     if (target.classList.contains('disabled')) {
+                        event.preventDefault();
                         showMessage('This asset cannot be edited because it already has a Planon Code.', 'error');
                         return;
                     }
+                    event.preventDefault();
                     openModalForEdit(index);
                 } else if (target.matches('.duplicate-row')) {
+                    event.preventDefault();
                     openModalForDuplicate(index);
                 } else if (target.matches('.delete-row')) {
                     if (target.classList.contains('disabled')) {
+                        event.preventDefault();
                         return;
                     }
                     pendingSingleDeleteIndex = index;
